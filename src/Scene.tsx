@@ -1,110 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 // ==========================================
-// 1. PROCEDURAL TEXTURES (Canvas-based)
-//    Flat, hand-drawn animation style —
-//    no soft alpha gradients.
+// 1. BACKDROP SHADER (fullscreen gradient)
+//    Teal → mint → dark teal. Provides the
+//    Ghibli-style color canvas.
 // ==========================================
 
-function createStarTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  const c = size / 2
-
-  // Solid bright core
-  ctx.fillStyle = 'rgba(255,255,255,1)'
-  ctx.beginPath()
-  ctx.arc(c, c, c * 0.15, 0, Math.PI * 2)
-  ctx.fill()
-
-  // Sharp 4-point cross spikes (full alpha, thick lines)
-  ctx.save()
-  ctx.translate(c, c)
-  for (let i = 0; i < 2; i++) {
-    const spike = ctx.createLinearGradient(-c, 0, c, 0)
-    spike.addColorStop(0, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.46, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.49, 'rgba(255,255,255,1)')
-    spike.addColorStop(0.51, 'rgba(255,255,255,1)')
-    spike.addColorStop(0.54, 'rgba(255,255,255,0)')
-    spike.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = spike
-    ctx.fillRect(-c, -2, size, 4)
-    ctx.rotate(Math.PI / 2)
-  }
-  ctx.restore()
-
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.needsUpdate = true
-  return tex
-}
-
-function createPetalTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  const c = size / 2
-
-  // Flat solid oval — painted pink debris
-  ctx.fillStyle = 'rgba(255,255,255,0.95)'
-  ctx.beginPath()
-  ctx.ellipse(c, c, c * 0.8, c * 0.3, 0, 0, Math.PI * 2)
-  ctx.fill()
-
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.needsUpdate = true
-  return tex
-}
-
-function createBlobTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  const c = size / 2
-
-  // Irregular wobbly silhouette — looks painted, not geometric.
-  // Multi-frequency sine wobble on the circumference radius.
-  ctx.fillStyle = 'rgba(255,255,255,0.9)'
-  ctx.beginPath()
-  const segments = 24
-  for (let i = 0; i <= segments; i++) {
-    const angle = (i / segments) * Math.PI * 2
-    const wobble =
-      0.68 +
-      Math.sin(angle * 3.7) * 0.10 +
-      Math.cos(angle * 5.3) * 0.07 +
-      Math.sin(angle * 11.0) * 0.04
-    const r = c * wobble
-    const x = c + Math.cos(angle) * r
-    const y = c + Math.sin(angle) * r
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
-  }
-  ctx.closePath()
-  ctx.fill()
-
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.needsUpdate = true
-  return tex
-}
-
-// ==========================================
-// 2. SHADERS
-// ==========================================
-
-// ── Layer A: Fullscreen backdrop ──────────────────────
-// Dark teal edges → luminous mint green center.
-// The bright center creates a vibrant canvas for the
-// explosion to clash against.
 const backdropVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -118,269 +22,88 @@ const backdropFragment = /* glsl */ `
   void main() {
     float dist = distance(vUv, vec2(0.5));
 
-    vec3 brightMint  = vec3(0.20, 0.90, 0.72);
-    vec3 midTeal     = vec3(0.02, 0.35, 0.38);
-    vec3 darkTeal    = vec3(0.0, 0.06, 0.12);
+    vec3 brightMint = vec3(0.12, 0.70, 0.58);
+    vec3 midTeal    = vec3(0.02, 0.25, 0.30);
+    vec3 darkTeal   = vec3(0.0, 0.04, 0.08);
 
-    vec3 color = mix(brightMint, midTeal, smoothstep(0.05, 0.45, dist));
-    color = mix(color, darkTeal, smoothstep(0.45, 0.85, dist));
+    vec3 color = mix(brightMint, midTeal, smoothstep(0.05, 0.50, dist));
+    color = mix(color, darkTeal, smoothstep(0.50, 0.90, dist));
 
     gl_FragColor = vec4(color, 1.0);
     #include <colorspace_fragment>
   }
 `
 
-// ── Layer B: Fluid particles (petals + blobs) ─────────
-const particleVertex = /* glsl */ `
-  uniform float uTime;
-  uniform float uSpeed;
-  attribute vec3 aInitialPos;
-  attribute vec3 aRandoms;
-
-  varying vec2 vUv;
-  varying float vType;
-  varying float vDepth;
-
-  void main() {
-    vUv = uv;
-    vType = aRandoms.z;
-    vec3 pos = aInitialPos;
-
-    pos.z += uTime * uSpeed * (0.8 + aRandoms.x * 0.4);
-    pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
-
-    float r = length(pos.xy);
-    if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
-
-    float wave = sin(pos.z * 0.1 + uTime + aRandoms.y * 6.28) * 0.5;
-    pos.x += cos(wave) * 0.5;
-    pos.y += sin(wave) * 0.5;
-
-    vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-
-    float baseScale = (vType < 0.5) ? 1.2 : 3.0;
-    float scale = baseScale * (0.2 + pow(vDepth, 3.0) * 12.0);
-
-    float angle = pos.z * 0.05 + aRandoms.y * 6.28;
-    float s = sin(angle);
-    float c = cos(angle);
-    vec3 transformed = position;
-    transformed.xy = mat2(c, -s, s, c) * transformed.xy;
-
-    vec4 mvPos = modelViewMatrix * vec4(pos + transformed * scale, 1.0);
-    gl_Position = projectionMatrix * mvPos;
-  }
-`
-
-const particleFragment = /* glsl */ `
-  uniform sampler2D uTexPetal;
-  uniform sampler2D uTexBlob;
-  varying vec2 vUv;
-  varying float vType;
-  varying float vDepth;
-
-  void main() {
-    vec4 texColor;
-    vec3 finalColor;
-    float opacity;
-
-    if (vType < 0.5) {
-      // Flat solid pink ovals
-      texColor = texture2D(uTexPetal, vUv);
-      finalColor = vec3(1.0, 0.4, 0.6);
-      opacity = texColor.a;
-    } else {
-      // Near-black silhouettes — deep dark debris
-      texColor = texture2D(uTexBlob, vUv);
-      finalColor = vec3(0.0, 0.03, 0.05);
-      opacity = texColor.a * 0.95;
-    }
-
-    float alphaFade = smoothstep(1.0, 0.85, vDepth);
-    gl_FragColor = vec4(finalColor, opacity * alphaFade);
-
-    #include <colorspace_fragment>
-  }
-`
-
-// ── Layer C: Radiant star flares (additive) ───────────
-// Bright neon green + yellow laser streaks.
-const flareVertex = /* glsl */ `
-  uniform float uTime;
-  uniform float uSpeed;
-  attribute vec3 aInitialPos;
-  attribute vec3 aRandoms;
-  varying vec2 vUv;
-  varying float vDepth;
-  varying float vColorPhase;
-
-  void main() {
-    vUv = uv;
-    vColorPhase = aRandoms.y;
-    vec3 pos = aInitialPos;
-
-    pos.z += uTime * uSpeed * (1.0 + aRandoms.x * 0.6);
-    pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
-
-    float r = length(pos.xy);
-    if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
-
-    vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-    float scale = 0.5 * (0.2 + pow(vDepth, 2.5) * 5.5);
-
-    // Radial stretch — extreme for anime speed lines
-    vec3 transformed = position;
-    vec2 dir = normalize(pos.xy + 0.001);
-    float stretch = 1.0 + (vDepth * 20.0); // Extreme stretch for long anime speed lines
-    transformed.xy += dir * dot(transformed.xy, dir) * (stretch - 1.0);
-
-    vec4 mvPos = modelViewMatrix * vec4(pos + transformed * scale, 1.0);
-    gl_Position = projectionMatrix * mvPos;
-  }
-`
-
-const flareFragment = /* glsl */ `
-  uniform sampler2D uTexStar;
-  varying vec2 vUv;
-  varying float vDepth;
-  varying float vColorPhase;
-
-  void main() {
-    vec4 texColor = texture2D(uTexStar, vUv);
-
-    // Hard 50/50 split: pure green vs pure yellow — no gradient
-    vec3 greenLaser  = vec3(0.35, 1.0, 0.25);
-    vec3 yellowLaser = vec3(1.0, 0.88, 0.15);
-    vec3 glow = mix(greenLaser, yellowLaser, step(0.5, vColorPhase));
-
-    float alphaFade = smoothstep(1.0, 0.72, vDepth);
-    gl_FragColor = vec4(glow, texColor.a * alphaFade);
-
-    #include <colorspace_fragment>
-  }
-`
-
-// ── Layer D: Explosive core glow (on top) ─────────────
-// Real 2D domain-warped noise creates a chaotic paint
-// splatter. Yellow center → orange-red → vibrant pink.
-// Slowly evolves over time so the explosion "boils."
-const glowVertex = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = vec4(position, 1.0);
-  }
-`
-
-const glowFragment = /* glsl */ `
-  uniform float uAspect;
-  uniform float uTime;
-  varying vec2 vUv;
-
-  // ── 2D hash + value noise + fbm ───────────────────
-  // These give us real 2D chaos (not angular-only spokes).
-  float hash21(vec2 p) {
-    p = fract(p * vec2(233.34, 851.73));
-    p += dot(p, p + 23.45);
-    return fract(p.x * p.y);
-  }
-
-  float noise2D(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash21(i);
-    float b = hash21(i + vec2(1.0, 0.0));
-    float c = hash21(i + vec2(0.0, 1.0));
-    float d = hash21(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-  }
-
-  float fbm(vec2 p) {
-    float v = 0.0;
-    float a = 0.5;
-    for (int i = 0; i < 4; i++) {
-      v += a * noise2D(p);
-      p *= 2.0;
-      a *= 0.5;
-    }
-    return v;
-  }
-
-  void main() {
-    vec2 centered = vUv - vec2(0.5);
-    centered.x *= uAspect;
-
-    // Domain warp — reduced amplitude for tight, contained blast.
-    // 2D fbm gives real chaos in BOTH x and y (not angular spokes).
-    float t = uTime * 0.06;
-    float warpX = fbm(centered * 8.0 + vec2(t, 0.0));
-    float warpY = fbm(centered * 8.0 + vec2(0.0, t) + 50.0);
-    vec2 warped = centered + (vec2(warpX, warpY) - 0.5) * 0.035;
-    float dist = length(warped);
-
-    // Secondary noise for edge splatter variation
-    float splatter = fbm(centered * 22.0 + 100.0);
-
-    // ── Three-stop color ramp (TIGHT) ──────────────
-    vec3 coreColor    = vec3(1.0, 0.92, 0.15);  // intense yellow
-    vec3 midColor     = vec3(1.0, 0.35, 0.22);   // hot orange-red
-    vec3 splatterCol  = vec3(0.92, 0.15, 0.42);  // vibrant pink
-
-    // Shrunk from 0.08/0.18 → 0.03/0.07 — tight contained burst
-    float coreEdge   = 0.03 + (splatter - 0.5) * 0.012;
-    float midEdge    = 0.07 + (splatter - 0.5) * 0.018;
-
-    vec3 color = mix(coreColor, midColor, smoothstep(coreEdge, coreEdge + 0.035, dist));
-    color = mix(color, splatterCol, smoothstep(midEdge, midEdge + 0.05, dist));
-
-    // ── Alpha: HARD jagged falloff (shrunk ~3x) ────
-    float alpha = 1.0 - smoothstep(0.08, 0.14, dist + (warpX - 0.5) * 0.025);
-
-    // ── Isolated splatter dots (tight ring around blast) ──
-    float dots = smoothstep(0.72, 0.88, fbm(centered * 32.0 + 200.0));
-    float dotMask = dots * smoothstep(0.22, 0.10, dist) * smoothstep(0.06, 0.12, dist);
-    alpha = max(alpha, dotMask * 0.6);
-
-    // Overall fade so splatter dots don't extend forever
-    alpha *= (1.0 - smoothstep(0.25, 0.50, length(centered)));
-
-    gl_FragColor = vec4(color, alpha);
-
-    #include <colorspace_fragment>
-  }
-`
-
 // ==========================================
-// 3. SCENE COMPONENT
+// 2. DATA GENERATORS
 // ==========================================
 
-const PAINT_COUNT = 4500
-const FLARE_COUNT = 2500
-
-function generateInstanceData(count: number, maxRadius: number) {
+/** Spherical random distribution for core / background orbs */
+function generateSphericalData(count: number, minR: number, maxR: number) {
   const pos = new Float32Array(count * 3)
-  const rand = new Float32Array(count * 3)
+  const scales = new Float32Array(count)
   for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2
-    const radius = Math.random() * maxRadius
-    pos[i * 3] = Math.cos(angle) * radius
-    pos[i * 3 + 1] = Math.sin(angle) * radius
-    pos[i * 3 + 2] = Math.random() * -60
-
-    rand[i * 3] = Math.random()
-    rand[i * 3 + 1] = Math.random()
-    rand[i * 3 + 2] = Math.random()
+    const r = minR + Math.random() * (maxR - minR)
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.acos(2 * Math.random() - 1)
+    pos[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+    pos[i * 3 + 2] = r * Math.cos(phi)
+    scales[i] = 0.1 + Math.random() * 0.4
   }
-  return { pos, rand }
+  return { pos, scales }
 }
 
-function KiraKiraVortex() {
-  const starTex = useMemo(() => createStarTexture(), [])
-  const petalTex = useMemo(() => createPetalTexture(), [])
-  const blobTex = useMemo(() => createBlobTexture(), [])
+/** Cylindrical distribution for speed-line sparks */
+function generateSparkData(count: number, maxR: number, zDepth: number) {
+  const pos = new Float32Array(count * 3)
+  const speeds = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const radius = Math.random() * maxR
+    pos[i * 3] = Math.cos(angle) * radius
+    pos[i * 3 + 1] = Math.sin(angle) * radius
+    pos[i * 3 + 2] = -Math.random() * zDepth
+    speeds[i] = 0.8 + Math.random() * 0.4
+  }
+  return { pos, speeds }
+}
 
-  const backdropMat = useMemo(
+/** Spherical distribution for large background water orbs */
+function generateWaterData(count: number, spread: number) {
+  const pos = new Float32Array(count * 3)
+  const scales = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
+    const r = spread * Math.cbrt(Math.random())
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.acos(2 * Math.random() - 1)
+    pos[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+    pos[i * 3 + 2] = r * Math.cos(phi)
+    scales[i] = 1.5 + Math.random() * 2.5
+  }
+  return { pos, scales }
+}
+
+// ==========================================
+// 3. PARTICLE COUNTS
+// ==========================================
+
+const INNER_CORE = 600
+const OUTER_CORE = 600
+const GREEN_SPARKS = 600
+const YELLOW_SPARKS = 600
+const WATER_COUNT = 150
+
+// Total: 2,550 CPU-animated spheres per frame (60fps on desktop)
+
+// ==========================================
+// 4. SCENE COMPONENTS
+// ==========================================
+
+// ── Backdrop (rendered first, behind everything) ──
+function Backdrop() {
+  const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         vertexShader: backdropVertex,
@@ -390,108 +113,295 @@ function KiraKiraVortex() {
       }),
     [],
   )
+  const geo = useMemo(() => new THREE.PlaneGeometry(2, 2), [])
+  return <mesh geometry={geo} material={mat} renderOrder={-1} />
+}
 
-  const paintMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uSpeed: { value: 0.18 },
-          uTexPetal: { value: petalTex },
-          uTexBlob: { value: blobTex },
-        },
-        vertexShader: particleVertex,
-        fragmentShader: particleFragment,
-        transparent: true,
-        depthWrite: false,
-      }),
-    [petalTex, blobTex],
+// ── Inner Core — dense yellow boiling mass ──────
+function InnerCore() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, scales } = useMemo(
+    () => generateSphericalData(INNER_CORE, 0, 1.0),
+    [],
   )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
 
-  const flareMat = useMemo(
+  const geo = useMemo(() => new THREE.SphereGeometry(0.15, 8, 8), [])
+  const mat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uSpeed: { value: 0.28 },
-          uTexStar: { value: starTex },
-        },
-        vertexShader: flareVertex,
-        fragmentShader: flareFragment,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
-    [starTex],
-  )
-
-  const glowMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uAspect: { value: window.innerWidth / window.innerHeight },
-          uTime: { value: 0 },
-        },
-        vertexShader: glowVertex,
-        fragmentShader: glowFragment,
-        transparent: true,
-        depthWrite: false,
-        depthTest: false,
+      new THREE.MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#ffe840',
+        emissiveIntensity: 5,
+        toneMapped: false,
+        roughness: 0.2,
+        metalness: 0,
       }),
     [],
   )
 
-  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(2, 2), [])
-
-  const paintGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0)
-    const geo = new THREE.PlaneGeometry(0.4, 0.4)
-    geo.setAttribute('aInitialPos', new THREE.InstancedBufferAttribute(pos, 3))
-    geo.setAttribute('aRandoms', new THREE.InstancedBufferAttribute(rand, 3))
-    return geo
-  }, [])
-
-  const flareGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(FLARE_COUNT, 12.0)
-    const geo = new THREE.PlaneGeometry(0.3, 0.3)
-    geo.setAttribute('aInitialPos', new THREE.InstancedBufferAttribute(pos, 3))
-    geo.setAttribute('aRandoms', new THREE.InstancedBufferAttribute(rand, 3))
-    return geo
-  }, [])
-
   useFrame((state) => {
+    if (!meshRef.current) return
     const t = state.clock.getElapsedTime()
-    paintMat.uniforms.uTime.value = t
-    flareMat.uniforms.uTime.value = t
-    glowMat.uniforms.uTime.value = t
-    glowMat.uniforms.uAspect.value = state.size.width / state.size.height
+
+    for (let i = 0; i < INNER_CORE; i++) {
+      const i3 = i * 3
+      dummy.position.set(
+        pos[i3] + Math.sin(t * 2.0 + i * 0.1) * 0.4,
+        pos[i3 + 1] + Math.cos(t * 2.3 + i * 0.13) * 0.4,
+        pos[i3 + 2] + Math.sin(t * 1.7 + i * 0.07) * 0.4,
+      )
+      const s = scales[i] * (1.0 + Math.sin(t * 5.0 + i * 0.2) * 0.3)
+      dummy.scale.setScalar(s)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <>
-      {/* Layer A: Fullscreen backdrop — dark teal → bright mint */}
-      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} />
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, INNER_CORE]}
+      frustumCulled={false}
+    />
+  )
+}
 
-      {/* Layer B: Flat painted debris (alpha blending) */}
-      <instancedMesh
-        args={[paintGeo, paintMat, PAINT_COUNT]}
-        frustumCulled={false}
-      />
+// ── Outer Core — pink/red halo, wider spread ───
+function OuterCore() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, scales } = useMemo(
+    () => generateSphericalData(OUTER_CORE, 1.0, 2.8),
+    [],
+  )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
 
-      {/* Layer C: Neon green/yellow laser streaks (additive) */}
-      <instancedMesh
-        args={[flareGeo, flareMat, FLARE_COUNT]}
-        frustumCulled={false}
-      />
+  const geo = useMemo(() => new THREE.SphereGeometry(0.25, 8, 8), [])
+  const mat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#ff2066',
+        emissiveIntensity: 3,
+        toneMapped: false,
+        roughness: 0.3,
+        metalness: 0,
+      }),
+    [],
+  )
 
-      {/* Layer D: Chaotic explosive core — always on top */}
-      <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} />
-    </>
+  useFrame((state) => {
+    if (!meshRef.current) return
+    const t = state.clock.getElapsedTime()
+
+    for (let i = 0; i < OUTER_CORE; i++) {
+      const i3 = i * 3
+      dummy.position.set(
+        pos[i3] + Math.sin(t * 1.5 + i * 0.08) * 0.6,
+        pos[i3 + 1] + Math.cos(t * 1.8 + i * 0.11) * 0.6,
+        pos[i3 + 2] + Math.sin(t * 1.2 + i * 0.06) * 0.6,
+      )
+      const s = scales[i] * (1.0 + Math.sin(t * 3.0 + i * 0.15) * 0.25)
+      dummy.scale.setScalar(s)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, OUTER_CORE]}
+      frustumCulled={false}
+    />
+  )
+}
+
+// ── Green Speed Sparks — stretched Z-axis ─────
+function GreenSparks() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, speeds } = useMemo(
+    () => generateSparkData(GREEN_SPARKS, 10, 60),
+    [],
+  )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  const geo = useMemo(() => new THREE.SphereGeometry(0.06, 6, 6), [])
+  const mat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#40ff30',
+        emissiveIntensity: 2.5,
+        toneMapped: false,
+        roughness: 0.1,
+        metalness: 0,
+      }),
+    [],
+  )
+
+  const baseSpeed = 12.0
+
+  useFrame((state) => {
+    if (!meshRef.current) return
+    const t = state.clock.getElapsedTime()
+
+    for (let i = 0; i < GREEN_SPARKS; i++) {
+      const i3 = i * 3
+
+      // Modular z-loop: fly toward camera, infinite loop
+      const rawZ = pos[i3 + 2] + t * baseSpeed * speeds[i]
+      const z = ((rawZ % 70) + 70) % 70 - 60
+
+      // Depth factor: 0 at z=-60, ~1 at z=5
+      const depth = Math.max(0, (z + 60) / 65)
+
+      // Subtle lateral wave
+      const wave = Math.sin(z * 0.1 + t + i * 0.3) * 0.4
+      dummy.position.set(
+        pos[i3] + Math.cos(wave) * 0.5,
+        pos[i3 + 1] + Math.sin(wave) * 0.5,
+        z,
+      )
+
+      // Tiny far away, stretched near camera (speed lines)
+      const s = 0.03 + Math.pow(depth, 2.5) * 0.1
+      const stretch = 1.0 + depth * 14.0
+      dummy.scale.set(s, s, s * stretch)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, GREEN_SPARKS]}
+      frustumCulled={false}
+    />
+  )
+}
+
+// ── Yellow Speed Sparks — stretched Z-axis ────
+function YellowSparks() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, speeds } = useMemo(
+    () => generateSparkData(YELLOW_SPARKS, 12, 60),
+    [],
+  )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  const geo = useMemo(() => new THREE.SphereGeometry(0.06, 6, 6), [])
+  const mat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#ffe020',
+        emissiveIntensity: 2.5,
+        toneMapped: false,
+        roughness: 0.1,
+        metalness: 0,
+      }),
+    [],
+  )
+
+  const baseSpeed = 10.0
+
+  useFrame((state) => {
+    if (!meshRef.current) return
+    const t = state.clock.getElapsedTime()
+
+    for (let i = 0; i < YELLOW_SPARKS; i++) {
+      const i3 = i * 3
+
+      const rawZ = pos[i3 + 2] + t * baseSpeed * speeds[i]
+      const z = ((rawZ % 70) + 70) % 70 - 60
+
+      const depth = Math.max(0, (z + 60) / 65)
+
+      const wave = Math.sin(z * 0.1 + t * 1.3 + i * 0.3) * 0.4
+      dummy.position.set(
+        pos[i3] + Math.cos(wave) * 0.5,
+        pos[i3 + 1] + Math.sin(wave) * 0.5,
+        z,
+      )
+
+      const s = 0.03 + Math.pow(depth, 2.5) * 0.1
+      const stretch = 1.0 + depth * 14.0
+      dummy.scale.set(s, s, s * stretch)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, YELLOW_SPARKS]}
+      frustumCulled={false}
+    />
+  )
+}
+
+// ── Water Thingies — soft glowing background bokeh ──
+function WaterThingies() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, scales } = useMemo(
+    () => generateWaterData(WATER_COUNT, 25),
+    [],
+  )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  const geo = useMemo(() => new THREE.SphereGeometry(1, 12, 12), [])
+  const mat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#40ffc8',
+        emissive: '#40ffc8',
+        emissiveIntensity: 1.2,
+        toneMapped: false,
+        transparent: true,
+        opacity: 0.10,
+        roughness: 1,
+        metalness: 0,
+        depthWrite: false,
+      }),
+    [],
+  )
+
+  useFrame((state) => {
+    if (!meshRef.current) return
+    const t = state.clock.getElapsedTime()
+
+    for (let i = 0; i < WATER_COUNT; i++) {
+      const i3 = i * 3
+      dummy.position.set(
+        pos[i3] + Math.sin(t * 0.15 + i * 0.5) * 2.0,
+        pos[i3 + 1] + Math.cos(t * 0.20 + i * 0.4) * 2.0,
+        pos[i3 + 2] + Math.sin(t * 0.10 + i * 0.6) * 2.0,
+      )
+      dummy.scale.setScalar(scales[i])
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, WATER_COUNT]}
+      frustumCulled={false}
+    />
   )
 }
 
 // ==========================================
-// 4. EXPORT
+// 5. EXPORT
 // ==========================================
 
 export default function Scene() {
@@ -505,7 +415,32 @@ export default function Scene() {
       }}
     >
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-        <KiraKiraVortex />
+        {/* Lighting — point light illuminates core area */}
+        <ambientLight intensity={0.1} />
+        <pointLight
+          position={[0, 0, 0]}
+          intensity={40}
+          color="#ff44aa"
+          distance={20}
+        />
+
+        {/* Layers */}
+        <Backdrop />
+        <WaterThingies />
+        <OuterCore />
+        <InnerCore />
+        <GreenSparks />
+        <YellowSparks />
+
+        {/* Post-processing — the magic glow */}
+        <EffectComposer>
+          <Bloom
+            luminanceThreshold={0.6}
+            luminanceSmoothing={0.5}
+            mipmapBlur
+            intensity={1.5}
+          />
+        </EffectComposer>
       </Canvas>
     </div>
   )
