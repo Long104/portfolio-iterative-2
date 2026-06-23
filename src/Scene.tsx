@@ -3,9 +3,9 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // ==========================================
-// 1. PROCEDURAL TEXTURES (Canvas-based)
-//    White alpha masks — coloring is done
-//    in the fragment shaders.
+// 1. PROCEDURAL TEXTURES — HARD-EDGED 2D CUTOUTS
+//    No soft gradients. Flat alpha masks.
+//    Gundam-style graphic shapes.
 // ==========================================
 
 function createStarTexture(): THREE.Texture {
@@ -16,30 +16,33 @@ function createStarTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Radial glow core
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.5)
-  grad.addColorStop(0, 'rgba(255,255,255,1)')
-  grad.addColorStop(0.2, 'rgba(255,255,220,0.9)')
-  grad.addColorStop(0.5, 'rgba(255,230,150,0.3)')
-  grad.addColorStop(1, 'rgba(255,230,150,0)')
-  ctx.fillStyle = grad
+  // Hard-edged 4-point starburst
+  ctx.fillStyle = 'rgba(0,0,0,0)'
   ctx.fillRect(0, 0, size, size)
 
-  // Cross-shaped star spikes
   ctx.save()
   ctx.translate(c, c)
-  ctx.globalCompositeOperation = 'lighter'
+
+  // Draw sharp cross spikes (hard alpha)
   for (let i = 0; i < 2; i++) {
-    const spike = ctx.createLinearGradient(-c, 0, c, 0)
-    spike.addColorStop(0, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.45, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.5, 'rgba(255,255,240,0.7)')
-    spike.addColorStop(0.55, 'rgba(255,255,255,0)')
-    spike.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = spike
-    ctx.fillRect(-c, -1, size, 2)
+    ctx.fillStyle = 'rgba(255,255,255,1)'
+    ctx.beginPath()
+    ctx.moveTo(-c, -1.5)
+    ctx.lineTo(0, -4)
+    ctx.lineTo(c, -1.5)
+    ctx.lineTo(c, 1.5)
+    ctx.lineTo(0, 4)
+    ctx.lineTo(-c, 1.5)
+    ctx.closePath()
+    ctx.fill()
     ctx.rotate(Math.PI / 2)
   }
+
+  // Hard center circle
+  ctx.beginPath()
+  ctx.arc(0, 0, c * 0.18, 0, Math.PI * 2)
+  ctx.fill()
+
   ctx.restore()
 
   const tex = new THREE.CanvasTexture(canvas)
@@ -55,14 +58,11 @@ function createPetalTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Soft radial alpha mask
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.65)
-  grad.addColorStop(0, 'rgba(255,255,255,1)')
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)')
-  grad.addColorStop(0.7, 'rgba(255,255,255,0.3)')
-  grad.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, size, size)
+  // Hard-edged solid oval (petal shape)
+  ctx.fillStyle = 'rgba(255,255,255,1)'
+  ctx.beginPath()
+  ctx.ellipse(c, c, c * 0.55, c * 0.35, 0, 0, Math.PI * 2)
+  ctx.fill()
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.needsUpdate = true
@@ -77,15 +77,10 @@ function createBlobTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Larger, softer blob
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.85)
-  grad.addColorStop(0, 'rgba(255,255,255,0.9)')
-  grad.addColorStop(0.3, 'rgba(255,255,255,0.6)')
-  grad.addColorStop(0.6, 'rgba(255,255,255,0.25)')
-  grad.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = grad
+  // Hard-edged solid circle (silhouette shape)
+  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.beginPath()
-  ctx.arc(c, c, c * 0.85, 0, Math.PI * 2)
+  ctx.arc(c, c, c * 0.9, 0, Math.PI * 2)
   ctx.fill()
 
   const tex = new THREE.CanvasTexture(canvas)
@@ -94,10 +89,12 @@ function createBlobTexture(): THREE.Texture {
 }
 
 // ==========================================
-// 2. SHADERS
+// 2. SHADERS — FLAT COLOR, HARD THRESHOLDS
+//    No smoothstep gradients. Step functions.
+//    No colorspace_fragment — raw sRGB output.
 // ==========================================
 
-// Layer A: Static fullscreen backdrop (prevents black hole)
+// Layer A: Static fullscreen backdrop
 const backdropVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -111,21 +108,20 @@ const backdropFragment = /* glsl */ `
   void main() {
     float dist = distance(vUv, vec2(0.5));
 
-    // Dark center — the foreground glow mesh paints the core/halo on top
-    vec3 dark   = vec3(0.01, 0.03, 0.05);
-    vec3 mint   = vec3(0.15, 0.85, 0.70);
-    vec3 teal   = vec3(0.02, 0.18, 0.22);
+    // Flat teal void — slight vignette via step
+    vec3 dark = vec3(0.01, 0.03, 0.05);
+    vec3 teal = vec3(0.02, 0.15, 0.18);
 
-    vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
-    if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
+    // Hard-ish vignette: dark center, teal edges
+    float t = step(0.15, dist);
+    vec3 color = mix(dark, teal, smoothstep(0.15, 0.55, dist));
 
     gl_FragColor = vec4(color, 1.0);
-
-    #include <colorspace_fragment>
+    // NO colorspace_fragment — raw output
   }
 `
 
-// Layer B: Fluid particles (petals + blobs, normal alpha blending)
+// Layer B: Fluid particles — sharp petals + massive dark silhouettes
 const particleVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
@@ -149,18 +145,25 @@ const particleVertex = /* glsl */ `
     float r = length(pos.xy);
     if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
 
-    // Liquid water-flow math (sine/cosine offset X/Y paths)
+    // Liquid water-flow math
     float wave = sin(pos.z * 0.1 + uTime + aRandoms.y * 6.28) * 0.5;
     pos.x += cos(wave) * 0.5;
     pos.y += sin(wave) * 0.5;
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
 
-    // Scale: microscopic far away, massive near camera
-    float baseScale = (vType < 0.5) ? 1.0 : 2.5;
+    // Scale: petals normal, dark blobs MASSIVE
+    float baseScale;
+    if (vType < 0.5) {
+      // Pink petals — moderate scale
+      baseScale = 1.0;
+    } else {
+      // Dark silhouettes — 8x larger for "face hit" effect
+      baseScale = 8.0;
+    }
     float scale = baseScale * (0.2 + pow(vDepth, 3.0) * 15.0);
 
-    // Spin particles along the current
+    // Spin particles
     float angle = pos.z * 0.05 + aRandoms.y * 6.28;
     float s = sin(angle);
     float c = cos(angle);
@@ -184,24 +187,31 @@ const particleFragment = /* glsl */ `
     vec3 finalColor;
 
     if (vType < 0.5) {
-      // Vibrant peach/pink petals
+      // HOT PINK petals — flat solid color, slight depth variation
       texColor = texture2D(uTexPetal, vUv);
-      finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
+      vec3 hotPink = vec3(1.0, 0.15, 0.45);
+      vec3 lightPink = vec3(1.0, 0.4, 0.6);
+      finalColor = mix(hotPink, lightPink, vDepth);
+
+      // Petals fade near camera but not as aggressively
+      float alphaFade = smoothstep(1.0, 0.90, vDepth);
+      gl_FragColor = vec4(finalColor, texColor.a * alphaFade);
     } else {
-      // Dark framing blobs (deep jade/teal)
+      // DARK TEAL/BLACK silhouettes — semi-transparent at camera
       texColor = texture2D(uTexBlob, vUv);
-      finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
+      finalColor = vec3(0.005, 0.04, 0.06);
+
+      // Lock to ~55% opacity when near camera — silhouette depth trick
+      // Far away: mostly invisible. Close: semi-transparent dark overlay.
+      float silhouetteAlpha = smoothstep(0.3, 0.75, vDepth) * 0.55;
+      gl_FragColor = vec4(finalColor, texColor.a * silhouetteAlpha);
     }
 
-    // Proximity fade — disappear at camera lens to prevent screen blocking
-    float alphaFade = smoothstep(1.0, 0.85, vDepth);
-    gl_FragColor = vec4(finalColor, texColor.a * alphaFade);
-
-    #include <colorspace_fragment>
+    // NO colorspace_fragment — raw flat color output
   }
 `
 
-// Layer C: Radiant star flares (additive blending)
+// Layer C: Radiant star flares — NEON GREEN + YELLOW
 const flareVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
@@ -209,9 +219,11 @@ const flareVertex = /* glsl */ `
   attribute vec3 aRandoms;
   varying vec2 vUv;
   varying float vDepth;
+  varying float vColorType;
 
   void main() {
     vUv = uv;
+    vColorType = aRandoms.z; // 0-1, split at 0.5 for green vs yellow
     vec3 pos = aInitialPos;
 
     pos.z += uTime * uSpeed * (1.0 + aRandoms.x * 0.5);
@@ -238,20 +250,29 @@ const flareFragment = /* glsl */ `
   uniform sampler2D uTexStar;
   varying vec2 vUv;
   varying float vDepth;
+  varying float vColorType;
 
   void main() {
     vec4 texColor = texture2D(uTexStar, vUv);
-    vec3 glow = mix(vec3(1.0, 0.98, 0.6), vec3(1.0, 1.0, 1.0), vDepth);
+
+    // 50% NEON GREEN, 50% BRIGHT YELLOW — flat solid
+    vec3 neonGreen = vec3(0.4, 1.0, 0.15);
+    vec3 brightYellow = vec3(1.0, 0.85, 0.1);
+
+    vec3 flareColor = mix(neonGreen, brightYellow, step(0.5, vColorType));
+
+    // Slight brightness boost near camera
+    flareColor *= (0.7 + vDepth * 0.6);
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
-    gl_FragColor = vec4(glow * 1.3, texColor.a * alphaFade);
+    gl_FragColor = vec4(flareColor, texColor.a * alphaFade);
 
-    #include <colorspace_fragment>
+    // NO colorspace_fragment — raw neon output
   }
 `
 
-// Layer D: Foreground core glow (renders ON TOP of particles)
-// Guarantees the yellow core + pink halo are always visible.
+// Layer D: Foreground core glow — HARD THRESHOLD STAR
+// Solid yellow core + solid pink halo. No gradients.
 const glowVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -264,23 +285,38 @@ const glowFragment = /* glsl */ `
   uniform float uAspect;
   varying vec2 vUv;
   void main() {
-    // Correct for screen aspect so the glow is circular
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
     float dist = length(centered);
 
-    vec3 coreColor = vec3(1.0, 0.98, 0.65);  // Warm yellow-white
-    vec3 haloColor = vec3(0.95, 0.12, 0.38);  // Crimson pink
+    // HARD THRESHOLDS — no smoothstep
+    vec3 coreColor = vec3(1.0, 0.92, 0.2);   // Solid warm yellow
+    vec3 haloColor = vec3(1.0, 0.1, 0.35);   // Solid hot pink
 
-    // Core blends into pink halo
-    vec3 color = mix(coreColor, haloColor, smoothstep(0.02, 0.16, dist));
+    vec3 color;
+    float alpha;
 
-    // Strong alpha at center, smooth falloff
-    float alpha = 1.0 - smoothstep(0.0, 0.35, dist);
+    if (dist < 0.06) {
+      // Solid yellow core — zero falloff
+      color = coreColor;
+      alpha = 1.0;
+    } else if (dist < 0.15) {
+      // Solid pink halo ring — hard edge
+      color = haloColor;
+      alpha = 1.0;
+    } else if (dist < 0.18) {
+      // Sharp cutoff edge
+      color = haloColor;
+      alpha = 0.85;
+    } else {
+      // Nothing beyond
+      color = vec3(0.0);
+      alpha = 0.0;
+    }
 
     gl_FragColor = vec4(color, alpha);
 
-    #include <colorspace_fragment>
+    // NO colorspace_fragment — raw punchy color
   }
 `
 
@@ -314,7 +350,7 @@ function KiraKiraVortex() {
   const petalTex = useMemo(() => createPetalTexture(), [])
   const blobTex = useMemo(() => createBlobTexture(), [])
 
-  // --- Materials (raw ShaderMaterial — no extend/TS hacks) ---
+  // --- Materials ---
   const backdropMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -407,19 +443,19 @@ function KiraKiraVortex() {
       {/* Layer A: Static fullscreen backdrop */}
       <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} />
 
-      {/* Layer B: Fluid particles (normal alpha blending) */}
+      {/* Layer B: Fluid particles — pink petals + dark silhouettes */}
       <instancedMesh
         args={[paintGeo, paintMat, PAINT_COUNT]}
         frustumCulled={false}
       />
 
-      {/* Layer C: Star flares (additive blending) */}
+      {/* Layer C: Star flares — neon green + yellow (additive) */}
       <instancedMesh
         args={[flareGeo, flareMat, FLARE_COUNT]}
         frustumCulled={false}
       />
 
-      {/* Layer D: Foreground core glow — always visible on top */}
+      {/* Layer D: Foreground core glow — hard yellow + pink */}
       <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} />
     </>
   )
