@@ -22,9 +22,9 @@ const backdropFragment = /* glsl */ `
   void main() {
     float dist = distance(vUv, vec2(0.5));
 
-    vec3 brightMint = vec3(0.12, 0.70, 0.58);
-    vec3 midTeal    = vec3(0.02, 0.25, 0.30);
-    vec3 darkTeal   = vec3(0.0, 0.04, 0.08);
+    vec3 brightMint = vec3(0.06, 0.40, 0.34);
+    vec3 midTeal    = vec3(0.01, 0.12, 0.15);
+    vec3 darkTeal   = vec3(0.0, 0.03, 0.06);
 
     vec3 color = mix(brightMint, midTeal, smoothstep(0.05, 0.50, dist));
     color = mix(color, darkTeal, smoothstep(0.50, 0.90, dist));
@@ -85,6 +85,23 @@ function generateWaterData(count: number, spread: number) {
   return { pos, scales }
 }
 
+/** Cylindrical distribution for dark foreground debris */
+function generateDebrisData(count: number, maxR: number, zDepth: number) {
+  const pos = new Float32Array(count * 3)
+  const scales = new Float32Array(count)
+  const speeds = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const radius = 2.0 + Math.random() * maxR
+    pos[i * 3] = Math.cos(angle) * radius
+    pos[i * 3 + 1] = Math.sin(angle) * radius
+    pos[i * 3 + 2] = -Math.random() * zDepth
+    scales[i] = 0.5 + Math.random() * 2.0
+    speeds[i] = 0.7 + Math.random() * 0.6
+  }
+  return { pos, scales, speeds }
+}
+
 // ==========================================
 // 3. PARTICLE COUNTS
 // ==========================================
@@ -94,8 +111,9 @@ const OUTER_CORE = 600
 const GREEN_SPARKS = 600
 const YELLOW_SPARKS = 600
 const WATER_COUNT = 150
+const DEBRIS_COUNT = 300
 
-// Total: 2,550 CPU-animated spheres per frame (60fps on desktop)
+// Total: 2,850 CPU-animated spheres per frame (60fps on desktop)
 
 // ==========================================
 // 4. SCENE COMPONENTS
@@ -197,13 +215,18 @@ function OuterCore() {
 
     for (let i = 0; i < OUTER_CORE; i++) {
       const i3 = i * 3
-      dummy.position.set(
-        pos[i3] + Math.sin(t * 1.5 + i * 0.08) * 0.6,
-        pos[i3 + 1] + Math.cos(t * 1.8 + i * 0.11) * 0.6,
-        pos[i3 + 2] + Math.sin(t * 1.2 + i * 0.06) * 0.6,
-      )
+      const px = pos[i3] + Math.sin(t * 1.5 + i * 0.08) * 0.6
+      const py = pos[i3 + 1] + Math.cos(t * 1.8 + i * 0.11) * 0.6
+      const pz = pos[i3 + 2] + Math.sin(t * 1.2 + i * 0.06) * 0.6
+
+      dummy.position.set(px, py, pz)
+
+      // Rotate to face outward from center → flat splatter facing camera
+      dummy.lookAt(px * 2, py * 2, pz * 2)
+
       const s = scales[i] * (1.0 + Math.sin(t * 3.0 + i * 0.15) * 0.25)
-      dummy.scale.setScalar(s)
+      // Flatten Z to 0.1 for 2D splatter look, not round bubbles
+      dummy.scale.set(s, s, s * 0.1)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
     }
@@ -266,10 +289,10 @@ function GreenSparks() {
         z,
       )
 
-      // Tiny far away, stretched near camera (speed lines)
-      const s = 0.03 + Math.pow(depth, 2.5) * 0.1
-      const stretch = 1.0 + depth * 14.0
-      dummy.scale.set(s, s, s * stretch)
+      // Thin X/Y, extreme Z stretch — long anime speed lines
+      const thickness = 0.02
+      const stretch = 1.0 + depth * 35.0
+      dummy.scale.set(thickness, thickness, stretch)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
     }
@@ -329,9 +352,10 @@ function YellowSparks() {
         z,
       )
 
-      const s = 0.03 + Math.pow(depth, 2.5) * 0.1
-      const stretch = 1.0 + depth * 14.0
-      dummy.scale.set(s, s, s * stretch)
+      // Thin X/Y, extreme Z stretch — long anime speed lines
+      const thickness = 0.02
+      const stretch = 1.0 + depth * 35.0
+      dummy.scale.set(thickness, thickness, stretch)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
     }
@@ -400,6 +424,69 @@ function WaterThingies() {
   )
 }
 
+// ── Dark Debris — foreground silhouettes flying past camera ──
+function DarkDebris() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const { pos, scales, speeds } = useMemo(
+    () => generateDebrisData(DEBRIS_COUNT, 12, 60),
+    [],
+  )
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  const geo = useMemo(() => new THREE.SphereGeometry(1, 8, 8), [])
+  const mat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#000a12',
+        roughness: 1,
+        metalness: 0,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+      }),
+    [],
+  )
+
+  const baseSpeed = 15.0
+
+  useFrame((state) => {
+    if (!meshRef.current) return
+    const t = state.clock.getElapsedTime()
+
+    for (let i = 0; i < DEBRIS_COUNT; i++) {
+      const i3 = i * 3
+
+      // Fast z-loop — debris flies past camera
+      const rawZ = pos[i3 + 2] + t * baseSpeed * speeds[i]
+      const z = ((rawZ % 70) + 70) % 70 - 60
+
+      const depth = Math.max(0, (z + 60) / 65)
+
+      // Slow lateral drift
+      dummy.position.set(
+        pos[i3] + Math.sin(t * 0.3 + i * 0.5) * 0.8,
+        pos[i3 + 1] + Math.cos(t * 0.4 + i * 0.3) * 0.8,
+        z,
+      )
+
+      // Flatten slightly for painted debris look
+      const s = scales[i] * (0.3 + Math.pow(depth, 3.0) * 5.0)
+      dummy.scale.set(s, s, s * 0.4)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, DEBRIS_COUNT]}
+      frustumCulled={false}
+    />
+  )
+}
+
 // ==========================================
 // 5. EXPORT
 // ==========================================
@@ -431,6 +518,7 @@ export default function Scene() {
         <InnerCore />
         <GreenSparks />
         <YellowSparks />
+        <DarkDebris />
 
         {/* Post-processing — the magic glow */}
         <EffectComposer>
