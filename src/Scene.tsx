@@ -345,7 +345,7 @@ const glowFragment = /* glsl */ `
     float gasNoise = fbm(noiseUV - vec2(uTime * 0.2, uTime * 0.1));
 
     // 1. Light Intensity Curves
-    float coreGlow = exp(-dist * 14.0) * 1.5;
+    float coreGlow = exp(-dist * 14.0) * 2.2;
     float outerHalo = exp(-dist * 5.5) * 1.0;
     float finalGlow = coreGlow + outerHalo * (0.5 + gasNoise * 0.5);
 
@@ -357,7 +357,7 @@ const glowFragment = /* glsl */ `
     // Base gradient transition
     vec3 finalColor = mix(outerEdge, midPink, smoothstep(0.15, 0.5, finalGlow));
 
-    // 3. Drifting yellow blob — wobble center + irregular edge via noise
+    // 3. Drifting yellow blob — wobble center + irregular edge
     vec2 wobbleOffset = vec2(
       fbm(vec2(uTime * 0.3, 0.0)) - 0.5,
       fbm(vec2(0.0, uTime * 0.35)) - 0.5
@@ -367,11 +367,20 @@ const glowFragment = /* glsl */ `
     float radialNoise = fbm(vec2(angle * 2.0, uTime * 0.5)) * 0.03;
 
     float blobDist = length(centered - wobbleOffset) + radialNoise;
-    float coreMask = smoothstep(0.10, 0.02, blobDist);
-    finalColor = mix(finalColor, coreYellow, coreMask);
+    float blobMask = smoothstep(0.12, 0.03, blobDist);
 
-    // 4. Prevent brightness blowout — suppress multiplier inside core
-    float intensityModifier = mix(finalGlow, 0.85, coreMask);
+    // 4. Pulsing yellow ring — breathes in/out at fixed radius
+    float ringRadius = 0.07 + sin(uTime * 1.5) * 0.015;
+    float ringNoise = fbm(vec2(angle * 3.0, uTime * 0.4)) * 0.015;
+    float ringDist = abs(dist - ringRadius - ringNoise);
+    float ringMask = smoothstep(0.025, 0.0, ringDist);
+
+    // 5. Combine blob + ring → total yellow presence
+    float yellowMask = clamp(blobMask + ringMask, 0.0, 1.0);
+    finalColor = mix(finalColor, coreYellow, yellowMask);
+
+    // 6. Prevent brightness blowout inside yellow zones
+    float intensityModifier = mix(finalGlow, 1.0, yellowMask);
 
     // Soft organic transparency falloff
     float alpha = smoothstep(0.02, 0.3, finalGlow * (1.0 - dist * 2.0));
