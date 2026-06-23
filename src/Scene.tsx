@@ -106,6 +106,25 @@ const backdropVertex = /* glsl */ `
   }
 `
 
+// const backdropFragment = /* glsl */ `
+//   varying vec2 vUv;
+//   void main() {
+//     float dist = distance(vUv, vec2(0.5));
+//
+//     // Re-introducing the beautiful teal/cyan backdrop from the image
+//     vec3 dark   = vec3(0.005, 0.05, 0.06);   // Deep Jade/Vortex Center
+//     vec3 mint   = vec3(0.08, 0.75, 0.62);    // Magical Glowing Mint
+//     vec3 teal   = vec3(0.01, 0.22, 0.25);    // Outer Deep Teal Tunnel
+//
+//     vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
+//     if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
+//
+//     gl_FragColor = vec4(color, 1.0);
+//
+//     #include <colorspace_fragment>
+//   }
+// `;
+
 const backdropFragment = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -253,7 +272,12 @@ const flareFragment = /* glsl */ `
   void main() {
     vec4 texColor = texture2D(uTexStar, vUv);
 
-    vec3 colors[6] = vec3[6](
+    vec3 colors[11] = vec3[11](
+      vec3(1.0, 1.0, 0.4),        // Saturated Core Yellow
+      vec3(1.0, 0.9, 0.2),        // Bright Yellow-Gold
+      vec3(1.0, 0.6, 0.3),        // Warm Amber transition
+      vec3(1.0, 0.2, 0.6),        // Vivid Hot Pink/VFX Magenta
+      vec3(0.95, 0.25, 0.75),      // Outer Edge Pink
       vec3(0.8078, 1.0, 0.6863),  // #CEFFAF  mint yellow
       vec3(1.0, 0.7059, 0.3529),  // #FFB45A  warm amber
       vec3(0.9843, 0.8039, 0.8471), // #FBCDD8  soft pink
@@ -261,7 +285,7 @@ const flareFragment = /* glsl */ `
       vec3(1.0, 0.4, 0.7),        // #FF66B2  deep pink
       vec3(1.0, 0.4118, 0.7059)   // #FF69B4  hot pink
     );
-    int index = int(floor(vColorMix * 6.0));
+    int index = int(floor(vColorMix * 11.0));
     vec3 glow = colors[index];
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
@@ -397,7 +421,7 @@ function KiraKiraVortex() {
   )
 
   // --- Geometry with instanced attributes ---
-  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(1, 1), [])
+  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(1.5, 1.5), [])
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0)
