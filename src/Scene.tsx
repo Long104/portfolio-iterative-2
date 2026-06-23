@@ -345,7 +345,7 @@ const glowFragment = /* glsl */ `
     float gasNoise = fbm(noiseUV - vec2(uTime * 0.2, uTime * 0.1));
 
     // 1. Light Intensity Curves
-    float coreGlow = exp(-dist * 14.0) * 2.2;
+    float coreGlow = exp(-dist * 14.0) * 1.5;
     float outerHalo = exp(-dist * 5.5) * 1.0;
     float finalGlow = coreGlow + outerHalo * (0.5 + gasNoise * 0.5);
 
@@ -371,7 +371,7 @@ const glowFragment = /* glsl */ `
     finalColor = mix(finalColor, coreYellow, coreMask);
 
     // 4. Prevent brightness blowout — suppress multiplier inside core
-    float intensityModifier = mix(finalGlow, 1.1, coreMask);
+    float intensityModifier = mix(finalGlow, 0.85, coreMask);
 
     // Soft organic transparency falloff
     float alpha = smoothstep(0.02, 0.3, finalGlow * (1.0 - dist * 2.0));
