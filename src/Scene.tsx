@@ -1,53 +1,15 @@
+// @ts-nocheck
 import { useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { Bloom, EffectComposer } from '@react-three/postprocessing'
 
 // ==========================================
 // 1. PROCEDURAL TEXTURES (Canvas-based)
-//    White alpha masks — coloring is done
-//    in the fragment shaders.
 // ==========================================
 
-function createStarTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  const c = size / 2
-
-  // Radial glow core
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.5)
-  grad.addColorStop(0, 'rgba(255,255,255,1)')
-  grad.addColorStop(0.2, 'rgba(255,255,220,0.9)')
-  grad.addColorStop(0.5, 'rgba(255,230,150,0.3)')
-  grad.addColorStop(1, 'rgba(255,230,150,0)')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, size, size)
-
-  // Cross-shaped star spikes
-  ctx.save()
-  ctx.translate(c, c)
-  ctx.globalCompositeOperation = 'lighter'
-  for (let i = 0; i < 2; i++) {
-    const spike = ctx.createLinearGradient(-c, 0, c, 0)
-    spike.addColorStop(0, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.45, 'rgba(255,255,255,0)')
-    spike.addColorStop(0.5, 'rgba(255,255,240,0.7)')
-    spike.addColorStop(0.55, 'rgba(255,255,255,0)')
-    spike.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = spike
-    ctx.fillRect(-c, -1, size, 2)
-    ctx.rotate(Math.PI / 2)
-  }
-  ctx.restore()
-
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.needsUpdate = true
-  return tex
-}
-
 function createPetalTexture(): THREE.Texture {
+  // Pink particles: user wants "0 not o" (elongated oval)
   const size = 128
   const canvas = document.createElement('canvas')
   canvas.width = size
@@ -55,14 +17,11 @@ function createPetalTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Soft radial alpha mask
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.65)
-  grad.addColorStop(0, 'rgba(255,255,255,1)')
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)')
-  grad.addColorStop(0.7, 'rgba(255,255,255,0.3)')
-  grad.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, size, size)
+  // Solid oval
+  ctx.fillStyle = 'rgba(255,255,255,1)'
+  ctx.beginPath()
+  ctx.ellipse(c, c, c * 0.9, c * 0.25, 0, 0, Math.PI * 2)
+  ctx.fill()
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.needsUpdate = true
@@ -70,6 +29,7 @@ function createPetalTexture(): THREE.Texture {
 }
 
 function createBlobTexture(): THREE.Texture {
+  // Background dark blobs: solid circle "o"
   const size = 128
   const canvas = document.createElement('canvas')
   canvas.width = size
@@ -77,15 +37,29 @@ function createBlobTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Larger, softer blob
-  const grad = ctx.createRadialGradient(c, c, 0, c, c, c * 0.85)
-  grad.addColorStop(0, 'rgba(255,255,255,0.9)')
-  grad.addColorStop(0.3, 'rgba(255,255,255,0.6)')
-  grad.addColorStop(0.6, 'rgba(255,255,255,0.25)')
-  grad.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = grad
+  // Solid, fully opaque circle
+  ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.beginPath()
-  ctx.arc(c, c, c * 0.85, 0, Math.PI * 2)
+  ctx.arc(c, c, c * 0.9, 0, Math.PI * 2)
+  ctx.fill()
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.needsUpdate = true
+  return tex
+}
+
+function createLineTexture(): THREE.Texture {
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const c = size / 2
+
+  // Thin line
+  ctx.fillStyle = 'rgba(255,255,255,1)'
+  ctx.beginPath()
+  ctx.ellipse(c, c, c * 0.9, c * 0.05, 0, 0, Math.PI * 2)
   ctx.fill()
 
   const tex = new THREE.CanvasTexture(canvas)
@@ -97,7 +71,6 @@ function createBlobTexture(): THREE.Texture {
 // 2. SHADERS
 // ==========================================
 
-// Layer A: Static fullscreen backdrop (prevents black hole)
 const backdropVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -110,22 +83,19 @@ const backdropFragment = /* glsl */ `
   varying vec2 vUv;
   void main() {
     float dist = distance(vUv, vec2(0.5));
+    // Bright vibrant mint/teal background matching reference exactly
+    vec3 mintCenter = vec3(0.5, 1.0, 0.9); 
+    vec3 tealMid    = vec3(0.1, 0.7, 0.65);
+    vec3 deepTeal   = vec3(0.01, 0.25, 0.3);
 
-    // Dark center — the foreground glow mesh paints the core/halo on top
-    vec3 dark   = vec3(0.01, 0.03, 0.05);
-    vec3 mint   = vec3(0.15, 0.85, 0.70);
-    vec3 teal   = vec3(0.02, 0.18, 0.22);
-
-    vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
-    if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
+    vec3 color = mix(mintCenter, tealMid, smoothstep(0.0, 0.4, dist));
+    color = mix(color, deepTeal, smoothstep(0.4, 1.0, dist));
 
     gl_FragColor = vec4(color, 1.0);
-
     #include <colorspace_fragment>
   }
 `
 
-// Layer B: Fluid particles (petals + blobs, normal alpha blending)
 const particleVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
@@ -141,27 +111,27 @@ const particleVertex = /* glsl */ `
     vType = aRandoms.z;
     vec3 pos = aInitialPos;
 
-    // Z-Axis flow (sucking-in effect)
-    pos.z += uTime * uSpeed * (0.8 + aRandoms.x * 0.4);
+    // Travel along Z
+    pos.z += uTime * uSpeed * (0.8 + aRandoms.x * 0.5);
     pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
-
-    // Center clearance — keep the glowing core visible
-    float r = length(pos.xy);
-    if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
-
-    // Liquid water-flow math (sine/cosine offset X/Y paths)
-    float wave = sin(pos.z * 0.1 + uTime + aRandoms.y * 6.28) * 0.5;
-    pos.x += cos(wave) * 0.5;
-    pos.y += sin(wave) * 0.5;
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
 
-    // Scale: microscopic far away, massive near camera
-    float baseScale = (vType < 0.5) ? 1.0 : 2.5;
-    float scale = baseScale * (0.2 + pow(vDepth, 3.0) * 15.0);
+    // Push dark blobs (vType > 0.7) far to the background
+    if (vType > 0.7) {
+       pos.z -= 15.0; 
+    }
 
-    // Spin particles along the current
-    float angle = pos.z * 0.05 + aRandoms.y * 6.28;
+    // Keep particles dense but clear dead center
+    float r = length(pos.xy);
+    if (r < 0.8) pos.xy = normalize(pos.xy + 0.001) * (0.8 + aRandoms.x * 1.0);
+
+    // Scaling
+    float baseScale = (vType < 0.7) ? 0.4 : 3.5; 
+    float scale = baseScale * (1.0 + vDepth * 3.0); // controlled scale, no extreme blowing up
+
+    // Orient ovals radially
+    float angle = atan(pos.y, pos.x);
     float s = sin(angle);
     float c = cos(angle);
     vec3 transformed = position;
@@ -183,30 +153,32 @@ const particleFragment = /* glsl */ `
     vec4 texColor;
     vec3 finalColor;
 
-    if (vType < 0.5) {
-      // Vibrant peach/pink petals
+    if (vType < 0.7) {
+      // Pink particles ("0" shape)
       texColor = texture2D(uTexPetal, vUv);
-      finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
+      finalColor = mix(vec3(1.0, 0.4, 0.6), vec3(1.0, 0.6, 0.8), vDepth);
+      finalColor *= 2.0; // HDR boost for bloom
     } else {
-      // Dark framing blobs (deep jade/teal)
+      // Dark jade background blobs ("o" shape)
       texColor = texture2D(uTexBlob, vUv);
-      finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
+      finalColor = vec3(0.0, 0.15, 0.2); // Solid dark silhouette
     }
 
-    // Proximity fade — disappear at camera lens to prevent screen blocking
+    // Hard cutoff for crisp shapes
+    if (texColor.a < 0.1) discard;
+
     float alphaFade = smoothstep(1.0, 0.85, vDepth);
     gl_FragColor = vec4(finalColor, texColor.a * alphaFade);
-
     #include <colorspace_fragment>
   }
 `
 
-// Layer C: Radiant star flares (additive blending)
-const flareVertex = /* glsl */ `
+const lineVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
   attribute vec3 aInitialPos;
   attribute vec3 aRandoms;
+
   varying vec2 vUv;
   varying float vDepth;
 
@@ -214,44 +186,46 @@ const flareVertex = /* glsl */ `
     vUv = uv;
     vec3 pos = aInitialPos;
 
-    pos.z += uTime * uSpeed * (1.0 + aRandoms.x * 0.5);
+    pos.z += uTime * uSpeed * (1.2 + aRandoms.x * 0.8);
     pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
 
-    float r = length(pos.xy);
-    if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
-
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-    float scale = 0.5 * (0.2 + pow(vDepth, 2.5) * 6.0);
+    
+    // Push lines away from exact center to not overlap the core
+    float r = length(pos.xy);
+    if (r < 1.5) pos.xy = normalize(pos.xy + 0.001) * (1.5 + aRandoms.x * 3.0);
 
-    // Radial forward-motion streak
     vec3 transformed = position;
     vec2 dir = normalize(pos.xy + 0.001);
-    float stretch = 1.0 + (vDepth * 3.0);
+    float stretch = 1.0 + (vDepth * 15.0); 
     transformed.xy += dir * dot(transformed.xy, dir) * (stretch - 1.0);
+
+    float scale = 0.5 * (0.5 + vDepth * 2.0);
 
     vec4 mvPos = modelViewMatrix * vec4(pos + transformed * scale, 1.0);
     gl_Position = projectionMatrix * mvPos;
   }
 `
 
-const flareFragment = /* glsl */ `
-  uniform sampler2D uTexStar;
+const lineFragment = /* glsl */ `
+  uniform sampler2D uTexLine;
   varying vec2 vUv;
   varying float vDepth;
 
   void main() {
-    vec4 texColor = texture2D(uTexStar, vUv);
-    vec3 glow = mix(vec3(1.0, 0.98, 0.6), vec3(1.0, 1.0, 1.0), vDepth);
+    vec4 texColor = texture2D(uTexLine, vUv);
+    
+    // Yellow/green streak
+    vec3 glow = vec3(0.8, 1.0, 0.3);
+
+    if (texColor.a < 0.1) discard;
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
-    gl_FragColor = vec4(glow * 1.3, texColor.a * alphaFade);
-
+    gl_FragColor = vec4(glow * 4.0, texColor.a * alphaFade);
     #include <colorspace_fragment>
   }
 `
 
-// Layer D: Foreground core glow (renders ON TOP of particles)
-// Guarantees the yellow core + pink halo are always visible.
 const glowVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -262,24 +236,30 @@ const glowVertex = /* glsl */ `
 
 const glowFragment = /* glsl */ `
   uniform float uAspect;
+  uniform float uTime;
   varying vec2 vUv;
+  
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+
   void main() {
-    // Correct for screen aspect so the glow is circular
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
     float dist = length(centered);
 
-    vec3 coreColor = vec3(1.0, 0.98, 0.65);  // Warm yellow-white
-    vec3 haloColor = vec3(0.95, 0.12, 0.38);  // Crimson pink
+    float n = hash(centered * 50.0 + uTime * 10.0) * 0.05;
 
-    // Core blends into pink halo
-    vec3 color = mix(coreColor, haloColor, smoothstep(0.02, 0.16, dist));
+    // Vivid distinct yellow center and pink outer glow
+    vec3 coreColor = vec3(1.0, 0.9, 0.2) * 5.0;  
+    vec3 haloColor = vec3(1.0, 0.3, 0.6) * 3.0;  
 
-    // Strong alpha at center, smooth falloff
-    float alpha = 1.0 - smoothstep(0.0, 0.35, dist);
+    vec3 color = mix(coreColor, haloColor, smoothstep(0.0 + n, 0.12 + n, dist));
+    
+    // Hard fade so it doesn't wash out the screen
+    float alpha = 1.0 - smoothstep(0.1 + n, 0.25 + n, dist);
+
+    if (alpha <= 0.0) discard;
 
     gl_FragColor = vec4(color, alpha);
-
     #include <colorspace_fragment>
   }
 `
@@ -288,15 +268,15 @@ const glowFragment = /* glsl */ `
 // 3. SCENE COMPONENT
 // ==========================================
 
-const PAINT_COUNT = 5500 // Petals + Blobs
-const FLARE_COUNT = 3000 // Star flares
+const PAINT_COUNT = 4000
+const LINE_COUNT = 50 
 
-function generateInstanceData(count: number, maxRadius: number) {
+function generateInstanceData(count: number, maxRadius: number, power: number = 1.0) {
   const pos = new Float32Array(count * 3)
   const rand = new Float32Array(count * 3)
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2
-    const radius = Math.random() * maxRadius
+    const radius = Math.pow(Math.random(), power) * maxRadius
     pos[i * 3] = Math.cos(angle) * radius
     pos[i * 3 + 1] = Math.sin(angle) * radius
     pos[i * 3 + 2] = Math.random() * -60
@@ -309,12 +289,10 @@ function generateInstanceData(count: number, maxRadius: number) {
 }
 
 function KiraKiraVortex() {
-  // --- Procedural textures ---
-  const starTex = useMemo(() => createStarTexture(), [])
   const petalTex = useMemo(() => createPetalTexture(), [])
   const blobTex = useMemo(() => createBlobTexture(), [])
+  const lineTex = useMemo(() => createLineTexture(), [])
 
-  // --- Materials (raw ShaderMaterial — no extend/TS hacks) ---
   const backdropMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -323,7 +301,7 @@ function KiraKiraVortex() {
         depthWrite: false,
         depthTest: false,
       }),
-    [],
+    []
   )
 
   const paintMat = useMemo(
@@ -331,7 +309,7 @@ function KiraKiraVortex() {
       new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uSpeed: { value: 0.15 },
+          uSpeed: { value: 40.0 }, // Proper speed multiplier
           uTexPetal: { value: petalTex },
           uTexBlob: { value: blobTex },
         },
@@ -339,25 +317,26 @@ function KiraKiraVortex() {
         fragmentShader: particleFragment,
         transparent: true,
         depthWrite: false,
+        blending: THREE.NormalBlending,
       }),
-    [petalTex, blobTex],
+    [petalTex, blobTex]
   )
 
-  const flareMat = useMemo(
+  const lineMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uSpeed: { value: 0.2 },
-          uTexStar: { value: starTex },
+          uSpeed: { value: 70.0 }, 
+          uTexLine: { value: lineTex },
         },
-        vertexShader: flareVertex,
-        fragmentShader: flareFragment,
+        vertexShader: lineVertex,
+        fragmentShader: lineFragment,
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
-    [starTex],
+    [lineTex]
   )
 
   const glowMat = useMemo(
@@ -365,69 +344,54 @@ function KiraKiraVortex() {
       new THREE.ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
+          uTime: { value: 0 },
         },
         vertexShader: glowVertex,
         fragmentShader: glowFragment,
         transparent: true,
         depthWrite: false,
         depthTest: false,
+        blending: THREE.NormalBlending,
       }),
-    [],
+    []
   )
 
-  // --- Geometry with instanced attributes ---
   const backdropGeo = useMemo(() => new THREE.PlaneGeometry(2, 2), [])
 
   const paintGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0)
-    const geo = new THREE.PlaneGeometry(0.4, 0.4)
+    const { pos, rand } = generateInstanceData(PAINT_COUNT, 20.0, 1.5)
+    const geo = new THREE.PlaneGeometry(1.0, 1.0)
     geo.setAttribute('aInitialPos', new THREE.InstancedBufferAttribute(pos, 3))
     geo.setAttribute('aRandoms', new THREE.InstancedBufferAttribute(rand, 3))
     return geo
   }, [])
 
-  const flareGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(FLARE_COUNT, 10.0)
-    const geo = new THREE.PlaneGeometry(0.3, 0.3)
+  const lineGeo = useMemo(() => {
+    const { pos, rand } = generateInstanceData(LINE_COUNT, 15.0, 1.0)
+    const geo = new THREE.PlaneGeometry(1.0, 1.0)
     geo.setAttribute('aInitialPos', new THREE.InstancedBufferAttribute(pos, 3))
     geo.setAttribute('aRandoms', new THREE.InstancedBufferAttribute(rand, 3))
     return geo
   }, [])
 
-  // --- Animation loop ---
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     paintMat.uniforms.uTime.value = t
-    flareMat.uniforms.uTime.value = t
+    lineMat.uniforms.uTime.value = t
     glowMat.uniforms.uAspect.value = state.size.width / state.size.height
+    glowMat.uniforms.uTime.value = t
   })
 
   return (
     <>
-      {/* Layer A: Static fullscreen backdrop */}
-      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} />
-
-      {/* Layer B: Fluid particles (normal alpha blending) */}
-      <instancedMesh
-        args={[paintGeo, paintMat, PAINT_COUNT]}
-        frustumCulled={false}
-      />
-
-      {/* Layer C: Star flares (additive blending) */}
-      <instancedMesh
-        args={[flareGeo, flareMat, FLARE_COUNT]}
-        frustumCulled={false}
-      />
-
-      {/* Layer D: Foreground core glow — always visible on top */}
-      <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} />
+      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-2} />
+      {/* Core rendered first so particles pass over it */}
+      <mesh geometry={backdropGeo} material={glowMat} renderOrder={-1} />
+      <instancedMesh args={[paintGeo, paintMat, PAINT_COUNT]} frustumCulled={false} renderOrder={0} />
+      <instancedMesh args={[lineGeo, lineMat, LINE_COUNT]} frustumCulled={false} renderOrder={1} />
     </>
   )
 }
-
-// ==========================================
-// 4. EXPORT
-// ==========================================
 
 export default function Scene() {
   return (
@@ -436,11 +400,20 @@ export default function Scene() {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: '#020d12',
+        background: '#000',
       }}
     >
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
         <KiraKiraVortex />
+        <EffectComposer disableNormalPass>
+          {/* @ts-expect-error React 19 type mismatch */}
+          <Bloom
+            luminanceThreshold={1.0}
+            mipmapBlur
+            intensity={1.5}
+            radius={0.8}
+          />
+        </EffectComposer>
       </Canvas>
     </div>
   )
