@@ -274,20 +274,61 @@ const flareFragment = /* glsl */ `
   void main() {
     vec4 texColor = texture2D(uTexStar, vUv);
 
-    vec3 colors[11] = vec3[11](
+
+    // vec3 colors[11] = vec3[11](
+    //   vec3(1.0, 1.0, 0.4),        // Saturated Core Yellow
+    //   vec3(1.0, 0.9, 0.2),        // Bright Yellow-Gold
+    //   vec3(1.0, 0.6, 0.3),        // Warm Amber transition
+    //   vec3(1.0, 0.2, 0.6),        // Vivid Hot Pink/VFX Magenta
+    //   vec3(0.95, 0.25, 0.75),      // Outer Edge Pink
+    //   vec3(0.8078, 1.0, 0.6863),  // #CEFFAF  mint yellow
+    //   vec3(1.0, 0.7059, 0.3529),  // #FFB45A  warm amber
+    //   vec3(0.9843, 0.8039, 0.8471), // #FBCDD8  soft pink
+    //   vec3(1.0, 0.3, 0.5),        // #FF4D80  neon coral
+    //   vec3(1.0, 0.4, 0.7),        // #FF66B2  deep pink
+    //   // vec3(1.00, 0.05, 0.00),
+    //   vec3(1.0, 0.4118, 0.7059)   // #FF69B4  hot pink
+    // );
+    // int index = int(floor(vColorMix * 11.0));
+   // vec3 colors[11] = vec3[11](
+   //    vec3(0.965, 0.000, 0.200),   // #F6C9D6 (Pushed to strong pink-red)
+   //    vec3(0.973, 0.050, 0.250),   // #F88FA7 (Pushed to strong pink-red)
+   //    vec3(1.000, 0.100, 0.150),   // #FF9294 (Pushed to strong pink-red)
+   //    vec3(0.976, 0.020, 0.220),   // #F9C5D4 (Pushed to strong pink-red)
+   //    vec3(0.965, 0.000, 0.200),   // #F6C9D6
+   //    vec3(0.973, 0.050, 0.250),   // #F88FA7
+   //    vec3(1.000, 0.100, 0.150),   // #FF9294
+   //    vec3(0.976, 0.020, 0.220),   // #F9C5D4
+   //    vec3(0.965, 0.000, 0.200),   // #F6C9D6
+   //    vec3(0.973, 0.050, 0.250),   // #F88FA7
+   //    vec3(1.000, 0.100, 0.150)    // #FF9294
+   //  );
+   //  int index = int(floor(vColorMix * 11.0));
+
+
+    vec3 colors[6] = vec3[6](
       vec3(1.0, 1.0, 0.4),        // Saturated Core Yellow
       vec3(1.0, 0.9, 0.2),        // Bright Yellow-Gold
-      vec3(1.0, 0.6, 0.3),        // Warm Amber transition
-      vec3(1.0, 0.2, 0.6),        // Vivid Hot Pink/VFX Magenta
-      vec3(0.95, 0.25, 0.75),      // Outer Edge Pink
+      // vec3(1.0, 0.6, 0.3),        // Warm Amber transition
+      // vec3(1.0, 0.2, 0.6),        // Vivid Hot Pink/VFX Magenta
+      // vec3(0.95, 0.25, 0.75),      // Outer Edge Pink
       vec3(0.8078, 1.0, 0.6863),  // #CEFFAF  mint yellow
-      vec3(1.0, 0.7059, 0.3529),  // #FFB45A  warm amber
-      vec3(0.9843, 0.8039, 0.8471), // #FBCDD8  soft pink
-      vec3(1.0, 0.3, 0.5),        // #FF4D80  neon coral
-      vec3(1.0, 0.4, 0.7),        // #FF66B2  deep pink
-      vec3(1.0, 0.4118, 0.7059)   // #FF69B4  hot pink
+      // vec3(1.0, 0.7059, 0.3529),  // #FFB45A  warm amber
+      // vec3(0.9843, 0.8039, 0.8471), // #FBCDD8  soft pink
+      // vec3(1.0, 0.4, 0.7),        // #FF66B2  deep pink
+      // vec3(1.0, 0.4118, 0.7059),   // #FF69B4  hot pink
+
+  
+      // test
+      vec3(1.0, 0.3, 0.5),        // #FF4D80  neon coral // want
+      vec3(1.000, 0.100, 0.150),   // #FF9294 (Pushed to strong pink-red) // want
+       vec3(0.973, 0.050, 0.250)   // #F88FA7 (Pushed to strong pink-red) // let see
+       // vec3(0.976, 0.020, 0.220)   // #F9C5D4 (Pushed to strong pink-red) // too red
+       // vec3(0.965, 0.000, 0.200)   // #F6C9D6 (Pushed to strong pink-red) // don't want too red
     );
-    int index = int(floor(vColorMix * 11.0));
+    int index = int(floor(vColorMix * 6.0));
+
+
     vec3 glow = colors[index];
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
@@ -361,8 +402,8 @@ const glowFragment = /* glsl */ `
     // ── Distance Banding (outside → inside) — centered ──
     vec3 color = outerEdge;
     color = mix(color, midPink,  smoothstep(0.22, 0.15, d + gasNoise * 0.015));
-    color = mix(color, yellow,   smoothstep(0.15, 0.025, d));
-    color = mix(color, whiteCore, smoothstep(0.02, 0.0, d));
+    color = mix(color, yellow,   smoothstep(0.15, 0.025, d + gasNoise * 0.015));
+    color = mix(color, whiteCore, smoothstep(0.02, 0.0, d + gasNoise * 0.015));
 
     // ── Gentle intensity (capped to prevent blowout) ──
     float glow = min(exp(-d * 8.0) + 0.4, 0.85);
