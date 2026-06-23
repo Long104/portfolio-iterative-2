@@ -356,7 +356,7 @@ const glowFragment = /* glsl */ `
     // ── Color Palette ──
     vec3 whiteCore = vec3(1.0, 1.0, 1.0);      // Incandescent heart
     vec3 yellow    = vec3(1.0, 0.65, 0.0);    // Amber-yellow — best visibility under additive
-    vec3 midPink   = vec3(0.996, 0.663, 0.733); // #FEA9BB warm pink
+    vec3 midPink   = vec3(0.996, 0.549, 0.580); // #FE8C94 pink-red
     vec3 outerEdge = vec3(0.70, 0.15, 0.25);   // Warm deep red-pink (was purple)
 
 
