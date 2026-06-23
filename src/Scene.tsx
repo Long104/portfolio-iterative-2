@@ -190,10 +190,10 @@ const particleFragment = /* glsl */ `
       finalColor = vec3(1.0, 0.4, 0.6);
       opacity = texColor.a;
     } else {
-      // Dark semi-transparent silhouettes
+      // Near-black silhouettes — deep dark debris
       texColor = texture2D(uTexBlob, vUv);
-      finalColor = vec3(0.01, 0.08, 0.12);
-      opacity = texColor.a * 0.85;
+      finalColor = vec3(0.0, 0.03, 0.05);
+      opacity = texColor.a * 0.95;
     }
 
     float alphaFade = smoothstep(1.0, 0.85, vDepth);
@@ -231,7 +231,7 @@ const flareVertex = /* glsl */ `
     // Radial stretch — extreme for anime speed lines
     vec3 transformed = position;
     vec2 dir = normalize(pos.xy + 0.001);
-    float stretch = 1.0 + (vDepth * 5.0);
+    float stretch = 1.0 + (vDepth * 20.0); // Extreme stretch for long anime speed lines
     transformed.xy += dir * dot(transformed.xy, dir) * (stretch - 1.0);
 
     vec4 mvPos = modelViewMatrix * vec4(pos + transformed * scale, 1.0);
@@ -311,38 +311,39 @@ const glowFragment = /* glsl */ `
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
 
-    // Domain warp: offset coordinates by fbm noise so the
-    // distance field becomes chaotic in BOTH x and y.
-    float t = uTime * 0.08;
-    float warpX = fbm(centered * 6.0 + vec2(t, 0.0));
-    float warpY = fbm(centered * 6.0 + vec2(0.0, t) + 50.0);
-    vec2 warped = centered + (vec2(warpX, warpY) - 0.5) * 0.10;
+    // Domain warp — reduced amplitude for tight, contained blast.
+    // 2D fbm gives real chaos in BOTH x and y (not angular spokes).
+    float t = uTime * 0.06;
+    float warpX = fbm(centered * 8.0 + vec2(t, 0.0));
+    float warpY = fbm(centered * 8.0 + vec2(0.0, t) + 50.0);
+    vec2 warped = centered + (vec2(warpX, warpY) - 0.5) * 0.035;
     float dist = length(warped);
 
     // Secondary noise for edge splatter variation
-    float splatter = fbm(centered * 18.0 + 100.0);
+    float splatter = fbm(centered * 22.0 + 100.0);
 
-    // ── Three-stop color ramp ───────────────────────
+    // ── Three-stop color ramp (TIGHT) ──────────────
     vec3 coreColor    = vec3(1.0, 0.92, 0.15);  // intense yellow
     vec3 midColor     = vec3(1.0, 0.35, 0.22);   // hot orange-red
     vec3 splatterCol  = vec3(0.92, 0.15, 0.42);  // vibrant pink
 
-    float coreEdge   = 0.08 + (splatter - 0.5) * 0.03;
-    float midEdge    = 0.18 + (splatter - 0.5) * 0.04;
+    // Shrunk from 0.08/0.18 → 0.03/0.07 — tight contained burst
+    float coreEdge   = 0.03 + (splatter - 0.5) * 0.012;
+    float midEdge    = 0.07 + (splatter - 0.5) * 0.018;
 
-    vec3 color = mix(coreColor, midColor, smoothstep(coreEdge, coreEdge + 0.08, dist));
-    color = mix(color, splatterCol, smoothstep(midEdge, midEdge + 0.12, dist));
+    vec3 color = mix(coreColor, midColor, smoothstep(coreEdge, coreEdge + 0.035, dist));
+    color = mix(color, splatterCol, smoothstep(midEdge, midEdge + 0.05, dist));
 
-    // ── Alpha: jagged falloff ───────────────────────
-    float alpha = 1.0 - smoothstep(0.30, 0.48, dist + (warpX - 0.5) * 0.05);
+    // ── Alpha: HARD jagged falloff (shrunk ~3x) ────
+    float alpha = 1.0 - smoothstep(0.08, 0.14, dist + (warpX - 0.5) * 0.025);
 
-    // ── Isolated splatter dots beyond main blast ────
-    float dots = smoothstep(0.72, 0.88, fbm(centered * 28.0 + 200.0));
-    float dotMask = dots * smoothstep(0.65, 0.30, dist) * smoothstep(0.15, 0.30, dist);
-    alpha = max(alpha, dotMask * 0.7);
+    // ── Isolated splatter dots (tight ring around blast) ──
+    float dots = smoothstep(0.72, 0.88, fbm(centered * 32.0 + 200.0));
+    float dotMask = dots * smoothstep(0.22, 0.10, dist) * smoothstep(0.06, 0.12, dist);
+    alpha = max(alpha, dotMask * 0.6);
 
     // Overall fade so splatter dots don't extend forever
-    alpha *= (1.0 - smoothstep(0.50, 0.85, length(centered)));
+    alpha *= (1.0 - smoothstep(0.25, 0.50, length(centered)));
 
     gl_FragColor = vec4(color, alpha);
 
