@@ -357,16 +357,21 @@ const glowFragment = /* glsl */ `
     // Base gradient transition
     vec3 finalColor = mix(outerEdge, midPink, smoothstep(0.15, 0.5, finalGlow));
 
-    // 3. Pulsing yellow disc — fixed radius that breathes with noise
-    //    Slow pulse via sine wave + gas noise shimmer on the edge
-    float pulse = 0.5 + 0.5 * sin(uTime * 1.5);           // 0→1 slow breath
-    float yellowRadius = 0.06 + pulse * 0.02;              // radius oscillates 0.06→0.08
-    float yellowEdge = yellowRadius + gasNoise * 0.015;    // noise shimmers the boundary
-    float discMask = smoothstep(yellowEdge + 0.01, yellowEdge - 0.01, dist);
-    finalColor = mix(finalColor, coreYellow, discMask);
+    // 3. Drifting yellow blob — wobble center + irregular edge via noise
+    vec2 wobbleOffset = vec2(
+      fbm(vec2(uTime * 0.3, 0.0)) - 0.5,
+      fbm(vec2(0.0, uTime * 0.35)) - 0.5
+    ) * 0.08;
 
-    // 4. Suppress brightness inside the disc so yellow survives additive blending
-    float intensityModifier = mix(finalGlow, 1.0, discMask);
+    float angle = atan(centered.y, centered.x);
+    float radialNoise = fbm(vec2(angle * 2.0, uTime * 0.5)) * 0.03;
+
+    float blobDist = length(centered - wobbleOffset) + radialNoise;
+    float coreMask = smoothstep(0.10, 0.02, blobDist);
+    finalColor = mix(finalColor, coreYellow, coreMask);
+
+    // 4. Prevent brightness blowout — suppress multiplier inside core
+    float intensityModifier = mix(finalGlow, 1.1, coreMask);
 
     // Soft organic transparency falloff
     float alpha = smoothstep(0.02, 0.3, finalGlow * (1.0 - dist * 2.0));
