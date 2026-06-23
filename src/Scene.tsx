@@ -356,8 +356,8 @@ const glowFragment = /* glsl */ `
     // ── Color Palette ──
     vec3 whiteCore = vec3(1.0, 1.0, 1.0);      // Incandescent heart
     vec3 yellow    = vec3(1.0, 0.65, 0.0);    // Amber-yellow — best visibility under additive
-    vec3 midPink   = vec3(0.95, 0.18, 0.58);   // Cooling energy
-    vec3 outerEdge = vec3(0.55, 0.08, 0.40);   // Deep magenta fade
+    vec3 midPink   = vec3(0.996, 0.663, 0.733); // #FEA9BB warm pink
+    vec3 outerEdge = vec3(0.70, 0.15, 0.25);   // Warm deep red-pink (was purple)
 
 
     // ── Distance Banding (outside → inside) ──
