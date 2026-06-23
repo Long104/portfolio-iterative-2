@@ -108,17 +108,30 @@ const backdropVertex = /* glsl */ `
 `
 
 const backdropFragment = /* glsl */ `
+  uniform float uTime;
   varying vec2 vUv;
+
+  // Simple 2D noise for chaotic texture
+  float random(in vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123); }
+  float noise(in vec2 st) {
+    vec2 i = floor(st); vec2 f = fract(st);
+    float a = random(i); float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+  }
+
   void main() {
+    vec2 pos = vUv * 4.0;
+    float n = noise(pos + uTime * 0.5);
     float dist = distance(vUv, vec2(0.5));
 
-    // Tunnel effect — pitch-black void at edges, bright core at center
-    vec3 outerColor = vec3(0.0, 0.01, 0.02);
-    vec3 midColor   = vec3(0.02, 0.12, 0.18);
-    vec3 coreColor  = vec3(0.8, 0.9, 0.85);
+    // Anime colors: deep teal outer, bright mint/cyan inner
+    vec3 deepTeal   = vec3(0.01, 0.10, 0.15);
+    vec3 brightMint = vec3(0.15, 0.90, 0.75);
 
-    vec3 color = mix(coreColor, midColor, smoothstep(0.0, 0.25, dist));
-    color = mix(color, outerColor, smoothstep(0.25, 0.75, dist));
+    // Mix noise with radial distance for chaotic nebula texture
+    vec3 color = mix(brightMint, deepTeal, dist * 2.0 - n * 0.4);
 
     gl_FragColor = vec4(color, 1.0);
 
@@ -183,20 +196,21 @@ const particleFragment = /* glsl */ `
   void main() {
     vec4 texColor;
     vec3 finalColor;
+    float alpha = 1.0;
 
     if (vType < 0.5) {
-      // Vibrant peach/pink petals
+      // Sharp pink petals
       texColor = texture2D(uTexPetal, vUv);
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
+      alpha = texColor.a * smoothstep(1.0, 0.85, vDepth);
     } else {
-      // Dark framing blobs (deep jade/teal)
+      // Dark silhouettes — frame the explosion, do NOT bloom
       texColor = texture2D(uTexBlob, vUv);
-      finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
+      finalColor = vec3(0.01, 0.03, 0.05);
+      alpha = texColor.a;
     }
 
-    // Proximity fade — disappear at camera lens to prevent screen blocking
-    float alphaFade = smoothstep(1.0, 0.85, vDepth);
-    gl_FragColor = vec4(finalColor, texColor.a * alphaFade);
+    gl_FragColor = vec4(finalColor, alpha);
 
     #include <colorspace_fragment>
   }
@@ -264,23 +278,28 @@ const glowVertex = /* glsl */ `
 const glowFragment = /* glsl */ `
   uniform float uAspect;
   varying vec2 vUv;
+
   void main() {
-    // Correct for screen aspect so the glow is circular
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
-    float dist = length(centered);
 
-    // HDR colors > 1.0 to trigger Bloom post-processing
-    vec3 coreColor = vec3(1.0, 0.98, 0.65) * 3.0;
-    vec3 haloColor = vec3(0.95, 0.12, 0.38) * 1.5;
+    // Jagged explosion edges
+    float angle = atan(centered.y, centered.x);
+    float jagged = sin(angle * 30.0) * 0.015 + sin(angle * 13.0) * 0.02;
+    float dist = length(centered) + jagged;
 
-    // Core blends into pink halo
-    vec3 color = mix(coreColor, haloColor, smoothstep(0.02, 0.16, dist));
+    // Distinct colors — core yellow, halo magenta, edge to black
+    vec3 coreYellow = vec3(1.0, 0.95, 0.2);
+    vec3 haloPink   = vec3(0.95, 0.12, 0.38);
+    vec3 edgeDark   = vec3(0.0, 0.0, 0.0);
 
-    // Strong alpha at center, smooth falloff
-    float alpha = 1.0 - smoothstep(0.0, 0.35, dist);
+    // Harder mixing to prevent white-out
+    vec3 color = mix(coreYellow, haloPink, smoothstep(0.02, 0.08, dist));
+    color = mix(color, edgeDark, smoothstep(0.08, 0.25, dist));
 
-    gl_FragColor = vec4(color, alpha);
+    // Keep multiplier at 1.5 so bloom catches it without destroying color
+    float alpha = 1.0 - smoothstep(0.15, 0.35, dist);
+    gl_FragColor = vec4(color * 1.5, alpha);
 
     #include <colorspace_fragment>
   }
@@ -320,6 +339,9 @@ function KiraKiraVortex() {
   const backdropMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+        },
         vertexShader: backdropVertex,
         fragmentShader: backdropFragment,
         depthWrite: false,
@@ -399,6 +421,7 @@ function KiraKiraVortex() {
   // --- Animation loop ---
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
+    backdropMat.uniforms.uTime.value = t
     paintMat.uniforms.uTime.value = t
     flareMat.uniforms.uTime.value = t
     glowMat.uniforms.uAspect.value = state.size.width / state.size.height
@@ -445,9 +468,10 @@ export default function Scene() {
         <KiraKiraVortex />
         <EffectComposer enableNormalPass={false}>
           <Bloom
-            luminanceThreshold={1.0}
+            luminanceThreshold={0.8}
+            luminanceSmoothing={0.3}
+            intensity={1.2}
             mipmapBlur
-            intensity={1.5}
           />
         </EffectComposer>
       </Canvas>
