@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 // ==========================================
@@ -16,34 +17,25 @@ function createStarTexture(): THREE.Texture {
   const ctx = canvas.getContext('2d')!
   const c = size / 2
 
-  // Hard-edged 4-point starburst
-  ctx.fillStyle = 'rgba(0,0,0,0)'
-  ctx.fillRect(0, 0, size, size)
+  // Clear transparent
+  ctx.clearRect(0, 0, size, size)
 
-  ctx.save()
-  ctx.translate(c, c)
+  // Single sharp horizontal streak — the vertex shader's radial
+  // alignment turns this into a hyperspace speed line.
+  // Tail fades to transparent, head is solid bright.
+  const grad = ctx.createLinearGradient(0, c, size, c)
+  grad.addColorStop(0, 'rgba(255,255,255,0)')
+  grad.addColorStop(0.7, 'rgba(255,255,255,0.9)')
+  grad.addColorStop(0.9, 'rgba(255,255,255,1)')
+  grad.addColorStop(1, 'rgba(255,255,255,0)')
 
-  // Draw sharp cross spikes (hard alpha)
-  for (let i = 0; i < 2; i++) {
-    ctx.fillStyle = 'rgba(255,255,255,1)'
-    ctx.beginPath()
-    ctx.moveTo(-c, -1.5)
-    ctx.lineTo(0, -4)
-    ctx.lineTo(c, -1.5)
-    ctx.lineTo(c, 1.5)
-    ctx.lineTo(0, 4)
-    ctx.lineTo(-c, 1.5)
-    ctx.closePath()
-    ctx.fill()
-    ctx.rotate(Math.PI / 2)
-  }
+  ctx.fillStyle = grad
+  ctx.fillRect(0, c - 3, size, 6)
 
-  // Hard center circle
+  // Small bright head dot
   ctx.beginPath()
-  ctx.arc(0, 0, c * 0.18, 0, Math.PI * 2)
+  ctx.arc(size * 0.85, c, 4, 0, Math.PI * 2)
   ctx.fill()
-
-  ctx.restore()
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.needsUpdate = true
@@ -283,36 +275,27 @@ const glowVertex = /* glsl */ `
 
 const glowFragment = /* glsl */ `
   uniform float uAspect;
+  uniform float uTime;
   varying vec2 vUv;
   void main() {
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
-    float dist = length(centered);
 
-    // HARD THRESHOLDS — no smoothstep
-    vec3 coreColor = vec3(1.0, 0.92, 0.2);   // Solid warm yellow
-    vec3 haloColor = vec3(1.0, 0.1, 0.35);   // Solid hot pink
+    // Angle for spiky noise
+    float angle = atan(centered.y, centered.x);
 
-    vec3 color;
-    float alpha;
+    // High-frequency sine waves → jagged starburst edges
+    float noise = sin(angle * 12.0 + uTime * 5.0) * 0.04;
+    noise += sin(angle * 7.0 - uTime * 3.0) * 0.03;
 
-    if (dist < 0.06) {
-      // Solid yellow core — zero falloff
-      color = coreColor;
-      alpha = 1.0;
-    } else if (dist < 0.15) {
-      // Solid pink halo ring — hard edge
-      color = haloColor;
-      alpha = 1.0;
-    } else if (dist < 0.18) {
-      // Sharp cutoff edge
-      color = haloColor;
-      alpha = 0.85;
-    } else {
-      // Nothing beyond
-      color = vec3(0.0);
-      alpha = 0.0;
-    }
+    float dist = length(centered) + noise;
+
+    // HARD THRESHOLDS on noisy distance → jagged star
+    vec3 coreColor = vec3(1.0, 0.95, 0.2);   // Neon yellow
+    vec3 haloColor = vec3(1.0, 0.1, 0.4);    // Hot pink
+
+    vec3 color = mix(haloColor, coreColor, step(dist, 0.08));
+    float alpha = 1.0 - step(0.18, dist);
 
     gl_FragColor = vec4(color, alpha);
 
@@ -401,6 +384,7 @@ function KiraKiraVortex() {
       new THREE.ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
+          uTime: { value: 0 },
         },
         vertexShader: glowVertex,
         fragmentShader: glowFragment,
@@ -436,6 +420,7 @@ function KiraKiraVortex() {
     paintMat.uniforms.uTime.value = t
     flareMat.uniforms.uTime.value = t
     glowMat.uniforms.uAspect.value = state.size.width / state.size.height
+    glowMat.uniforms.uTime.value = t
   })
 
   return (
@@ -477,6 +462,14 @@ export default function Scene() {
     >
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
         <KiraKiraVortex />
+        <EffectComposer>
+          <Bloom
+            intensity={1.2}
+            luminanceThreshold={0.15}
+            luminanceSmoothing={0.3}
+            mipmapBlur
+          />
+        </EffectComposer>
       </Canvas>
     </div>
   )
