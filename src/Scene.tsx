@@ -150,7 +150,9 @@ const particleVertex = /* glsl */ `
 
     // Center clearance — keep the glowing core visible
     float r = length(pos.xy);
+    //fix
     if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
+    // if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
 
     // Liquid water-flow math (sine/cosine offset X/Y paths)
     float wave = sin(pos.z * 0.1 + uTime + aRandoms.y * 6.28) * 0.5;
@@ -222,7 +224,9 @@ const flareVertex = /* glsl */ `
     pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
 
     float r = length(pos.xy);
+    // fix
     if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
+    // if (r < 2.0) pos.xy = normalize(pos.xy + 0.001) * (2.0 + aRandoms.x * 1.5);
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
     float scale = 0.5 * (0.2 + pow(vDepth, 2.5) * 6.0);
@@ -245,7 +249,7 @@ const flareFragment = /* glsl */ `
 
   void main() {
     vec4 texColor = texture2D(uTexStar, vUv);
-    vec3 glow = mix(vec3(1.0, 0.98, 0.6), vec3(1.0, 1.0, 1.0), vDepth);
+    vec3 glow = mix(vec3(1.0, 0.98, 0.65), vec3(0.95, 0.12, 0.38), vDepth);
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
     gl_FragColor = vec4(glow * 1.3, texColor.a * alphaFade);
@@ -409,7 +413,7 @@ function KiraKiraVortex() {
   return (
     <>
       {/* Layer A: Static fullscreen backdrop */}
-      {/* <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} /> */}
+      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} />
 
       {/* Layer B: Fluid particles (normal alpha blending) */}
       <instancedMesh
@@ -418,13 +422,13 @@ function KiraKiraVortex() {
       />
 
       {/* Layer C: Star flares (additive blending) */}
-      {/* <instancedMesh */}
-      {/*   args={[flareGeo, flareMat, FLARE_COUNT]} */}
-      {/*   frustumCulled={false} */}
-      {/* /> */}
+      <instancedMesh
+        args={[flareGeo, flareMat, FLARE_COUNT]}
+        frustumCulled={false}
+      />
 
       {/* Layer D: Foreground core glow — always visible on top */}
-      {/* <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} /> */}
+      <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} />
     </>
   )
 }
