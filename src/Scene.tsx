@@ -159,6 +159,7 @@ const particleVertex = /* glsl */ `
   varying vec2 vUv;
   varying float vType;
   varying float vDepth;
+  varying vec2 vScreenPos;
 
   void main() {
     vUv = uv;
@@ -195,6 +196,7 @@ const particleVertex = /* glsl */ `
 
     vec4 mvPos = modelViewMatrix * vec4(pos + transformed * scale, 1.0);
     gl_Position = projectionMatrix * mvPos;
+    vScreenPos = gl_Position.xy / gl_Position.w;
   }
 `;
 
@@ -204,6 +206,7 @@ const particleFragment = /* glsl */ `
   varying vec2 vUv;
   varying float vType;
   varying float vDepth;
+  varying vec2 vScreenPos;
 
   void main() {
     vec4 texColor;
@@ -211,20 +214,21 @@ const particleFragment = /* glsl */ `
 
     if (vType < 0.5) {
       // Vibrant peach/pink petals
-      // no need for this the pink blur i want it to be the pink explosive instead not as blur and ove slowly
-      // texColor = texture2D(uTexBlob, vUv);
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
-      // Dark framing blobs (deep jade/teal)
+      // Dark framing blobs — radial screen-space gradient
       texColor = texture2D(uTexBlob, vUv);
-      // finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
 
-      vec3 outer  = vec3(0.004, 0.165, 0.180);  // #012a2e — dark teal tunnel
-      vec3 middle = vec3(0.047, 0.890, 0.714);  // #0ce3b6 — bright mint glow
-      vec3 center = vec3(0.000, 0.063, 0.078);  // #001014 — dark ocean void
-      finalColor = mix(mix(outer, middle, smoothstep(0.0, 0.5, vDepth)),
-                       center,
-                       smoothstep(0.5, 1.0, vDepth));
+      vec3 outer  = vec3(0.004, 0.165, 0.180);  // #012a2e — dark teal (edges)
+      vec3 middle = vec3(0.047, 0.890, 0.714);  // #0ce3b6 — bright mint (mid ring)
+      vec3 center = vec3(0.000, 0.063, 0.078);  // #001014 — dark void (center)
+
+      // NDC distance from screen center (0 = center, ~1.414 = corner)
+      float dist = length(vScreenPos);
+      // 0 ─► 0.5 ─► 1.2+   →   center ─► middle ─► outer
+      finalColor = mix(mix(center, middle, smoothstep(0.0, 0.5, dist)),
+                       outer,
+                       smoothstep(0.6, 1.2, dist));
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking
