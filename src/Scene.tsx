@@ -216,19 +216,23 @@ const particleFragment = /* glsl */ `
       // Vibrant peach/pink petals
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
-      // Dark framing blobs — radial screen-space gradient
+      // Dark framing blobs — depth + radial blended 50/50
       texColor = texture2D(uTexBlob, vUv);
 
-      vec3 outer  = vec3(0.004, 0.165, 0.180);  // #012a2e — dark teal (edges)
-      vec3 middle = vec3(0.047, 0.890, 0.714);  // #0ce3b6 — bright mint (mid ring)
-      vec3 center = vec3(0.000, 0.063, 0.078);  // #001014 — dark void (center)
+      vec3 outer  = vec3(0.004, 0.165, 0.180);  // #012a2e — dark teal
+      vec3 middle = vec3(0.047, 0.890, 0.714);  // #0ce3b6 — bright mint
+      vec3 center = vec3(0.000, 0.063, 0.078);  // #001014 — dark void
 
-      // NDC distance from screen center (0 = center, ~1.414 = corner)
-      float dist = length(vScreenPos);
-      // 0 ─► 0.5 ─► 1.2+   →   center ─► middle ─► outer
-      finalColor = mix(mix(center, middle, smoothstep(0.0, 0.5, dist)),
-                       outer,
-                       smoothstep(0.6, 1.2, dist));
+      // Depth factor: 0 (far) → 1 (near)
+      float depthT = vDepth;
+      // Radial factor: 0 (screen edge) → 1 (screen center)
+      float radialT = 1.0 - clamp(length(vScreenPos) / 1.2, 0.0, 1.0);
+      // 50/50 blend
+      float t = mix(depthT, radialT, 0.5);
+      // 0 ─► 0.5 ─► 1   →   outer ─► middle ─► center
+      finalColor = mix(mix(outer, middle, smoothstep(0.0, 0.5, t)),
+                       center,
+                       smoothstep(0.5, 1.0, t));
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking
