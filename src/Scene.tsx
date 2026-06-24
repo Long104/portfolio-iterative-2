@@ -136,9 +136,9 @@ const backdropFragment = /* glsl */ `
     float dist = length(centered);
 
     // Dark center — the foreground glow mesh paints the core/halo on top
-    vec3 dark   = vec3(1, 1, 1);
-    vec3 mint   = vec3(1, 1, 1);
-    vec3 teal   = vec3(1, 1, 1);
+    vec3 dark   = vec3(0.0, 0.063, 0.078);  // #001014  — center void
+    vec3 mint   = vec3(0.047, 0.89, 0.714); // #0ce3b6  — middle glow
+    vec3 teal   = vec3(0.004, 0.165, 0.18); // #012a2e  — outer tunnel
 
     vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
     if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
@@ -148,7 +148,6 @@ const backdropFragment = /* glsl */ `
     #include <colorspace_fragment>
   }
 `;
-
 
 // Layer B: Fluid particles (petals + blobs, normal alpha blending)
 const particleVertex = /* glsl */ `
@@ -219,6 +218,18 @@ const particleFragment = /* glsl */ `
       // Dark framing blobs (deep jade/teal)
       texColor = texture2D(uTexBlob, vUv);
       finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
+
+// // Current: dark jade/teal
+// finalColor = mix(vec3(0.01, 0.12, 0.15), vec3(0.0, 0.05, 0.08), vDepth);
+//
+// // Example: warm amber
+// finalColor = mix(vec3(0.8, 0.4, 0.1), vec3(0.6, 0.2, 0.0), vDepth);
+//
+// // Example: bright cyan
+// finalColor = mix(vec3(0.0, 0.8, 0.9), vec3(0.0, 0.4, 0.5), vDepth);
+//
+// // Example: hot pink
+// finalColor = mix(vec3(1.0, 0.1, 0.5), vec3(0.6, 0.0, 0.3), vDepth);
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking
@@ -319,7 +330,7 @@ const flareFragment = /* glsl */ `
       // vec3(1.0, 0.4, 0.7),        // #FF66B2  deep pink
       // vec3(1.0, 0.4118, 0.7059),   // #FF69B4  hot pink
 
-  
+
       // test
       vec3(1.0, 0.3, 0.5),        // #FF4D80  neon coral // want
       vec3(1.000, 0.100, 0.150),   // #FF9294 (Pushed to strong pink-red) // want
@@ -556,13 +567,13 @@ function KiraKiraVortex() {
       />
 
       {/* Layer C: Star flares (additive blending) */}
-      <instancedMesh
-        args={[flareGeo, flareMat, FLARE_COUNT]}
-        frustumCulled={false}
-      />
+      {/* <instancedMesh */}
+      {/*   args={[flareGeo, flareMat, FLARE_COUNT]} */}
+      {/*   frustumCulled={false} */}
+      {/* /> */}
 
       {/* Layer D: Foreground core glow — always visible on top */}
-      <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} />
+      {/* <mesh geometry={backdropGeo} material={glowMat} renderOrder={1} /> */}
     </>
   );
 }
@@ -578,7 +589,11 @@ export default function Scene() {
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        background: "#020d12",
+        // background: "#020d12",
+
+        // background: "teal",
+        background: "#044454",
+        // background: "radial-gradient(#00C6C9 0%, #FF69B4 50%, #8A2BE2 100%)"
       }}
     >
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
