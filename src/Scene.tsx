@@ -126,53 +126,29 @@ const backdropVertex = /* glsl */ `
 //   }
 // `;
 
-// const backdropFragment = /* glsl */ `
-//   uniform float uAspect;
-//   varying vec2 vUv;
-//   void main() {
-//     // Center coordinate space + correct for aspect ratio (matches glow shader)
-//     vec2 centered = vUv - vec2(0.5);
-//     centered.x *= uAspect;
-//     float dist = length(centered);
-//
-//     // Dark center — the foreground glow mesh paints the core/halo on top
-//     vec3 dark   = vec3(1, 1, 1);
-//     vec3 mint   = vec3(1, 1, 1);
-//     vec3 teal   = vec3(1, 1, 1);
-//
-//     vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
-//     if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
-//
-//     gl_FragColor = vec4(color, 1.0);
-//
-//     #include <colorspace_fragment>
-//   }
-// `;
-
 const backdropFragment = /* glsl */ `
   uniform float uAspect;
   varying vec2 vUv;
   void main() {
+    // Center coordinate space + correct for aspect ratio (matches glow shader)
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // ── Exact Color Match from the Right Image ──
-    vec3 darkCenter = vec3(0.000, 0.063, 0.078); // #001014 Deep center void
-    vec3 glowingMint = vec3(0.047, 0.890, 0.714); // #0CE3B6 Vibrant magical mint
-    vec3 deepTeal    = vec3(0.004, 0.165, 0.180); // #012A2E Rich outer tunnel
+    // Dark center — the foreground glow mesh paints the core/halo on top
+    vec3 dark   = vec3(1, 1, 1);
+    vec3 mint   = vec3(1, 1, 1);
+    vec3 teal   = vec3(1, 1, 1);
 
-    // Smoothly blend them in a circle outward
-    vec3 color = mix(darkCenter, glowingMint, smoothstep(0.0, 0.28, dist));
-    if (dist > 0.28) {
-      color = mix(color, deepTeal, smoothstep(0.28, 0.65, dist));
-    }
+    vec3 color = mix(dark, mint, smoothstep(0.0, 0.40, dist));
+    if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
 
     gl_FragColor = vec4(color, 1.0);
 
     #include <colorspace_fragment>
   }
 `;
+
 
 // Layer B: Fluid particles (petals + blobs, normal alpha blending)
 const particleVertex = /* glsl */ `
@@ -434,7 +410,7 @@ const glowFragment = /* glsl */ `
     float glow = min(exp(-d * 8.0) + 0.4, 0.85);
 
     // ── Organic alpha falloff ──
-    float alpha = smoothstep(0.42, 0.06, d) * (0.7 + gasNoise * 0.3);
+    float alpha = smoothstep(0.42, 0.06, d) * (0.9 + gasNoise * 0.9);
 
     gl_FragColor = vec4(color * glow, alpha);
 
@@ -539,9 +515,7 @@ function KiraKiraVortex() {
   );
 
   // --- Geometry with instanced attributes ---
-  // 2×2 so clip-space vertex shader (gl_Position = vec4(position, 1.0))
-  // fills the full NDC (-1..1). 1×1 only covers the center quarter.
-  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
+  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0);
