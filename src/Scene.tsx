@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -193,9 +193,8 @@ const particleFragment = /* glsl */ `
     vec3 finalColor;
 
     if (vType < 0.5) {
-      // Vibrant peach/pink petals
-      // no need for this the pink blur i want it to be the pink explosive instead not as blur and ove slowly
-      // texColor = texture2D(uTexBlob, vUv);
+      // Vibrant peach/pink petals — solid alpha (no texture lookup needed)
+      texColor = vec4(1.0);
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
       // Dark framing blobs (deep jade/teal)
@@ -395,7 +394,9 @@ const glowFragment = /* glsl */ `
     float a = 0.5;
     vec2 shift = vec2(100.0);
     mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-    for (int i = 0; i < 3; ++i) {
+    // 2 octaves (was 3) — halves fragment cost on this fullscreen pass;
+    // glow is soft so the lost high-frequency detail is imperceptible.
+    for (int i = 0; i < 2; ++i) {
       v += a * noise(p);
       p = rot * p * 2.5 + shift;
       a *= 0.5;
@@ -446,8 +447,27 @@ const glowFragment = /* glsl */ `
 // 3. SCENE COMPONENT
 // ==========================================
 
-const PAINT_COUNT = 5500; // Petals + Blobs
-const FLARE_COUNT = 3000; // Star flares
+// --- Adaptive perf tier (replaces hardcoded counts) ---
+// Cheap heuristic: UA + cores + RAM. Good enough before first frame;
+// R3F `performance` prop then drops DPR further if FPS dips at runtime.
+type PerfTier = "mobile" | "low" | "high";
+
+function detectPerfTier(): PerfTier {
+  if (typeof navigator === "undefined") return "high";
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
+  );
+  if (isMobile) return "mobile";
+  const cores = navigator.hardwareConcurrency ?? 4;
+  const memory = (navigator as { deviceMemory?: number }).deviceMemory ?? 4;
+  if (cores <= 4 || memory <= 4) return "low";
+  return "high";
+}
+
+const PERF_TIER = detectPerfTier();
+const PAINT_COUNT = PERF_TIER === "mobile" ? 2000 : PERF_TIER === "low" ? 3500 : 5500;
+const FLARE_COUNT = PERF_TIER === "mobile" ? 1000 : PERF_TIER === "low" ? 1500 : 3000;
+const MAX_DPR = PERF_TIER === "mobile" ? 1 : PERF_TIER === "low" ? 1.25 : 1.5;
 
 function generateInstanceData(count: number, maxRadius: number) {
   const pos = new Float32Array(count * 3);
@@ -557,6 +577,19 @@ function KiraKiraVortex() {
     return geo;
   }, []);
 
+  // --- Dispose all GPU resources on unmount (prevents leaks on HMR/route change) ---
+  useEffect(() => {
+    return () => {
+      [starTex, petalTex, blobTex].forEach((t) => t.dispose());
+      [backdropGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
+      [backdropMat, paintMat, flareMat, glowMat].forEach((m) => m.dispose());
+    };
+  }, [
+    starTex, petalTex, blobTex,
+    backdropGeo, paintGeo, flareGeo,
+    backdropMat, paintMat, flareMat, glowMat,
+  ]);
+
   // --- Animation loop ---
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
@@ -608,7 +641,16 @@ export default function Scene() {
 
       }}
     >
-      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
+      <Canvas
+        camera={{ position: [0, 0, 5], fov: 75 }}
+        dpr={PERF_TIER === "mobile" ? 1 : [1, MAX_DPR]}
+        gl={{
+          antialias: false, // additive particles + glow — MSAA is wasted cost
+          powerPreference: "high-performance",
+          alpha: false,
+        }}
+        performance={{ min: 0.5 }} // R3F adaptive: drops DPR if FPS dips
+      >
         <KiraKiraVortex />
       </Canvas>
     </div>
