@@ -302,10 +302,57 @@ const particleFragment = /* glsl */ `
       // texColor = vec4(1.0);
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
-      // Dark framing blobs — color from baked 15-stop depth gradient LUT.
-      // Edit palette in createGradientLUT(), never touch this shader.
+      // Dark framing blobs — 16-layer smoothstep color system
       texColor = texture2D(uTexBlob, vUv);
-      finalColor = texture2D(uGradLUT, vec2(vDepth, 0.5)).rgb;
+
+      vec3 c00 = vec3(1.000, 0.996, 0.941); // #FFFEF0 whiteCore
+      vec3 c01 = vec3(1.000, 0.969, 0.541); // #FFF78A warmYellow
+      vec3 c02 = vec3(1.000, 0.878, 0.251); // #FFE040 vividYellow
+      vec3 c03 = vec3(1.000, 0.690, 0.416); // #FFB06A peach
+      vec3 c04 = vec3(1.000, 0.498, 0.612); // #FF7F9C vividPink
+      vec3 c05 = vec3(0.839, 0.353, 0.541); // #D65A8A deepRose
+      vec3 c06 = vec3(0.251, 0.769, 0.776); // #40C4C6 brightTeal
+      vec3 c07 = vec3(0.102, 0.675, 0.698); // #1AACB2 saturatedTeal
+      vec3 c08 = vec3(0.047, 0.557, 0.596); // #0C8E98 teal
+      vec3 c09 = vec3(0.027, 0.443, 0.486); // #07717C deepTeal
+      vec3 c10 = vec3(0.016, 0.333, 0.376); // #045560 darkerTeal
+      vec3 c11 = vec3(0.008, 0.227, 0.275); // #023A46 darkBlue
+      vec3 c12 = vec3(0.004, 0.141, 0.180); // #01242E veryDark
+      vec3 c13 = vec3(0.004, 0.078, 0.110); // #01141C nearBlack
+      vec3 c14 = vec3(0.000, 0.039, 0.063); // #000A10 almostBlack
+      vec3 c15 = vec3(0.000, 0.020, 0.031); // #000508 deepBlack
+
+      if (vDepth < 0.030) {
+        finalColor = mix(c00, c01, smoothstep(0.000, 0.030, vDepth));
+      } else if (vDepth < 0.071) {
+        finalColor = mix(c01, c02, smoothstep(0.030, 0.071, vDepth));
+      } else if (vDepth < 0.143) {
+        finalColor = mix(c02, c03, smoothstep(0.071, 0.143, vDepth));
+      } else if (vDepth < 0.214) {
+        finalColor = mix(c03, c04, smoothstep(0.143, 0.214, vDepth));
+      } else if (vDepth < 0.286) {
+        finalColor = mix(c04, c05, smoothstep(0.214, 0.286, vDepth));
+      } else if (vDepth < 0.357) {
+        finalColor = mix(c05, c06, smoothstep(0.286, 0.357, vDepth));
+      } else if (vDepth < 0.429) {
+        finalColor = mix(c06, c07, smoothstep(0.357, 0.429, vDepth));
+      } else if (vDepth < 0.500) {
+        finalColor = mix(c07, c08, smoothstep(0.429, 0.500, vDepth));
+      } else if (vDepth < 0.571) {
+        finalColor = mix(c08, c09, smoothstep(0.500, 0.571, vDepth));
+      } else if (vDepth < 0.643) {
+        finalColor = mix(c09, c10, smoothstep(0.571, 0.643, vDepth));
+      } else if (vDepth < 0.714) {
+        finalColor = mix(c10, c11, smoothstep(0.643, 0.714, vDepth));
+      } else if (vDepth < 0.786) {
+        finalColor = mix(c11, c12, smoothstep(0.714, 0.786, vDepth));
+      } else if (vDepth < 0.857) {
+        finalColor = mix(c12, c13, smoothstep(0.786, 0.857, vDepth));
+      } else if (vDepth < 0.929) {
+        finalColor = mix(c13, c14, smoothstep(0.857, 0.929, vDepth));
+      } else {
+        finalColor = mix(c14, c15, smoothstep(0.929, 1.000, vDepth));
+      }
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking
