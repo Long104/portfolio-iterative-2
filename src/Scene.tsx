@@ -93,6 +93,46 @@ function createBlobTexture(): THREE.Texture {
   return tex;
 }
 
+// 15-stop depth gradient baked into a 256×1 LUT.
+// Edit colors here — no shader changes ever needed.
+function createGradientLUT(): THREE.Texture {
+  const w = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d")!;
+
+  const stops: [number, string][] = [
+    [0.0, "#FFFEF0"], // whiteCore
+    [0.071, "#FFF529"], // coreYellow
+    [0.143, "#FFB45A"], // amber
+    [0.214, "#FF8A6E"], // coral
+    [0.286, "#FD6982"], // hotPink
+    [0.357, "#EB4A94"], // magenta
+    [0.429, "#9E61B8"], // orchid
+    [0.5, "#4DB39E"], // spring
+    [0.571, "#0CE3B6"], // mintGlow
+    [0.643, "#05949E"], // aqua
+    [0.714, "#015161"], // seafoam
+    [0.786, "#012E42"], // deepTeal
+    [0.857, "#001523"], // deepBlue
+    [0.929, "#00060E"], // darkForest
+    [1.0, "#000208"], // darkJade
+  ];
+
+  const grad = ctx.createLinearGradient(0, 0, w, 0);
+  for (const [offset, color] of stops) grad.addColorStop(offset, color);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, 1);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter; // GPU interpolates between stops for free
+  tex.magFilter = THREE.LinearFilter;
+  tex.colorSpace = THREE.LinearSRGBColorSpace; // raw values — no sRGB linearization
+  tex.needsUpdate = true;
+  return tex;
+}
+
 // ==========================================
 // 2. SHADERS
 // ==========================================
@@ -184,6 +224,7 @@ const particleVertex = /* glsl */ `
 const particleFragment = /* glsl */ `
   uniform sampler2D uTexPetal;
   uniform sampler2D uTexBlob;
+  uniform sampler2D uGradLUT;
   varying vec2 vUv;
   varying float vType;
   varying float vDepth;
@@ -197,57 +238,10 @@ const particleFragment = /* glsl */ `
       // texColor = vec4(1.0);
       finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
-      // Dark framing blobs (deep jade/teal)
+      // Dark framing blobs — color from baked 15-stop depth gradient LUT.
+      // Edit palette in createGradientLUT(), never touch this shader.
       texColor = texture2D(uTexBlob, vUv);
-      
- // 15-LAYER COLOR SYSTEM
-      vec3 whiteCore   = vec3(1.000, 0.996, 0.941);
-      vec3 coreYellow  = vec3(1.000, 0.960, 0.161);
-      vec3 amber       = vec3(1.000, 0.706, 0.353);
-      vec3 coral       = vec3(1.000, 0.541, 0.431);
-      vec3 hotPink     = vec3(0.991, 0.410, 0.510);
-      vec3 magenta     = vec3(0.920, 0.290, 0.580);
-      vec3 orchid      = vec3(0.620, 0.380, 0.720);
-      vec3 spring      = vec3(0.302, 0.702, 0.620);
-      vec3 mintGlow    = vec3(0.047, 0.890, 0.714);
-      vec3 aqua        = vec3(0.020, 0.580, 0.620);
-      vec3 seafoam     = vec3(0.005, 0.318, 0.383);
-      vec3 deepTeal    = vec3(0.004, 0.180, 0.259);
-      vec3 deepBlue    = vec3(0.000, 0.083, 0.137);
-      vec3 darkForest  = vec3(0.002, 0.025, 0.054);
-      vec3 darkJade    = vec3(0.001, 0.014, 0.032);
-
-      if (vDepth < 0.071) {
-        finalColor = mix(whiteCore, coreYellow, smoothstep(0.000, 0.071, vDepth));
-      } else if (vDepth < 0.143) {
-        finalColor = mix(coreYellow, amber, smoothstep(0.071, 0.143, vDepth));
-      } else if (vDepth < 0.214) {
-        finalColor = mix(amber, coral, smoothstep(0.143, 0.214, vDepth));
-      } else if (vDepth < 0.286) {
-        finalColor = mix(coral, hotPink, smoothstep(0.214, 0.286, vDepth));
-      } else if (vDepth < 0.357) {
-        finalColor = mix(hotPink, magenta, smoothstep(0.286, 0.357, vDepth));
-      } else if (vDepth < 0.429) {
-        finalColor = mix(magenta, orchid, smoothstep(0.357, 0.429, vDepth));
-      } else if (vDepth < 0.500) {
-        finalColor = mix(orchid, spring, smoothstep(0.429, 0.500, vDepth));
-      } else if (vDepth < 0.571) {
-        finalColor = mix(spring, mintGlow, smoothstep(0.500, 0.571, vDepth));
-      } else if (vDepth < 0.643) {
-        finalColor = mix(mintGlow, aqua, smoothstep(0.571, 0.643, vDepth));
-      } else if (vDepth < 0.714) {
-        finalColor = mix(aqua, seafoam, smoothstep(0.643, 0.714, vDepth));
-      } else if (vDepth < 0.786) {
-        finalColor = mix(seafoam, deepTeal, smoothstep(0.714, 0.786, vDepth));
-      } else if (vDepth < 0.857) {
-        finalColor = mix(deepTeal, deepBlue, smoothstep(0.786, 0.857, vDepth));
-      } else if (vDepth < 0.929) {
-        finalColor = mix(deepBlue, darkForest, smoothstep(0.857, 0.929, vDepth));
-      } else {
-        finalColor = mix(darkForest, darkJade, smoothstep(0.929, 1.000, vDepth));
-      }
-    
-
+      finalColor = texture2D(uGradLUT, vec2(vDepth, 0.5)).rgb;
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking
@@ -498,6 +492,7 @@ function KiraKiraVortex() {
   const starTex = useMemo(() => createStarTexture(), []);
   const petalTex = useMemo(() => createPetalTexture(), []);
   const blobTex = useMemo(() => createBlobTexture(), []);
+  const gradLUT = useMemo(() => createGradientLUT(), []);
 
   // --- Materials (raw ShaderMaterial — no extend/TS hacks) ---
   const backdropMat = useMemo(
@@ -522,13 +517,14 @@ function KiraKiraVortex() {
           uSpeed: { value: 0.15 },
           uTexPetal: { value: petalTex },
           uTexBlob: { value: blobTex },
+          uGradLUT: { value: gradLUT },
         },
         vertexShader: particleVertex,
         fragmentShader: particleFragment,
         transparent: true,
         depthWrite: false,
       }),
-    [petalTex, blobTex],
+    [petalTex, blobTex, gradLUT],
   );
 
   const flareMat = useMemo(
@@ -587,12 +583,12 @@ function KiraKiraVortex() {
   // --- Dispose all GPU resources on unmount (prevents leaks on HMR/route change) ---
   useEffect(() => {
     return () => {
-      [starTex, petalTex, blobTex].forEach((t) => t.dispose());
+      [starTex, petalTex, blobTex, gradLUT].forEach((t) => t.dispose());
       [backdropGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
       [backdropMat, paintMat, flareMat, glowMat].forEach((m) => m.dispose());
     };
   }, [
-    starTex, petalTex, blobTex,
+    starTex, petalTex, blobTex, gradLUT,
     backdropGeo, paintGeo, flareGeo,
     backdropMat, paintMat, flareMat, glowMat,
   ]);
