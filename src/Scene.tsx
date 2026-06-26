@@ -587,7 +587,7 @@ const sunFragment = /* glsl */ `
     color = mix(color, whiteCore, smoothstep(0.02, 0.0, d + gasNoise * 0.015));
 
     float glow = min(exp(-d * 8.0) + 0.4, 0.85);
-    float alpha = smoothstep(0.42, 0.06, d) * (0.1 + gasNoise * 0.1);
+    float alpha = smoothstep(0.42, 0.06, d) * (0.4 + gasNoise * 0.4);
 
     //change
     // Capped intensity — stays pastel, never blows out
