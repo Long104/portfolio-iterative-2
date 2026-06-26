@@ -329,54 +329,14 @@ const particleFragment = /* glsl */ `
   varying float vType;
   varying float vDepth;
 
-  // ── Inline hash + noise for liquid glassmorphism swirl ──
-  float hash21(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-  }
-  float vnoise(vec2 p) {
-    vec2 i = floor(p); vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(
-      mix(hash21(i + vec2(0,0)), hash21(i + vec2(1,0)), u.x),
-      mix(hash21(i + vec2(0,1)), hash21(i + vec2(1,1)), u.x), u.y);
-  }
-
-  // Glassmorphism palette
-  vec3 glassColor(float t) {
-    vec3 c0 = vec3(0.043, 0.141, 0.216);  // #0B2437 deep navy
-    vec3 c1 = vec3(0.533, 0.937, 0.820);  // #88EFD1 seafoam
-    vec3 c2 = vec3(0.192, 0.980, 0.910);  // #31FAE8 bright cyan
-    vec3 c3 = vec3(0.005, 0.193, 0.290);  // #01314A dark teal
-    vec3 c4 = vec3(0.247, 0.894, 0.792);  // #3FE4CA mint
-    vec3 c5 = vec3(0.894, 0.800, 0.780);  // #E4CCC7 nude beige
-    vec3 c6 = vec3(0.827, 0.988, 0.988);  // #D3FCFC ice blue
-    vec3 c7 = vec3(0.149, 0.784, 0.722);  // #26C8B8 medium teal
-    vec3 c8 = vec3(0.447, 0.976, 0.984);  // #72F9FB electric cyan
-
-    if      (t < 0.125) return mix(c0, c1, t / 0.125);
-    else if (t < 0.250) return mix(c1, c2, (t - 0.125) / 0.125);
-    else if (t < 0.375) return mix(c2, c3, (t - 0.250) / 0.125);
-    else if (t < 0.500) return mix(c3, c4, (t - 0.375) / 0.125);
-    else if (t < 0.625) return mix(c4, c5, (t - 0.500) / 0.125);
-    else if (t < 0.750) return mix(c5, c6, (t - 0.625) / 0.125);
-    else if (t < 0.875) return mix(c6, c7, (t - 0.750) / 0.125);
-    else                 return mix(c7, c8, (t - 0.875) / 0.125);
-  }
-
   void main() {
     vec4 texColor;
     vec3 finalColor;
 
-    // make it less
-    // if (vType < 0.15) {
     if (vType < 0.5) {
-      // Liquid glassmorphism petals — noise-swirled teal/cyan/nude palette
+      // Vibrant peach/pink petals — soft radial alpha from petal texture
       texColor = texture2D(uTexPetal, vUv);
-      vec2 centered = vUv - 0.5;
-      float n1 = vnoise(centered * 6.0 + vDepth * 4.0);
-      float n2 = vnoise(centered * 10.0 - vDepth * 2.0);
-      float swirl = fract(n1 * 0.7 + n2 * 0.3 + vDepth * 0.25);
-      finalColor = glassColor(swirl);
+      finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
     } else {
       // Dark framing blobs — color from baked 15-stop depth gradient LUT.
       // Edit palette in createGradientLUT(), never touch this shader.
