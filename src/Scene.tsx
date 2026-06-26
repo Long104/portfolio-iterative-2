@@ -518,11 +518,12 @@ const flareFragment = /* glsl */ `
   }
 `;
 
-// Layer D: Two stacked fullscreen meshes with additive blending.
-// D2 = wide warm halo (breathes, dimmed, whispers under core)
-// D1 = tight ignition core (flickers, bright, punches through)
-// Both share the same vertex shader + noise texture but sample at
-// different frequencies/scales so they never look correlated.
+// Layer D: Four stacked fullscreen meshes with additive blending.
+// D4 = big pastel sun circle (extra-light.md — wide, FBM noise, breathing)
+// D3 = anisotropic light rays (NEW — directional streaks radiating outward)
+// D2 = bridge glow (NEW — medium radial fill, connects core to sun)
+// D1 = tight ignition core (really-like-it.md — small, bright, hot)
+// All use inline GLSL hash/noise (per-pixel, full resolution, no texture tiling).
 
 const glowVertex = /* glsl */ `
   varying vec2 vUv;
@@ -532,82 +533,195 @@ const glowVertex = /* glsl */ `
   }
 `;
 
-// ── D2: HALO — wide, dim, breathing ──
-const haloFragment = /* glsl */ `
+// Shared GLSL noise functions — duplicated in each shader (no cross-shader sharing)
+// hash + value noise = organic, non-repeating, full resolution
+
+// ── D4: SUN — big pastel circle (from extra-light.md) ──
+const sunFragment = /* glsl */ `
   uniform float uAspect;
   uniform float uTime;
-  uniform sampler2D uNoiseTex;
   varying vec2 vUv;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+  float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+               mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+  }
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < 3; ++i) {
+      v += a * noise(p);
+      p = rot * p * 2.5 + shift;
+      a *= 0.5;
+    }
+    return v;
+  }
 
   void main() {
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
     float dist = length(centered);
+    float angle = atan(centered.y, centered.x);
 
-    // Breathing — subtle radial expansion (visible but not distracting)
-    float breathe = sin(uTime * 1.2) * 0.015;
+    // Fluid gas noise — FBM for rich, layered turbulence
+    float gasNoise = fbm(centered * 4.0 - vec2(uTime * 0.3, uTime * 0.3));
+    float ripple = fbm(vec2(angle * 3.0, uTime * 0.6)) * 0.02;
+    float d = dist + ripple;
 
-    // Slow gas drift — low frequency noise, lazy movement
-    float gasNoise = texture2D(uNoiseTex, centered * 3.0 - vec2(uTime * 0.1)).r;
-    float d = dist + breathe + gasNoise * 0.01;
+    // Pastel sun palette (outside → inside)
+    vec3 whiteCore = vec3(1.0, 1.0, 0.9);      // creamy incandescent heart
+    vec3 yellow    = vec3(1.0, 0.88, 0.2);     // anime yellow
+    vec3 midPink   = vec3(1.0, 0.45, 0.7);     // bubblegum pink aura
+    vec3 outerEdge = vec3(0.95, 0.2, 0.6);     // cosmic magenta edge
 
-    // Warm halo palette (outside → inside) — matches particle/flare colors
-    vec3 whiteCore = vec3(1.0, 0.95, 0.85);   // creamy warm white
-    vec3 amber     = vec3(1.0, 0.55, 0.15);    // warm amber
-    vec3 warmPink  = vec3(1.0, 0.30, 0.35);    // warm coral pink
-    vec3 deepEdge  = vec3(0.80, 0.10, 0.20);   // deep crimson edge
+    vec3 color = outerEdge;
+    color = mix(color, midPink,   smoothstep(0.22, 0.15, d + gasNoise * 0.015));
+    color = mix(color, yellow,    smoothstep(0.15, 0.025, d + gasNoise * 0.015));
+    color = mix(color, whiteCore, smoothstep(0.02, 0.0, d + gasNoise * 0.015));
 
-    vec3 color = deepEdge;
-    color = mix(color, warmPink,  smoothstep(0.22, 0.15, d));
-    color = mix(color, amber,     smoothstep(0.15, 0.025, d));
-    color = mix(color, whiteCore, smoothstep(0.02, 0.0, d));
+    // Capped intensity — stays pastel, never blows out
+    float glow = min(exp(-d * 8.0) + 0.4, 0.85);
+    float alpha = smoothstep(0.42, 0.06, d) * (0.9 + gasNoise * 0.9);
 
-    // Capped glow — stays soft, never blows out
-    float glow = min(exp(-d * 8.0) + 0.3, 0.6);
-
-    // Wide alpha falloff — covers ~40% of screen, dimmed under core
-    float alpha = smoothstep(0.40, 0.08, d) * (0.5 + gasNoise * 0.2);
-
-    gl_FragColor = vec4(color * glow, alpha * 0.5);
+    gl_FragColor = vec4(color * glow, alpha);
 
     #include <colorspace_fragment>
   }
 `;
 
-// ── D1: CORE — tight, bright, flickering ──
-const coreFragment = /* glsl */ `
+// ── D3: RAYS — anisotropic light streaks radiating from center (NEW) ──
+const raysFragment = /* glsl */ `
   uniform float uAspect;
   uniform float uTime;
-  uniform sampler2D uNoiseTex;
   varying vec2 vUv;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+  float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+               mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+  }
+
+  void main() {
+    vec2 centered = vUv - vec2(0.5);
+    centered.x *= uAspect;
+    float dist = length(centered);
+    float angle = atan(centered.y, centered.x);
+
+    // Slow rotation — barely perceptible drift
+    float a = angle + uTime * 0.03;
+
+    // Primary rays (6) + secondary rays (13) — pow sharpens to thin streaks
+    float rays = pow(0.5 + 0.5 * sin(a * 6.0), 8.0);
+    rays += pow(0.5 + 0.5 * sin(a * 13.0 + 1.5), 16.0) * 0.4;
+
+    // Noise variation — breaks perfect symmetry, adds organic flicker
+    float n = noise(vec2(angle * 5.0, uTime * 0.2));
+    rays *= 0.6 + n * 0.8;
+
+    // Distance falloff — visible from core edge to mid-radius
+    float distFade = smoothstep(0.42, 0.06, dist) * smoothstep(0.0, 0.02, dist);
+
+    // Warm color — yellow near center, pink at outer edges
+    vec3 rayColor = mix(
+      vec3(1.0, 0.88, 0.3),    // warm yellow
+      vec3(1.0, 0.4, 0.6),     // soft pink
+      smoothstep(0.05, 0.3, dist)
+    );
+
+    float alpha = rays * distFade * 0.35;
+
+    gl_FragColor = vec4(rayColor * alpha, alpha);
+
+    #include <colorspace_fragment>
+  }
+`;
+
+// ── D2: BRIDGE — medium radial glow filling gap between core and sun (NEW) ──
+const bridgeFragment = /* glsl */ `
+  uniform float uAspect;
+  uniform float uTime;
+  varying vec2 vUv;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+  float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+               mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+  }
 
   void main() {
     vec2 centered = vUv - vec2(0.5);
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Fast flicker — high frequency noise, sharp transient spikes
-    float flickerNoise = texture2D(uNoiseTex, centered * 6.0 - vec2(uTime * 0.5)).r;
-    // Sharpen — most frames stay dim, occasional bright spike (like real fire)
-    float flicker = pow(flickerNoise, 3.0);
-    float d = dist + flickerNoise * 0.01;
+    float gasNoise = noise(centered * 4.0 - vec2(uTime * 0.2));
+    float d = dist + gasNoise * 0.012;
 
-    // Hot core palette (outside → inside) — hotter than halo
-    vec3 whiteCore = vec3(1.0, 1.0, 0.95);    // incandescent white heart
-    vec3 molten    = vec3(1.0, 0.65, 0.10);    // molten amber ring
-    vec3 deepCrim  = vec3(0.95, 0.12, 0.15);   // deep crimson edge
+    // Bridge palette — connects hot core to pastel sun
+    vec3 whiteCore = vec3(1.0, 0.95, 0.8);    // warm white
+    vec3 gold      = vec3(1.0, 0.75, 0.2);     // gold
+    vec3 warmPink  = vec3(1.0, 0.35, 0.5);     // warm pink
 
-    vec3 color = deepCrim;
-    color = mix(color, molten,    smoothstep(0.08, 0.04, d));
-    color = mix(color, whiteCore, smoothstep(0.03, 0.0, d));
+    vec3 color = warmPink;
+    color = mix(color, gold,      smoothstep(0.15, 0.06, d));
+    color = mix(color, whiteCore, smoothstep(0.04, 0.0, d));
+
+    float glow = exp(-d * 6.0);
+    float alpha = smoothstep(0.25, 0.05, d);
+
+    gl_FragColor = vec4(color * glow * 0.8, alpha * 0.6);
+
+    #include <colorspace_fragment>
+  }
+`;
+
+// ── D1: CORE — tight ignition point (from really-like-it.md) ──
+const coreFragment = /* glsl */ `
+  uniform float uAspect;
+  uniform float uTime;
+  varying vec2 vUv;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+  float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+               mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+  }
+
+  void main() {
+    vec2 centered = vUv - vec2(0.5);
+    centered.x *= uAspect;
+    float dist = length(centered);
+
+    float gasNoise = noise(centered * 6.0 - vec2(uTime * 0.5, uTime * 0.5));
+    float d = dist + gasNoise * 0.01;
+
+    // Hot core palette (outside → inside)
+    vec3 whiteCore = vec3(1.0, 1.0, 0.9);
+    vec3 sunYellow = vec3(1.0, 0.80, 0.1);
+    vec3 neonPink  = vec3(0.95, 0.15, 0.45);
+
+    vec3 color = neonPink;
+    color = mix(color, sunYellow, smoothstep(0.08, 0.04, d));
+    color = mix(color, whiteCore, smoothstep(0.03, 0.00, d));
 
     // Tight falloff — kills everything past radius 0.12
     float alpha = smoothstep(0.12, 0.01, d);
 
-    // Flicker modulates brightness — dim baseline, spikes bright
-    float intensity = 1.1 + flicker * 0.4;
-
-    gl_FragColor = vec4(color * intensity, alpha);
+    gl_FragColor = vec4(color * 1.3, alpha);
 
     #include <colorspace_fragment>
   }
@@ -665,7 +779,7 @@ function KiraKiraVortex() {
   const petalTex = useMemo(() => createPetalTexture(), []);
   const blobTex = useMemo(() => createBlobTexture(), []);
   const gradLUT = useMemo(() => createGradientLUT(), []);
-  const noiseTex = useMemo(() => createNoiseTexture(), []);
+  const noiseTex = useMemo(() => createNoiseTexture(), []); // unused by glow shaders (inline noise) — kept for potential future use
 
   // --- Materials (raw ShaderMaterial — no extend/TS hacks) ---
   const backdropMat = useMemo(
@@ -717,33 +831,67 @@ function KiraKiraVortex() {
     [starTex],
   );
 
-  // D2: Halo — wide, dim, breathing
-  const haloMat = useMemo(
+  // D4: Sun — big pastel circle
+  const sunMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
-          uNoiseTex: { value: noiseTex },
         },
         vertexShader: glowVertex,
-        fragmentShader: haloFragment,
+        fragmentShader: sunFragment,
         transparent: true,
         depthWrite: false,
         depthTest: false,
         blending: THREE.AdditiveBlending,
       }),
-    [noiseTex],
+    [],
   );
 
-  // D1: Core — tight, bright, flickering
+  // D3: Rays — anisotropic light streaks
+  const raysMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uAspect: { value: window.innerWidth / window.innerHeight },
+          uTime: { value: 0 },
+        },
+        vertexShader: glowVertex,
+        fragmentShader: raysFragment,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [],
+  );
+
+  // D2: Bridge — medium radial glow
+  const bridgeMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uAspect: { value: window.innerWidth / window.innerHeight },
+          uTime: { value: 0 },
+        },
+        vertexShader: glowVertex,
+        fragmentShader: bridgeFragment,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [],
+  );
+
+  // D1: Core — tight ignition
   const coreMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
-          uNoiseTex: { value: noiseTex },
         },
         vertexShader: glowVertex,
         fragmentShader: coreFragment,
@@ -752,11 +900,11 @@ function KiraKiraVortex() {
         depthTest: false,
         blending: THREE.AdditiveBlending,
       }),
-    [noiseTex],
+    [],
   );
 
   // --- Geometry with instanced attributes ---
-  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
+  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0);
@@ -779,7 +927,7 @@ function KiraKiraVortex() {
     return () => {
       [starTex, petalTex, blobTex, gradLUT, noiseTex].forEach((t) => t.dispose());
       [backdropGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
-      [backdropMat, paintMat, flareMat, haloMat, coreMat].forEach((m) =>
+      [backdropMat, paintMat, flareMat, sunMat, raysMat, bridgeMat, coreMat].forEach((m) =>
         m.dispose(),
       );
     };
@@ -795,7 +943,9 @@ function KiraKiraVortex() {
     backdropMat,
     paintMat,
     flareMat,
-    haloMat,
+    sunMat,
+    raysMat,
+    bridgeMat,
     coreMat,
   ]);
 
@@ -804,10 +954,14 @@ function KiraKiraVortex() {
     const t = state.clock.getElapsedTime();
     paintMat.uniforms.uTime.value = t;
     flareMat.uniforms.uTime.value = t;
-    haloMat.uniforms.uTime.value = t;
+    sunMat.uniforms.uTime.value = t;
+    raysMat.uniforms.uTime.value = t;
+    bridgeMat.uniforms.uTime.value = t;
     coreMat.uniforms.uTime.value = t;
     const aspect = state.size.width / state.size.height;
-    haloMat.uniforms.uAspect.value = aspect;
+    sunMat.uniforms.uAspect.value = aspect;
+    raysMat.uniforms.uAspect.value = aspect;
+    bridgeMat.uniforms.uAspect.value = aspect;
     coreMat.uniforms.uAspect.value = aspect;
     backdropMat.uniforms.uAspect.value = aspect;
   });
@@ -829,11 +983,15 @@ function KiraKiraVortex() {
         frustumCulled={false}
       />
 
-      {/* Layer D: Two stacked fullscreen glow meshes (additive)
-          D2 = wide warm halo (breathes, dimmed — renderOrder 1)
-          D1 = tight ignition core (flickers, bright — renderOrder 2) */}
-      <mesh geometry={backdropGeo} material={haloMat} renderOrder={1} />
-      <mesh geometry={backdropGeo} material={coreMat} renderOrder={2} />
+      {/* Layer D: Four stacked fullscreen glow meshes (additive)
+          D4 = big pastel sun circle (renderOrder 1)
+          D3 = anisotropic light rays (renderOrder 2)
+          D2 = bridge glow connecting core to sun (renderOrder 3)
+          D1 = tight ignition core (renderOrder 4) */}
+      <mesh geometry={backdropGeo} material={sunMat} renderOrder={1} />
+      <mesh geometry={backdropGeo} material={raysMat} renderOrder={2} />
+      <mesh geometry={backdropGeo} material={bridgeMat} renderOrder={3} />
+      <mesh geometry={backdropGeo} material={coreMat} renderOrder={4} />
     </>
   );
 }
