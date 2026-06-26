@@ -159,6 +159,15 @@ function createGradientLUT(): THREE.Texture {
     [0.945, "#072D42"], // darkJade
     [1.0, "#000508"], // deepBlack
 
+
+    // here
+// [0.857, "#00161d"], // deepBlue
+//     // [0.857, "#01141C"], // nearBlack
+//     [0.929, "#013D50"], // darkForest
+//     [0.945, "#072D42"], // darkJade
+//     [0.929, "#000A10"], // almostBlack
+//     [1.0, "#000508"], // deepBlack
+
 // [0.857, "#00161d"], // deepBlue
 //     // [0.857, "#01141C"], // nearBlack
 //     [0.929, "#013D50"], // darkForest
@@ -271,7 +280,7 @@ const particleVertex = /* glsl */ `
     pos.x += cos(wave) * 0.5;
     pos.y += sin(wave) * 0.5;
 
-    vDepth = pow(clamp((pos.z + 60.0) / 65.0, 0.0, 1.0), 1.5);
+    vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
 
     // Scale: microscopic far away, massive near camera
     float baseScale = (vType < 0.5) ? 1.0 : 2.5;
@@ -303,8 +312,11 @@ const particleFragment = /* glsl */ `
     vec3 finalColor;
 
     if (vType < 0.5) {
-      // Vibrant peach/pink petals — solid alpha (no texture lookup needed)
-      finalColor = mix(vec3(1.0, 0.3, 0.55), vec3(1.0, 0.6, 0.75), vDepth);
+      // Semi-transparent glass/smoke wisps — light tint, soft circular blob shape
+      texColor = texture2D(uTexBlob, vUv);
+      finalColor = vec3(1.0, 0.92, 0.96); // very light warm white tint
+      // Extra fade — wisps disappear as they approach camera
+      alphaFade *= 0.12 + 0.15 * vDepth;
     } else {
       // Dark framing blobs — color from baked 15-stop depth gradient LUT.
       // Edit palette in createGradientLUT(), never touch this shader.
