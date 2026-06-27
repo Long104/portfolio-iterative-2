@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import {
+  AdditiveBlending,
+  CanvasTexture,
+  InstancedBufferAttribute,
+  LinearFilter,
+  PlaneGeometry,
+  ShaderMaterial,
+  SRGBColorSpace,
+  Texture,
+} from "three";
 
 // ==========================================
 // 1. PROCEDURAL TEXTURES (Canvas-based)
@@ -8,7 +17,7 @@ import * as THREE from "three";
 //    in the fragment shaders.
 // ==========================================
 
-function createStarTexture(): THREE.Texture {
+function createStarTexture(): Texture {
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -42,12 +51,12 @@ function createStarTexture(): THREE.Texture {
   }
   ctx.restore();
 
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = new CanvasTexture(canvas);
   tex.needsUpdate = true;
   return tex;
 }
 
-function createPetalTexture(): THREE.Texture {
+function createPetalTexture(): Texture {
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -64,12 +73,12 @@ function createPetalTexture(): THREE.Texture {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
 
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = new CanvasTexture(canvas);
   tex.needsUpdate = true;
   return tex;
 }
 
-function createBlobTexture(): THREE.Texture {
+function createBlobTexture(): Texture {
   const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -88,14 +97,14 @@ function createBlobTexture(): THREE.Texture {
   ctx.arc(c, c, c * 0.85, 0, Math.PI * 2);
   ctx.fill();
 
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = new CanvasTexture(canvas);
   tex.needsUpdate = true;
   return tex;
 }
 
 // 15-stop depth gradient baked into a 256×1 LUT.
 // Edit colors here — no shader changes ever needed.
-function createGradientLUT(): THREE.Texture {
+function createGradientLUT(): Texture {
   const w = 256;
   const canvas = document.createElement("canvas");
   canvas.width = w;
@@ -223,14 +232,14 @@ function createGradientLUT(): THREE.Texture {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, 1);
 
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.minFilter = THREE.LinearFilter; // GPU interpolates between stops for free
-  tex.magFilter = THREE.LinearFilter;
+  const tex = new CanvasTexture(canvas);
+  tex.minFilter = LinearFilter; // GPU interpolates between stops for free
+  tex.magFilter = LinearFilter;
 
   // old
-  // tex.colorSpace = THREE.LinearSRGBColorSpace; // raw values — no sRGB linearization
+  // tex.colorSpace = LinearSRGBColorSpace; // raw values — no sRGB linearization
   // To this:
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = SRGBColorSpace;
   tex.needsUpdate = true;
   return tex;
 }
@@ -306,7 +315,7 @@ const particleVertex = /* glsl */ `
 
     // Scale: microscopic far away, massive near camera
     float baseScale = (vType < 0.5) ? 1.0 : 2.5;
-    float scale = baseScale * (0.2 + pow(vDepth, 3.0) * 15.0);
+    float scale = baseScale * (0.2 + vDepth * vDepth * vDepth * 15.0);
 
 
     // Spin particles along the current
@@ -377,7 +386,7 @@ const flareVertex = /* glsl */ `
     if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-    float scale = 0.5 * (0.2 + pow(vDepth, 2.5) * 6.0);
+    float scale = 0.5 * (0.2 + vDepth * vDepth * sqrt(vDepth) * 6.0);
 
     // Radial forward-motion streak
     vec3 transformed = position;
@@ -715,7 +724,7 @@ function KiraKiraVortex() {
   // with imperative Three.js uniform mutations.
   const backdropMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
         },
@@ -729,7 +738,7 @@ function KiraKiraVortex() {
 
   const paintMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
           uSpeed: { value: 0.15 },
@@ -747,7 +756,7 @@ function KiraKiraVortex() {
 
   const flareMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
           uSpeed: { value: 0.2 },
@@ -757,7 +766,7 @@ function KiraKiraVortex() {
         fragmentShader: flareFragment,
         transparent: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
+        blending: AdditiveBlending,
       }),
     [starTex],
   );
@@ -765,7 +774,7 @@ function KiraKiraVortex() {
   // D4: Sun — big pastel circle
   const sunMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
@@ -775,7 +784,7 @@ function KiraKiraVortex() {
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        blending: THREE.AdditiveBlending,
+        blending: AdditiveBlending,
       }),
     [],
   );
@@ -783,7 +792,7 @@ function KiraKiraVortex() {
   // D3: Rays — anisotropic light streaks
   const raysMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
@@ -793,7 +802,7 @@ function KiraKiraVortex() {
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        blending: THREE.AdditiveBlending,
+        blending: AdditiveBlending,
       }),
     [],
   );
@@ -801,7 +810,7 @@ function KiraKiraVortex() {
   // D2: Bridge — medium radial glow
   const bridgeMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
@@ -811,7 +820,7 @@ function KiraKiraVortex() {
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        blending: THREE.AdditiveBlending,
+        blending: AdditiveBlending,
       }),
     [],
   );
@@ -819,7 +828,7 @@ function KiraKiraVortex() {
   // D1: Core — tight ignition
   const coreMat = useMemo(
     () =>
-      new THREE.ShaderMaterial({
+      new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
@@ -829,27 +838,27 @@ function KiraKiraVortex() {
         transparent: true,
         depthWrite: false,
         depthTest: false,
-        blending: THREE.AdditiveBlending,
+        blending: AdditiveBlending,
       }),
     [],
   );
 
   // --- Geometry with instanced attributes ---
-  const backdropGeo = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
+  const backdropGeo = useMemo(() => new PlaneGeometry(2, 2), []);
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 14.0);
-    const geo = new THREE.PlaneGeometry(0.4, 0.4);
-    geo.setAttribute("aInitialPos", new THREE.InstancedBufferAttribute(pos, 3));
-    geo.setAttribute("aRandoms", new THREE.InstancedBufferAttribute(rand, 3));
+    const geo = new PlaneGeometry(0.4, 0.4);
+    geo.setAttribute("aInitialPos", new InstancedBufferAttribute(pos, 3));
+    geo.setAttribute("aRandoms", new InstancedBufferAttribute(rand, 3));
     return geo;
   }, []);
 
   const flareGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(FLARE_COUNT, 10.0);
-    const geo = new THREE.PlaneGeometry(0.3, 0.3);
-    geo.setAttribute("aInitialPos", new THREE.InstancedBufferAttribute(pos, 3));
-    geo.setAttribute("aRandoms", new THREE.InstancedBufferAttribute(rand, 3));
+    const geo = new PlaneGeometry(0.3, 0.3);
+    geo.setAttribute("aInitialPos", new InstancedBufferAttribute(pos, 3));
+    geo.setAttribute("aRandoms", new InstancedBufferAttribute(rand, 3));
     return geo;
   }, []);
 
@@ -921,35 +930,47 @@ return (
 // 4. FRAME LIMITER + EXPORT
 // ==========================================
 
-// Caps render rate to 30fps and pauses entirely when the tab is hidden.
+// Caps render rate to 30fps using requestAnimationFrame (vsync-aligned).
 // In frameloop="demand" mode, R3F only renders when invalidate() is called,
 // so the GPU genuinely idles between frames instead of spinning at 60-120fps.
+// rAF auto-pauses when the tab is hidden — no manual visibility handling needed.
 function FrameLimiter({ fps = 30 }: { fps?: number }) {
   const invalidate = useThree((state) => state.invalidate);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef(0);
 
   useEffect(() => {
-    function start() {
-      if (intervalRef.current) return;
-      intervalRef.current = setInterval(() => invalidate(), 1000 / fps);
-    }
-    function stop() {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    const interval = 1000 / fps;
+
+    function loop(now: number) {
+      rafRef.current = requestAnimationFrame(loop);
+      const elapsed = now - lastTimeRef.current;
+      if (elapsed >= interval) {
+        // Reset with remainder to avoid drift
+        lastTimeRef.current = now - (elapsed % interval);
+        invalidate();
       }
     }
 
     function onVisibilityChange() {
-      if (document.hidden) stop();
-      else start();
+      if (document.hidden) {
+        if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+      } else {
+        if (rafRef.current === null) {
+          lastTimeRef.current = 0;
+          rafRef.current = requestAnimationFrame(loop);
+        }
+      }
     }
 
-    start();
+    rafRef.current = requestAnimationFrame(loop);
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      stop();
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [fps, invalidate]);
