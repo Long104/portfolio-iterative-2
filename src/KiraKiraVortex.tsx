@@ -13,6 +13,7 @@ import { particleVertex, particleFragment } from "./shaders/particles";
 import { flareVertex, flareFragment } from "./shaders/flare";
 import { glowVertex, glowFragment } from "./shaders/glow";
 import { PAINT_COUNT, FLARE_COUNT } from "./perf";
+import { useAudioEngine } from "./useAudioEngine";
 
 // ==========================================
 // 3. SCENE COMPONENT
@@ -36,6 +37,9 @@ function generateInstanceData(count: number, maxRadius: number) {
 }
 
 export default function KiraKiraVortex() {
+  // --- Audio reactivity ---
+  const { getData } = useAudioEngine();
+
   // --- StrictMode-safe dispose flag ---
   // In dev StrictMode, React mount→unmount→mount. The cleanup would dispose
   // GPU resources that the second mount still references. Deferring disposal
@@ -59,6 +63,7 @@ export default function KiraKiraVortex() {
       new ShaderMaterial({
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
+          uBass: { value: 0 },
         },
         vertexShader: backdropVertex,
         fragmentShader: backdropFragment,
@@ -77,6 +82,9 @@ export default function KiraKiraVortex() {
           uTexPetal: { value: petalTex },
           uTexBlob: { value: blobTex },
           uGradLUT: { value: gradLUT },
+          uBass: { value: 0 },
+          uMid: { value: 0 },
+          uTreble: { value: 0 },
         },
         vertexShader: particleVertex,
         fragmentShader: particleFragment,
@@ -93,6 +101,9 @@ export default function KiraKiraVortex() {
           uTime: { value: 0 },
           uSpeed: { value: 0.2 },
           uTexStar: { value: starTex },
+          uBass: { value: 0 },
+          uTreble: { value: 0 },
+          uAudioLevel: { value: 0 },
         },
         vertexShader: flareVertex,
         fragmentShader: flareFragment,
@@ -110,6 +121,10 @@ export default function KiraKiraVortex() {
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
+          uBass: { value: 0 },
+          uMid: { value: 0 },
+          uTreble: { value: 0 },
+          uAudioLevel: { value: 0 },
         },
         vertexShader: glowVertex,
         fragmentShader: glowFragment,
@@ -163,12 +178,33 @@ export default function KiraKiraVortex() {
   // --- Animation loop ---
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
+    const audio = getData();
+    const aspect = state.size.width / state.size.height;
+
+    // Time uniforms
     paintMat.uniforms.uTime.value = t;
     flareMat.uniforms.uTime.value = t;
     glowMat.uniforms.uTime.value = t;
-    const aspect = state.size.width / state.size.height;
+
+    // Aspect uniforms
     glowMat.uniforms.uAspect.value = aspect;
     backdropMat.uniforms.uAspect.value = aspect;
+
+    // Audio uniforms → push to all materials
+    paintMat.uniforms.uBass.value = audio.bass;
+    paintMat.uniforms.uMid.value = audio.mid;
+    paintMat.uniforms.uTreble.value = audio.treble;
+
+    flareMat.uniforms.uBass.value = audio.bass;
+    flareMat.uniforms.uTreble.value = audio.treble;
+    flareMat.uniforms.uAudioLevel.value = audio.level;
+
+    glowMat.uniforms.uBass.value = audio.bass;
+    glowMat.uniforms.uMid.value = audio.mid;
+    glowMat.uniforms.uTreble.value = audio.treble;
+    glowMat.uniforms.uAudioLevel.value = audio.level;
+
+    backdropMat.uniforms.uBass.value = audio.bass;
   });
 
   return (

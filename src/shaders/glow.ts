@@ -20,6 +20,10 @@ export const glowVertex = /* glsl */ `
 export const glowFragment = /* glsl */ `
   uniform float uAspect;
   uniform float uTime;
+  uniform float uBass;
+  uniform float uMid;
+  uniform float uTreble;
+  uniform float uAudioLevel;
   varying vec2 vUv;
 
   float hash(vec2 p) {
@@ -48,8 +52,9 @@ export const glowFragment = /* glsl */ `
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Master early-out — max reach of any layer is 0.42
-    if (dist > 0.42) discard;
+    // Master early-out — max reach of any layer expands with bass
+    float maxReach = 0.42 + uBass * 0.08;
+    if (dist > maxReach) discard;
 
     float angle = atan(centered.y, centered.x);
     vec3 totalColor = vec3(0.0);
@@ -73,6 +78,10 @@ export const glowFragment = /* glsl */ `
       float glow = min(exp(-d * 8.0) + 0.4, 0.85);
       float alpha = smoothstep(0.42, 0.06, d) * (0.1 + gasNoise * 0.1);
 
+      // Audio: bass intensifies sun, level broadens its reach
+      glow *= 1.0 + uBass * 0.6;
+      alpha *= 1.0 + uAudioLevel * 0.8;
+
       totalColor += color * glow * alpha;
     }
 
@@ -95,6 +104,9 @@ export const glowFragment = /* glsl */ `
 
       float alpha = rays * distFade * 0.2;
 
+      // Audio: treble sharpens and brightens the rays
+      alpha *= 1.0 + uTreble * 1.5;
+
       totalColor += rayColor * alpha * alpha;
     }
 
@@ -114,6 +126,9 @@ export const glowFragment = /* glsl */ `
       float glow = exp(-d * 6.0);
       float alpha = smoothstep(0.25, 0.05, d);
 
+      // Audio: mid frequencies pulse the bridge
+      glow *= 1.0 + uMid * 0.5;
+
       totalColor += color * glow * 0.8 * alpha * 0.5;
     }
 
@@ -132,7 +147,10 @@ export const glowFragment = /* glsl */ `
 
       float alpha = smoothstep(0.17, 0.01, d);
 
-      totalColor += color * 1.6 * alpha;
+      // Audio: core blazes hotter with bass + overall level
+      float coreBoost = 1.6 + uBass * 1.2 + uAudioLevel * 0.5;
+
+      totalColor += color * coreBoost * alpha;
     }
 
     if (dot(totalColor, totalColor) < 0.000001) discard;
