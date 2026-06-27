@@ -28,7 +28,7 @@ export const backdropFragment = /* glsl */ `
     if (dist > 0.40) color = mix(color, teal, smoothstep(0.40, 0.70, dist));
 
     // Audio: bass makes the void breathe — barely perceptible
-    color *= 1.0 + uBass * 0.03;
+    color *= 1.0 + uBass * 0.06;
 
     gl_FragColor = vec4(color, 1.0);
 

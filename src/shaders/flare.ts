@@ -25,7 +25,7 @@ export const flareVertex = /* glsl */ `
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
     // Treble gives subtle scale lift — gentle sparkle, not a bloom
-    float audioScale = 1.0 + uTreble * 0.15;
+    float audioScale = 1.0 + uTreble * 0.3;
     float scale = 0.5 * (0.2 + vDepth * vDepth * sqrt(vDepth) * 6.0) * audioScale;
 
     // Radial forward-motion streak — constant stretch, no audio
@@ -69,7 +69,7 @@ export const flareFragment = /* glsl */ `
 
     vec3 glow = colors[index];
     // Treble adds gentle sparkle — subtle brightness lift, not a flash
-    glow *= 1.0 + vTreblePulse * 0.2;
+    glow *= 1.0 + vTreblePulse * 0.4;
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
     gl_FragColor = vec4(glow, texColor.a * alphaFade);

@@ -26,7 +26,7 @@ export const particleVertex = /* glsl */ `
     if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
 
     // Liquid water-flow math — mid gently sways the wave amplitude
-    float waveAmp = 0.5 + uMid * 0.3;
+    float waveAmp = 0.5 + uMid * 0.5;
     float wave = sin(pos.z * 0.8 + uTime + aRandoms.y * 6.28) * waveAmp;
     pos.x += cos(wave) * 0.5;
     pos.y += sin(wave) * 0.5;
@@ -35,7 +35,7 @@ export const particleVertex = /* glsl */ `
 
     // Scale: microscopic far away, massive near camera
     // Mid gives a subtle bloom — particles "breathe" with the music
-    float audioScale = 1.0 + uMid * 0.2;
+    float audioScale = 1.0 + uMid * 0.4;
     float baseScale = (vType < 0.5) ? 1.0 : 2.5;
     float scale = baseScale * (0.2 + vDepth * vDepth * vDepth * 15.0) * audioScale;
 
@@ -76,7 +76,7 @@ export const particleFragment = /* glsl */ `
       texColor = texture2D(uTexBlob, vUv);
       finalColor = texture2D(uGradLUT, vec2(vDepth, 0.5)).rgb;
       // Subtle mid-driven brightness — barely perceptible color lift
-      finalColor *= 1.0 + vMidPulse * 0.08;
+      finalColor *= 1.0 + vMidPulse * 0.15;
     }
 
     // Proximity fade — disappear at camera lens to prevent screen blocking

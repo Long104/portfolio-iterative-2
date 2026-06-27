@@ -52,8 +52,8 @@ export const glowFragment = /* glsl */ `
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Master early-out
-    if (dist > 0.42) discard;
+    // Master early-out — sun bass slightly expands the reach
+    if (dist > 0.42 + uSunBass * 0.04) discard;
 
     float angle = atan(centered.y, centered.x);
     vec3 totalColor = vec3(0.0);
@@ -77,8 +77,9 @@ export const glowFragment = /* glsl */ `
       float glow = min(exp(-d * 8.0) + 0.4, 0.85);
       float alpha = smoothstep(0.42, 0.06, d) * (0.1 + gasNoise * 0.1);
 
-      // Audio: slow bass gently intensifies the sun — subtle breathing
-      glow *= 1.0 + uSunBass * 0.15;
+      // Audio: slow bass intensifies the sun — visible breathing
+      glow *= 1.0 + uSunBass * 0.35;
+      alpha *= 1.0 + uSunBass * 0.25;
 
       totalColor += color * glow * alpha;
     }
@@ -102,8 +103,8 @@ export const glowFragment = /* glsl */ `
 
       float alpha = rays * distFade * 0.2;
 
-      // Audio: treble gently sharpens rays
-      alpha *= 1.0 + uRaysTreble * 0.3;
+      // Audio: treble sharpens rays — visible shimmer
+      alpha *= 1.0 + uRaysTreble * 0.6;
 
       totalColor += rayColor * alpha * alpha;
     }
@@ -124,8 +125,8 @@ export const glowFragment = /* glsl */ `
       float glow = exp(-d * 6.0);
       float alpha = smoothstep(0.25, 0.05, d);
 
-      // Audio: mid gently pulses the bridge
-      glow *= 1.0 + uBridgeMid * 0.1;
+      // Audio: mid pulses the bridge
+      glow *= 1.0 + uBridgeMid * 0.25;
 
       totalColor += color * glow * 0.8 * alpha * 0.5;
     }
@@ -146,7 +147,7 @@ export const glowFragment = /* glsl */ `
       float alpha = smoothstep(0.17, 0.01, d);
 
       // Audio: core is the main responder — fast bass makes the heart pulse
-      float coreBoost = 1.6 + uCoreBass * 0.3;
+      float coreBoost = 1.6 + uCoreBass * 0.8;
 
       totalColor += color * coreBoost * alpha;
     }

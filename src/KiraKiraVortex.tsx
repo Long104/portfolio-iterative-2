@@ -197,7 +197,7 @@ export default function KiraKiraVortex() {
     s.sunBass      = s.sunBass      + (raw.bass   - s.sunBass)      * 0.25;
     s.raysTreble   = s.raysTreble   + (raw.treble - s.raysTreble)   * 0.40;
     s.bridgeMid    = s.bridgeMid    + (raw.mid    - s.bridgeMid)    * 0.30;
-    s.particlesMid = s.particlesMid + (raw.mid    - s.particlesMid) * 0.12;
+    s.particlesMid = s.particlesMid + (raw.mid    - s.particlesMid) * 0.20;
     s.flaresTreble = s.flaresTreble + (raw.treble - s.flaresTreble) * 0.35;
     s.backdropBass = s.backdropBass + (raw.bass   - s.backdropBass) * 0.08;
 
