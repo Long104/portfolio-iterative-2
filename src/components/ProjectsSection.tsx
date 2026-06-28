@@ -47,10 +47,10 @@ export default function ProjectsSection() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(2, 1fr)",
           gap: "1.25rem",
           width: "100%",
-          maxWidth: "1040px",
+          maxWidth: "780px",
           padding: "0 1rem",
         }}
       >
