@@ -4,19 +4,15 @@ import SparkleSystem from "./SparkleSystem";
 import FrameLimiter from "./FrameLimiter";
 import { PERF_TIER, MAX_DPR } from "./perf";
 
-interface SceneProps {
-  scrollProgress?: number;
-}
-
-export default function Scene({ scrollProgress = 0 }: SceneProps) {
+export default function Scene() {
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 0,
-        // background: "#000406",
-        // background: "#032034",
+        // background: "#000406";
+        // background: "#032034";
         background: "#01314A",
       }}
     >
@@ -32,7 +28,7 @@ export default function Scene({ scrollProgress = 0 }: SceneProps) {
         performance={{ min: 0.5 }} // R3F adaptive: drops DPR if FPS dips
       >
         <FrameLimiter fps={30} />
-        <KiraKiraVortex scrollProgress={scrollProgress} />
+        <KiraKiraVortex />
         <SparkleSystem />
       </Canvas>
     </div>

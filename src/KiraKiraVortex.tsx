@@ -3,7 +3,6 @@ import { useFrame } from "@react-three/fiber";
 import {
   AdditiveBlending,
   InstancedBufferAttribute,
-  InstancedMesh,
   PlaneGeometry,
   ShaderMaterial,
 } from "three";
@@ -37,17 +36,9 @@ function generateInstanceData(count: number, maxRadius: number) {
   return { pos, rand };
 }
 
-interface KiraKiraVortexProps {
-  scrollProgress?: number;
-}
-
-export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexProps) {
+export default function KiraKiraVortex() {
   // --- Audio reactivity ---
   const { getData } = useAudioEngine();
-
-  // --- Mesh refs for layer rotation (Option B) ---
-  const paintRef = useRef<InstancedMesh>(null);
-  const flareRef = useRef<InstancedMesh>(null);
 
   // Per-layer smoothing — each visual element responds at a different speed.
   // This creates a staggered cascade: core snaps fast, particles lag behind.
@@ -125,7 +116,6 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
   );
 
   // MERGED GLOW: Sun + Rays + Bridge + Core in 1 pass
-  // Now with scroll-based uScroll + uBreath uniforms for color shift & breath
   const glowMat = useMemo(
     () =>
       new ShaderMaterial({
@@ -136,8 +126,6 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
           uSunBass: { value: 0 },
           uRaysTreble: { value: 0 },
           uBridgeMid: { value: 0 },
-          uScroll: { value: 0 },    // Option C: color shift
-          uBreath: { value: 0 },    // Option C: intensity swell
         },
         vertexShader: glowVertex,
         fragmentShader: glowFragment,
@@ -204,16 +192,16 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
 
     const aspect = state.size.width / state.size.height;
 
-    // ── TIMING ──
+    // Time
     paintMat.uniforms.uTime.value = t;
     flareMat.uniforms.uTime.value = t;
     glowMat.uniforms.uTime.value = t;
 
-    // ── ASPECT ──
+    // Aspect
     glowMat.uniforms.uAspect.value = aspect;
     backdropMat.uniforms.uAspect.value = aspect;
 
-    // ── AUDIO → MATERIALS (unchanged) ──
+    // Push smoothed audio → materials
     glowMat.uniforms.uCoreBass.value = s.coreBass;
     glowMat.uniforms.uSunBass.value = s.sunBass;
     glowMat.uniforms.uRaysTreble.value = s.raysTreble;
@@ -221,38 +209,6 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
     paintMat.uniforms.uMid.value = s.particlesMid;
     flareMat.uniforms.uTreble.value = s.flaresTreble;
     backdropMat.uniforms.uBass.value = s.backdropBass;
-
-    // ══════════════════════════════════════════════
-    // OPTION B: Layer rotation (parallax scroll)
-    // Each layer rotates at a different speed around Y
-    // to create depth: flares (fast) → particles (mid) → glow/core (static)
-    // ══════════════════════════════════════════════
-    // Subtle layer rotation: max ~10° (π/18) per full scroll — gentle tunnel feel
-    const scrollAngle = scrollProgress * Math.PI / 18;
-
-    if (paintRef.current) {
-      paintRef.current.rotation.y = scrollAngle;
-    }
-    if (flareRef.current) {
-      // Flares rotate faster for parallax depth (closer feel)
-      flareRef.current.rotation.y = scrollAngle * 1.8;
-    }
-
-    // ══════════════════════════════════════════════
-    // OPTION C: Scroll-driven effects
-    // ══════════════════════════════════════════════
-
-    // Speed pulse — particles + flares speed up in middle, slow at ends
-    const speedCurve = 1.0 + Math.sin(scrollProgress * Math.PI) * 1.0;
-    paintMat.uniforms.uSpeed.value = 0.15 * speedCurve;
-    flareMat.uniforms.uSpeed.value = 0.2 * speedCurve;
-
-    // Color shift + Breath → passed to glow shader
-    glowMat.uniforms.uScroll.value = scrollProgress;
-
-    // Breath: sinusoidal swell that peaks at mid-scroll (0→1→0)
-    const breath = 0.5 + 0.5 * Math.sin(scrollProgress * Math.PI);
-    glowMat.uniforms.uBreath.value = breath;
   });
 
   return (
@@ -263,17 +219,15 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
       {/* 2. Merged Glow (Sun + Rays + Bridge + Core — single pass) */}
       <mesh geometry={backdropGeo} material={glowMat} renderOrder={-4} />
 
-      {/* 3. Fluid Particles — rotates with scroll (1x) */}
+      {/* 3. Fluid Particles & Water Bubbles */}
       <instancedMesh
-        ref={paintRef}
         args={[paintGeo, paintMat, PAINT_COUNT]}
         frustumCulled={false}
         renderOrder={1}
       />
 
-      {/* 4. Saturated Star Flares — rotates with scroll (1.8x, parallax closer) */}
+      {/* 4. Saturated Star Flares */}
       <instancedMesh 
-        ref={flareRef}
         args={[flareGeo, flareMat, FLARE_COUNT]} 
         frustumCulled={false} 
         renderOrder={2}
