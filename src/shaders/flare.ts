@@ -25,9 +25,8 @@ export const flareVertex = /* glsl */ `
     if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-    // ~65% reactive flares scale up on treble
-    float reactive = smoothstep(0.3, 0.6, vColorMix);
-    float audioScale = 1.0 + uTreble * reactive * 0.6;
+    // ALL flares scale up on treble — uniform
+    float audioScale = 1.0 + uTreble * 0.6;
     float scale = 0.5 * (0.2 + vDepth * vDepth * sqrt(vDepth) * 6.0) * audioScale;
 
     // Radial forward-motion streak
@@ -70,9 +69,8 @@ export const flareFragment = /* glsl */ `
     index = clamp(index, 0, 9);
 
     vec3 glow = colors[index];
-    // Near-dark at rest (×0.12). Reactive flares explode on treble.
-    float reactive = smoothstep(0.3, 0.6, vColorMix);
-    glow *= 0.12 + vTreblePulse * reactive * 2.0;
+    // Near-dark at rest (×0.12). ALL flares flash on treble.
+    glow *= 0.12 + vTreblePulse * 2.0;
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
     gl_FragColor = vec4(glow, texColor.a * alphaFade);

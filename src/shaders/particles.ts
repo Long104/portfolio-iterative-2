@@ -67,9 +67,8 @@ export const particleFragment = /* glsl */ `
     vec4 texColor;
     vec3 finalColor;
 
-    // ~60% of particles react to mid (smoothstep 0.3, 0.6)
-    float reactive = smoothstep(0.3, 0.6, vRand);
-    float twinkle = reactive * vMidPulse;
+    // ALL particles react to mid — uniform flash
+    float twinkle = vMidPulse;
 
     if (vType < 0.5) {
       // Ghost-teal petals — nearly invisible at rest, explode on mid
