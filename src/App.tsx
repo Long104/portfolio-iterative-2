@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import Scene from "./Scene";
 import PortfolioContent from "./components/PortfolioContent";
 import { useAudioEngine } from "./useAudioEngine";
 
 function App() {
   const [started, setStarted] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const { start, isLoading, error, isPlaying, toggle } = useAudioEngine();
 
   const handleStart = useCallback(async () => {
@@ -12,13 +14,20 @@ function App() {
     setStarted(true);
   }, [start]);
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const progress = el.scrollTop / (el.scrollHeight - el.clientHeight);
+    setScrollProgress(Math.min(Math.max(progress, 0), 1));
+  }, []);
+
   return (
     <>
-      {/* Fixed 3D background — always rendering */}
-      <Scene />
+      {/* Fixed 3D background — always rendering, now scroll-reactive */}
+      <Scene scrollProgress={scrollProgress} />
 
       {/* Scrollable portfolio content — visible only after start */}
-      {started && <PortfolioContent />}
+      {started && <PortfolioContent scrollRef={scrollRef} onScroll={handleScroll} />}
 
       {/* Click-to-start overlay — blocks everything until user interacts */}
       {!started && (

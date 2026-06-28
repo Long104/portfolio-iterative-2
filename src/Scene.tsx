@@ -2,9 +2,14 @@ import { Canvas } from "@react-three/fiber";
 import KiraKiraVortex from "./KiraKiraVortex";
 import SparkleSystem from "./SparkleSystem";
 import FrameLimiter from "./FrameLimiter";
+import ScrollCamera from "./ScrollCamera";
 import { PERF_TIER, MAX_DPR } from "./perf";
 
-export default function Scene() {
+interface SceneProps {
+  scrollProgress?: number;
+}
+
+export default function Scene({ scrollProgress = 0 }: SceneProps) {
   return (
     <div
       style={{
@@ -28,6 +33,7 @@ export default function Scene() {
         performance={{ min: 0.5 }} // R3F adaptive: drops DPR if FPS dips
       >
         <FrameLimiter fps={30} />
+        <ScrollCamera progress={scrollProgress} />
         <KiraKiraVortex />
         <SparkleSystem />
       </Canvas>
