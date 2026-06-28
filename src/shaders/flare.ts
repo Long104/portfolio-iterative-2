@@ -1,6 +1,6 @@
 // Layer C: Radiant star flares (additive blending)
-// AUDIO STRATEGY: near-dark at rest (×0.12). ~65% flash bright on treble.
-// Punchy starburst effect — flares explode on hi-hats and synths.
+// AUDIO STRATEGY: near-dark at rest (×0.12). Different random ~50% flash each beat.
+// Chaotic starburst — different flares explode on each hi-hat.
 export const flareVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
@@ -11,13 +11,19 @@ export const flareVertex = /* glsl */ `
   varying float vDepth;
   varying float vColorMix;
   varying float vTreblePulse;
+  varying float vShuffleReactive;
 
   void main() {
     vUv = uv;
     vColorMix = aRandoms.x;
     vec3 pos = aInitialPos;
 
-    // Constant speed — no audio
+    // Time-based shuffle: different flares reactive every ~0.25s
+    float seed = floor(uTime * 4.0);
+    float shuffleRand = fract(sin(vColorMix * 100.0 + seed * 17.313) * 43758.5453);
+    vShuffleReactive = smoothstep(0.3, 0.6, shuffleRand);
+
+    // Constant speed
     pos.z += uTime * uSpeed * (1.2 + aRandoms.x * 0.5);
     pos.z = mod(pos.z + 60.0, 70.0) - 60.0;
 
@@ -25,9 +31,8 @@ export const flareVertex = /* glsl */ `
     if (r < 4.0) pos.xy = normalize(pos.xy + 0.001) * (4.0 + aRandoms.x * 2.0);
 
     vDepth = clamp((pos.z + 60.0) / 65.0, 0.0, 1.0);
-    // ~65% reactive flares scale up on treble
-    float reactive = smoothstep(0.3, 0.6, vColorMix);
-    float audioScale = 1.0 + uTreble * reactive * 0.6;
+    // Shuffled reactive flares scale up on treble
+    float audioScale = 1.0 + uTreble * vShuffleReactive * 0.6;
     float scale = 0.5 * (0.2 + vDepth * vDepth * sqrt(vDepth) * 6.0) * audioScale;
 
     // Radial forward-motion streak
@@ -49,6 +54,7 @@ export const flareFragment = /* glsl */ `
   varying float vDepth;
   varying float vColorMix;
   varying float vTreblePulse;
+  varying float vShuffleReactive;
 
   void main() {
      vec4 texColor = texture2D(uTexStar, vUv);
@@ -70,9 +76,8 @@ export const flareFragment = /* glsl */ `
     index = clamp(index, 0, 9);
 
     vec3 glow = colors[index];
-    // Near-dark at rest (×0.12). Reactive flares explode on treble.
-    float reactive = smoothstep(0.3, 0.6, vColorMix);
-    glow *= 0.12 + vTreblePulse * reactive * 2.0;
+    // Near-dark at rest. Shuffled subset flashes on treble — changes every beat.
+    glow *= 0.12 + vTreblePulse * vShuffleReactive * 2.0;
 
     float alphaFade = smoothstep(1.0, 0.80, vDepth);
     gl_FragColor = vec4(glow, texColor.a * alphaFade);

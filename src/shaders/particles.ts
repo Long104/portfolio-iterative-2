@@ -1,6 +1,6 @@
 // Layer B: Fluid particles (petals + blobs, normal alpha blending)
-// AUDIO STRATEGY: near-invisible at rest. ~60% flash bright on mid.
-// Punchy firefly effect — petals explode into visibility on beats.
+// AUDIO STRATEGY: near-invisible at rest. Different random 50% flash each beat.
+// Chaotic firefly effect — different petals light up every moment.
 export const particleVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;
@@ -13,12 +13,18 @@ export const particleVertex = /* glsl */ `
   varying float vDepth;
   varying float vMidPulse;
   varying float vRand;
+  varying float vShuffleReactive;
 
   void main() {
     vUv = uv;
     vType = aRandoms.z;
     vRand = aRandoms.x;
     vec3 pos = aInitialPos;
+
+    // Time-based shuffle: different 50% of particles reactive every ~0.25s
+    float seed = floor(uTime * 4.0);
+    float shuffleRand = fract(sin(vRand * 100.0 + seed * 17.313) * 43758.5453);
+    vShuffleReactive = smoothstep(0.3, 0.6, shuffleRand);
 
     // Z-Axis flow — constant speed, no audio
     pos.z += uTime * uSpeed * (1.2 + aRandoms.x * 0.4);
@@ -28,14 +34,14 @@ export const particleVertex = /* glsl */ `
     float r = length(pos.xy);
     if (r < 5.0) pos.xy = normalize(pos.xy + 0.001) * (5.0 + aRandoms.x * 3.0);
 
-    // Liquid water-flow math — constant amplitude, no audio
+    // Liquid water-flow math — constant amplitude
     float wave = sin(pos.z * 0.8 + uTime + aRandoms.y * 6.28) * 0.5;
     pos.x += cos(wave) * 0.5;
     pos.y += sin(wave) * 0.5;
 
     vDepth = pow(clamp((pos.z + 60.0) / 65.0, 0.0, 1.0), 1.6);
 
-    // Scale — constant, no uniform audio bloom
+    // Scale — constant
     float baseScale = (vType < 0.5) ? 1.0 : 2.5;
     float scale = baseScale * (0.2 + vDepth * vDepth * vDepth * 15.0);
 
@@ -62,25 +68,24 @@ export const particleFragment = /* glsl */ `
   varying float vDepth;
   varying float vMidPulse;
   varying float vRand;
+  varying float vShuffleReactive;
 
   void main() {
     vec4 texColor;
     vec3 finalColor;
 
-    // ~60% of particles react to mid (smoothstep 0.3, 0.6)
-    float reactive = smoothstep(0.3, 0.6, vRand);
-    float twinkle = reactive * vMidPulse;
+    // Shuffled reactivity — different petals active each beat
+    float twinkle = vShuffleReactive * vMidPulse;
 
     if (vType < 0.5) {
-      // Ghost-teal petals — nearly invisible at rest, explode on mid
+      // Ghost-teal petals — nearly invisible at rest, shuffled subset flashes
       texColor = texture2D(uTexPetal, vUv);
       finalColor = vec3(0.106, 0.737, 0.698); // #1BBCB2
       texColor.a *= 0.04;
-      // Reactive petals: ghostly → bright flash (up to 5x)
       texColor.a *= 1.0 + twinkle * 4.0;
       finalColor *= 1.0 + twinkle * 0.6;
     } else {
-      // Dark framing blobs — dim at rest, brighten on mid
+      // Dark framing blobs
       texColor = texture2D(uTexBlob, vUv);
       finalColor = texture2D(uGradLUT, vec2(vDepth, 0.5)).rgb;
       finalColor *= 0.2 + twinkle * 0.8;
