@@ -191,15 +191,24 @@ export default function KiraKiraVortex() {
     const raw = getData(); // raw frequency data from AudioEngine
     const s = smooth.current;
 
-    // Per-layer temporal smoothing — each approaches raw value at its own speed
-    // Lower factor = more lag = heavier/slower feel
-    s.coreBass     = s.coreBass     + (raw.bass   - s.coreBass)     * 0.70;
-    s.sunBass      = s.sunBass      + (raw.bass   - s.sunBass)      * 0.30;
-    s.raysTreble   = s.raysTreble   + (raw.treble - s.raysTreble)   * 0.50;
-    s.bridgeMid    = s.bridgeMid    + (raw.mid    - s.bridgeMid)    * 0.35;
-    s.particlesMid = s.particlesMid + (raw.mid    - s.particlesMid) * 0.40;
-    s.flaresTreble = s.flaresTreble + (raw.treble - s.flaresTreble) * 0.60;
-    s.backdropBass = s.backdropBass + (raw.bass   - s.backdropBass) * 0.10;
+    // Asymmetric envelope per layer — smooth build on attack, gentle fade on decay.
+    // Different timing per layer creates natural depth: some elements react fast,
+    // others swell slowly. Like different stars twinkling at different speeds
+    // in a real galaxy.
+    //
+    // envelope(current, target, attack, decay)
+    // attack = how fast it builds when audio hits (higher = snappier)
+    // decay  = how slow it fades after audio passes (lower = longer tail)
+    const env = (cur: number, target: number, atk: number, dec: number) =>
+      cur + (target - cur) * (target > cur ? atk : dec);
+
+    s.coreBass     = env(s.coreBass,     raw.bass,   0.40, 0.08); // clear pulse, medium fade
+    s.sunBass      = env(s.sunBass,      raw.bass,   0.20, 0.04); // slow swell, long tail
+    s.raysTreble   = env(s.raysTreble,   raw.treble, 0.35, 0.12); // quick shimmer
+    s.bridgeMid    = env(s.bridgeMid,    raw.mid,    0.25, 0.06); // medium build
+    s.particlesMid = env(s.particlesMid, raw.mid,    0.15, 0.04); // gentle drift
+    s.flaresTreble = env(s.flaresTreble, raw.treble, 0.40, 0.10); // quick sparkle
+    s.backdropBass = env(s.backdropBass, raw.bass,   0.08, 0.02); // barely breathes
 
     const aspect = state.size.width / state.size.height;
 
