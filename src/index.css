@@ -51,12 +51,10 @@ body {
   padding: 2rem;
 }
 
-/* ── Glass card ── */
+/* ── Glass card (refractive handles backdrop-filter + border-radius) ── */
 .glass {
-  background: rgba(1, 49, 74, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   padding: 2rem;
 }
@@ -64,8 +62,7 @@ body {
 /* Reduced blur on low-end devices */
 @media (max-width: 768px) {
   .glass {
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 

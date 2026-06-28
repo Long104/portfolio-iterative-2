@@ -6,8 +6,11 @@ const isMobile = PERF_TIER === "mobile";
 
 export const refraction = {
   radius: 16,
-  blur: 3,
-  bezelWidth: 8,
-  glassThickness: 50,
+  blur: 4,
+  bezelWidth: 10,
+  glassThickness: 60,
+  refractiveIndex: 1.5,
+  specularOpacity: 0.4,
+  specularAngle: Math.PI / 4,
   renderMode: isMobile ? ("simple" as const) : ("auto" as const),
 };
