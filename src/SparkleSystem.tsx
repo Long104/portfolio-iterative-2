@@ -23,7 +23,7 @@ import { useAudioEngine } from "./useAudioEngine";
 // Born from nothing → flash → die. Beat-driven.
 // ==========================================
 
-const POOL_SIZE = 200;
+const POOL_SIZE = 120;
 
 const SPARKLE_COLORS: [number, number, number][] = [
   [0.938, 0.278, 0.386], [0.947, 0.481, 0.584],
@@ -228,8 +228,8 @@ export default function SparkleSystem() {
 
       s.rot = (Math.random() - 0.5) * 0.3; // near-horizontal for anamorphic streak
       s.size = big
-        ? 0.6 + Math.random() * 0.7
-        : 0.3 + Math.random() * 0.4;
+        ? 0.4 + Math.random() * 0.4    // lean: 0.4-0.8
+        : 0.2 + Math.random() * 0.25;  // lean: 0.2-0.45
 
       const col = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
       s.cr = col[0]; s.cg = col[1]; s.cb = col[2];
@@ -259,18 +259,18 @@ export default function SparkleSystem() {
 
     spawnTimer.current += delta;
 
-    if (bassBeat && spawnTimer.current > 0.06) {
-      spawn(6 + Math.floor(audio.bass * 12), time, true);
+    if (bassBeat && spawnTimer.current > 0.12) {
+      spawn(3 + Math.floor(audio.bass * 4), time, true); // lean: 3-7
       spawnTimer.current = 0;
     }
 
     if (trebleSpark) {
-      spawn(2 + Math.floor(audio.treble * 5), time, false);
+      spawn(1 + Math.floor(audio.treble * 2), time, false); // lean: 1-3
     }
 
     ambientTimer.current += delta;
-    if (ambientTimer.current > 0.35 + Math.random() * 0.25) {
-      spawn(1 + Math.floor(Math.random() * 2), time, false);
+    if (ambientTimer.current > 0.7 + Math.random() * 0.5) {
+      spawn(1, time, false); // lean ambient: 1 sparkle every 0.7-1.2s
       ambientTimer.current = 0;
     }
 
@@ -305,9 +305,9 @@ export default function SparkleSystem() {
         if (t < 0.15) {
           stretchX = 1.0 + (t / 0.15) * 2.0; // 1x → 3x
         } else if (t < 0.40) {
-          // Streak extends further with audio — beam shoots longer on strong beats
+          // Streak extends with audio — capped at 3.5x for elegance
           const audioStreak = s.big ? smoothBass.current : smoothTreble.current;
-          stretchX = 3.0 + audioStreak * 2.0; // 3x → up to 5x
+          stretchX = 3.0 + audioStreak * 0.5; // 3x → up to 3.5x
         } else {
           const deathT = (t - 0.40) / 0.60;
           stretchX = Math.max(1.0, 3.0 - deathT * 4.0); // 3x → 1x quickly
