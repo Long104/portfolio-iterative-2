@@ -2,7 +2,9 @@ import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import HeroSection from "./HeroSection";
+import AboutSection from "./AboutSection";
 import ProjectsSection from "./ProjectsSection";
+import ExperienceSection from "./ExperienceSection";
 import ContactSection from "./ContactSection";
 
 export default function PortfolioContent() {
@@ -31,7 +33,9 @@ export default function PortfolioContent() {
     <div ref={wrapperRef} className="scroll-container">
       <div ref={contentRef} className="scroll-content">
         <HeroSection />
+        <AboutSection />
         <ProjectsSection />
+        <ExperienceSection />
         <ContactSection />
       </div>
     </div>

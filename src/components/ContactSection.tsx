@@ -60,6 +60,69 @@ export default function ContactSection() {
           hello@pantorn.dev
         </a>
 
+        {/* Social links */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1.5rem",
+            marginTop: "1.5rem",
+          }}
+        >
+          {/* GitHub */}
+          <a
+            href="https://github.com/yourusername"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cursor="link"
+            style={{
+              color: "rgba(255,255,255,0.4)",
+              fontSize: "11px",
+              fontFamily: '"SF Mono", "Fira Code", monospace',
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.9)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+            }}
+          >
+            GitHub
+          </a>
+
+          {/* Divider */}
+          <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+
+          {/* LinkedIn */}
+          <a
+            href="https://linkedin.com/in/yourusername"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cursor="link"
+            style={{
+              color: "rgba(255,255,255,0.4)",
+              fontSize: "11px",
+              fontFamily: '"SF Mono", "Fira Code", monospace',
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.9)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+            }}
+          >
+            LinkedIn
+          </a>
+        </div>
+
         {/* Decorative line */}
         <div
           style={{
