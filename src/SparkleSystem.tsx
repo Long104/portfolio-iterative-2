@@ -15,29 +15,28 @@ import { useAudioEngine } from "./useAudioEngine";
 
 // ==========================================
 // SPARKLE SYSTEM — True kira-kira sparkles
-// Sparkles SPAWN from nothing, FLASH bright, DIE.
-// Not brightness modulation — actual birth/life/death lifecycle.
+// Diamond sparkles SPAWN from nothing, FLASH bright, DIE.
 // Beat-driven spawning + ambient twinkle.
 // ==========================================
 
 const POOL_SIZE = 200;
 
-// Pastel kira-kira palette (matches existing flare colors)
+// Pastel kira-kira palette
 const SPARKLE_COLORS: [number, number, number][] = [
-  [0.938, 0.278, 0.386], // #F890A8 vibrant pink
-  [0.947, 0.481, 0.584], // #F9B9CA pastel rose
-  [0.262, 1.000, 0.320], // #8CFF96 mint green
-  [0.850, 1.000, 0.448], // #EDFFB6 lime
-  [0.612, 1.000, 0.402], // #D0FFAF mint yellow
-  [0.984, 0.694, 0.761], // #FEDBE4 blush
-  [1.000, 1.000, 0.448], // #FFFFB6 pastel yellow
-  [0.973, 0.612, 0.694], // #FDD0DA sakura
-  [0.947, 0.247, 0.347], // #FB889E neon pink
-  [1.000, 0.973, 0.612], // #FFFDDA warm cream
-  [0.106, 0.737, 0.698], // #1BBCB2 teal
+  [0.938, 0.278, 0.386], // vibrant pink
+  [0.947, 0.481, 0.584], // pastel rose
+  [0.262, 1.000, 0.320], // mint green
+  [0.850, 1.000, 0.448], // lime
+  [0.612, 1.000, 0.402], // mint yellow
+  [0.984, 0.694, 0.761], // blush
+  [1.000, 1.000, 0.448], // pastel yellow
+  [0.973, 0.612, 0.694], // sakura
+  [0.947, 0.247, 0.347], // neon pink
+  [1.000, 0.973, 0.612], // warm cream
+  [0.106, 0.737, 0.698], // teal
 ];
 
-// Sharp 4-pointed diamond sparkle texture (classic anime ✧)
+// Sharp 4-pointed diamond sparkle texture
 function createSparkleTexture() {
   const size = 128;
   const canvas = document.createElement("canvas");
@@ -46,28 +45,42 @@ function createSparkleTexture() {
   const ctx = canvas.getContext("2d")!;
   const c = size / 2;
 
-  // Bright core
-  const core = ctx.createRadialGradient(c, c, 0, c, c, 8);
+  // Bright core — bigger and hotter
+  const core = ctx.createRadialGradient(c, c, 0, c, c, 14);
   core.addColorStop(0, "rgba(255,255,255,1)");
-  core.addColorStop(0.5, "rgba(255,255,255,0.8)");
+  core.addColorStop(0.3, "rgba(255,255,255,0.9)");
+  core.addColorStop(0.6, "rgba(255,255,255,0.4)");
   core.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = core;
   ctx.fillRect(0, 0, size, size);
 
-  // Sharp 4-pointed diamond spikes
+  // Sharp 4-pointed diamond spikes — thicker and brighter
   ctx.save();
   ctx.translate(c, c);
   ctx.globalCompositeOperation = "lighter";
   for (let i = 0; i < 2; i++) {
     const spike = ctx.createLinearGradient(-c, 0, c, 0);
     spike.addColorStop(0.0, "rgba(255,255,255,0)");
-    spike.addColorStop(0.35, "rgba(255,255,255,0)");
-    spike.addColorStop(0.5, "rgba(255,255,255,0.9)");
-    spike.addColorStop(0.65, "rgba(255,255,255,0)");
+    spike.addColorStop(0.30, "rgba(255,255,255,0)");
+    spike.addColorStop(0.50, "rgba(255,255,255,1)");
+    spike.addColorStop(0.70, "rgba(255,255,255,0)");
     spike.addColorStop(1.0, "rgba(255,255,255,0)");
     ctx.fillStyle = spike;
-    // Sharper, thinner spikes for diamond look
-    ctx.fillRect(-c, -1.5, size, 3);
+    ctx.fillRect(-c, -2, size, 4); // thicker spikes
+    ctx.rotate(Math.PI / 2);
+  }
+
+  // Diagonal sparkle lines (45° offset) for extra ✧ shape
+  ctx.rotate(Math.PI / 4);
+  for (let i = 0; i < 2; i++) {
+    const spike = ctx.createLinearGradient(-c, 0, c, 0);
+    spike.addColorStop(0.0, "rgba(255,255,255,0)");
+    spike.addColorStop(0.40, "rgba(255,255,255,0)");
+    spike.addColorStop(0.50, "rgba(255,255,255,0.5)");
+    spike.addColorStop(0.60, "rgba(255,255,255,0)");
+    spike.addColorStop(1.0, "rgba(255,255,255,0)");
+    ctx.fillStyle = spike;
+    ctx.fillRect(-c, -1, size, 2); // thinner diagonal spikes
     ctx.rotate(Math.PI / 2);
   }
   ctx.restore();
@@ -81,14 +94,10 @@ function createSparkleTexture() {
 }
 
 interface Sparkle {
-  x: number;
-  y: number;
-  z: number;
+  x: number; y: number; z: number;
   rot: number;
   size: number;
-  cr: number;
-  cg: number;
-  cb: number;
+  cr: number; cg: number; cb: number;
   birthTime: number;
   lifetime: number;
   active: boolean;
@@ -103,7 +112,8 @@ export default function SparkleSystem() {
   const ambientTimer = useRef(0);
 
   const sparkleTex = useMemo(() => createSparkleTexture(), []);
-  const geometry = useMemo(() => new PlaneGeometry(0.3, 0.3), []);
+  // Bigger geometry — was 0.3, now 1.0
+  const geometry = useMemo(() => new PlaneGeometry(1.0, 1.0), []);
   const material = useMemo(
     () =>
       new MeshBasicMaterial({
@@ -115,7 +125,6 @@ export default function SparkleSystem() {
     [sparkleTex],
   );
 
-  // Sparkle pool — all start dead
   const pool = useMemo<Sparkle[]>(() => {
     const arr: Sparkle[] = [];
     for (let i = 0; i < POOL_SIZE; i++) {
@@ -138,26 +147,27 @@ export default function SparkleSystem() {
       if (spawned >= count) break;
       if (s.active) continue;
 
-      // Random position spread across the screen area
       const angle = Math.random() * Math.PI * 2;
       const radius = big
-        ? 1.5 + Math.random() * 7 // bass: wider spread
-        : 2 + Math.random() * 5;  // treble: medium spread
+        ? 1.0 + Math.random() * 6   // bass: wide spread
+        : 1.5 + Math.random() * 4;  // treble: medium spread
 
       s.x = Math.cos(angle) * radius;
-      s.y = Math.sin(angle) * radius * 0.8; // slightly squashed (aspect)
-      s.z = -3 - Math.random() * 22;
+      s.y = Math.sin(angle) * radius * 0.8;
+      // Closer to camera — was -3 to -25, now -1 to -15
+      s.z = -1 - Math.random() * 14;
 
       s.rot = Math.random() * Math.PI * 2;
+      // Bigger sizes — was 0.2-0.5 / 0.1-0.25
       s.size = big
-        ? 0.2 + Math.random() * 0.3   // bass: bigger sparkles
-        : 0.1 + Math.random() * 0.15; // treble: smaller sparkles
+        ? 0.6 + Math.random() * 0.7   // bass: 0.6-1.3 (big sparkles)
+        : 0.3 + Math.random() * 0.4;  // treble: 0.3-0.7 (medium sparkles)
 
       const col = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
       s.cr = col[0]; s.cg = col[1]; s.cb = col[2];
 
       s.birthTime = time;
-      s.lifetime = 0.25 + Math.random() * 0.45; // 250-700ms
+      s.lifetime = 0.3 + Math.random() * 0.5; // 300-800ms
       s.active = true;
       spawned++;
     }
@@ -167,38 +177,33 @@ export default function SparkleSystem() {
     const time = state.clock.getElapsedTime();
     const audio = getData();
 
-    // ── Beat detection ──
-    // Bass beat: sudden increase in bass energy
-    const bassBeat = audio.bass > 0.45 && audio.bass > prevBass.current * 1.15;
+    // Beat detection
+    const bassBeat = audio.bass > 0.4 && audio.bass > prevBass.current * 1.12;
     prevBass.current = audio.bass;
 
-    // Treble spark: sudden increase in treble
-    const trebleSpark = audio.treble > 0.12 && audio.treble > prevTreble.current * 1.3;
+    const trebleSpark = audio.treble > 0.10 && audio.treble > prevTreble.current * 1.25;
     prevTreble.current = audio.treble;
 
-    // ── Spawning ──
+    // Spawning
     spawnTimer.current += delta;
 
-    // On bass beat: burst of big sparkles (with cooldown)
     if (bassBeat && spawnTimer.current > 0.06) {
-      const count = 6 + Math.floor(audio.bass * 10); // 6-16 sparkles
+      const count = 6 + Math.floor(audio.bass * 12); // 6-18 sparkles
       spawn(count, time, true);
       spawnTimer.current = 0;
     }
 
-    // On treble spark: few small sparkles
     if (trebleSpark) {
-      spawn(2 + Math.floor(audio.treble * 4), time, false);
+      spawn(2 + Math.floor(audio.treble * 5), time, false);
     }
 
-    // Ambient twinkle: 1-2 random sparkles per ~500ms (even without beats)
     ambientTimer.current += delta;
-    if (ambientTimer.current > 0.4 + Math.random() * 0.3) {
+    if (ambientTimer.current > 0.35 + Math.random() * 0.25) {
       spawn(1 + Math.floor(Math.random() * 2), time, false);
       ambientTimer.current = 0;
     }
 
-    // ── Update all instances ──
+    // Update instances
     const mesh = meshRef.current;
     if (!mesh) return;
 
@@ -207,29 +212,24 @@ export default function SparkleSystem() {
       const age = time - s.birthTime;
 
       if (s.active && age < s.lifetime) {
-        const t = age / s.lifetime; // 0 → 1
+        const t = age / s.lifetime;
 
-        // Size envelope: quick grow → hold → shrink
-        // This is the kira-kira lifecycle: appear → flash → die
+        // Lifecycle: grow (0-15%) → hold (15-40%) → shrink (40-100%)
         let scale: number;
-        if (t < 0.12) {
-          // Birth: grow from 0 to full in 12% of lifetime
-          scale = t / 0.12;
-        } else if (t < 0.30) {
-          // Flash: hold at full brightness
+        if (t < 0.15) {
+          scale = t / 0.15;
+        } else if (t < 0.40) {
           scale = 1.0;
         } else {
-          // Death: shrink back to 0 over remaining 70%
-          scale = 1.0 - (t - 0.30) / 0.70;
+          scale = 1.0 - (t - 0.40) / 0.60;
         }
 
-        // Add a slight overshoot at birth for "pop" effect
-        if (t < 0.15 && t > 0.10) {
-          scale *= 1.15; // brief overshoot
-        }
+        // Brief overshoot "pop" at birth
+        if (t < 0.18 && t > 0.12) scale *= 1.2;
 
+        scale = Math.max(0, scale);
         const renderScale = scale * s.size;
-        const brightness = Math.max(0, scale); // fade color with scale
+        const brightness = Math.max(0, scale);
 
         dummy.position.set(s.x, s.y, s.z);
         dummy.rotation.set(0, 0, s.rot);
@@ -237,14 +237,15 @@ export default function SparkleSystem() {
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
 
+        // Boost brightness during flash phase
+        const flashBoost = t < 0.40 ? 1.0 + (1.0 - t / 0.40) * 0.5 : 1.0;
         tmpColor.setRGB(
-          s.cr * brightness,
-          s.cg * brightness,
-          s.cb * brightness,
+          s.cr * brightness * flashBoost,
+          s.cg * brightness * flashBoost,
+          s.cb * brightness * flashBoost,
         );
         mesh.setColorAt(i, tmpColor);
       } else {
-        // Dead sparkle — invisible
         if (s.active) s.active = false;
         dummy.position.set(0, 0, -100);
         dummy.scale.setScalar(0.0001);
@@ -259,12 +260,10 @@ export default function SparkleSystem() {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   });
 
-  // Initialize all instances as invisible + dispose on unmount
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Initialize colors so instanceColor buffer exists
     tmpColor.setRGB(0, 0, 0);
     for (let i = 0; i < POOL_SIZE; i++) {
       dummy.position.set(0, 0, -100);
