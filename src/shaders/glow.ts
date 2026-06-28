@@ -132,7 +132,7 @@ export const glowFragment = /* glsl */ `
       color = mix(color, whiteCore, smoothstep(0.01, 0.00, d));
 
         // here
-      float alpha = smoothstep(0.14, 0.01, d);
+      float alpha = smoothstep(0.13, 0.01, d);
 
       // Near-dark ember at rest (0.2), EXPLODES on kick (2.65)
       float coreBoost = 0.2 + uCoreBass * 2.5;
