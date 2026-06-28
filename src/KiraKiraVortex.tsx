@@ -227,12 +227,14 @@ export default function KiraKiraVortex({ scrollProgress = 0 }: KiraKiraVortexPro
     // Each layer rotates at a different speed around Y
     // to create depth: flares (fast) → particles (mid) → glow/core (static)
     // ══════════════════════════════════════════════
-    const scrollAngle = scrollProgress * Math.PI * 2;
+    // Gentle layer rotation: max ~60° (π/3) per full scroll — subtle parallax
+    const scrollAngle = scrollProgress * Math.PI / 3;
 
     if (paintRef.current) {
-      paintRef.current.rotation.y = scrollAngle * 1.0;
+      paintRef.current.rotation.y = scrollAngle;
     }
     if (flareRef.current) {
+      // Flares rotate faster for parallax depth (closer feel)
       flareRef.current.rotation.y = scrollAngle * 1.8;
     }
 
