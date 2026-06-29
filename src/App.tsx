@@ -160,9 +160,9 @@ function App() {
           className="audio-bar"
           refraction={{
             radius: 24,
-            blur: 4,
+            blur: 0,
             bezelWidth: 8,
-            specularOpacity: 0.12,
+            specularOpacity: 0.2,
           }}
         >
           <button

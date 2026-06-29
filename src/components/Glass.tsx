@@ -9,12 +9,12 @@ import { PROJECTS } from "./projects";
 
 export const RefractiveDiv = refractive.div;
 
-// Shared refraction config — tuned for vortex backdrop
+// Shared refraction config — experiment: clear glass, no blur
 export const refractionConfig = {
   radius: 16,
-  blur: 4,
+  blur: 0,
   bezelWidth: 12,
-  specularOpacity: 0.15,
+  specularOpacity: 0.2,
 } as const;
 
 // ── Glass Panel (for About section) ──
@@ -36,9 +36,9 @@ export function ProjectCard({
     <RefractiveDiv
       refraction={{
         radius: 14,
-        blur: 3,
+        blur: 0,
         bezelWidth: 10,
-        specularOpacity: 0.1,
+        specularOpacity: 0.15,
       }}
       className="project-card"
     >
