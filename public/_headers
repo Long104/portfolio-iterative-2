@@ -1,0 +1,20 @@
+# ── Cloudflare Pages headers ──
+# Assets with content hash — cache forever
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Audio files — cache for 1 year (re-encode if updated)
+*.opus
+  Cache-Control: public, max-age=31536000, immutable
+
+# Font files — cache for 1 year (content-hashed by Vite)
+*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML — never cache (always serve latest)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Root — never cache
+/
+  Cache-Control: public, max-age=0, must-revalidate

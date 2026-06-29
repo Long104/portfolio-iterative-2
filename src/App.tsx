@@ -1,12 +1,17 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import "./fonts.css";
+import type { ScrollContainerHandle } from "./components/ScrollContainer";
 
 const Scene = lazy(() => import("./Scene"));
+const ScrollContainer = lazy(() =>
+  import("./components/ScrollContainer").then((m) => ({
+    default: m.ScrollContainer,
+  })),
+);
 import { useAudioEngine, TRACKS } from "./useAudioEngine";
 import { HUD } from "./components/HUD";
 import { PsycommuBoot } from "./components/PsycommuBoot";
 import { PsycommuWaveform } from "./components/PsycommuWaveform";
-import { ScrollContainer, type ScrollContainerHandle } from "./components/ScrollContainer";
 import { NavPill } from "./components/NavPill";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { RefractiveDiv, buildSmallConfig } from "./components/Glass";
@@ -113,13 +118,15 @@ function App() {
 
       {/* ── Layer 1: Scrollable content ── */}
       {started && (
-        <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange}>
-          <HeroSection />
-          <AboutSection />
-          <ExperienceSection />
-          <WorkSection />
-          <ContactSection />
-        </ScrollContainer>
+        <Suspense fallback={<div className="content-layer" />}>
+          <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange}>
+            <HeroSection />
+            <AboutSection />
+            <ExperienceSection />
+            <WorkSection />
+            <ContactSection />
+          </ScrollContainer>
+        </Suspense>
       )}
 
       {/* ── Layer 2: HUD (always visible after start) ── */}
