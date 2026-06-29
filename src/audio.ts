@@ -44,6 +44,20 @@ export class AudioEngine {
     this.gainNode.connect(this.ctx.destination);
   }
 
+  /** Warm up AudioContext during a user gesture (e.g. click on boot overlay).
+   *  Browsers block ctx.resume() outside user gestures, so call this early
+   *  in a click/key handler so the context is running by the time engage() fires. */
+  async warmUp() {
+    if (!this.ctx) await this.init();
+    if (this.ctx?.state === "suspended") {
+      try {
+        await this.ctx.resume();
+      } catch {
+        // Not in user gesture — will retry on engage()
+      }
+    }
+  }
+
   async loadTrack(url: string) {
     await this.preloadTrack(url);
     // loadTrack also starts playback; preloadTrack just loads.

@@ -48,6 +48,7 @@ function App() {
     isPreloaded,
     toggle,
     currentTrack,
+    warmUp,
     preload,
     engage,
     loadTrack,
@@ -146,6 +147,7 @@ function App() {
           currentTrack={currentTrack}
           onStart={handleStart}
           onSelectTrack={handleSelectTrack}
+          onWarmUp={warmUp}
           tracks={TRACKS}
         />
       )}

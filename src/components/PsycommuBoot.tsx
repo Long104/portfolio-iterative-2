@@ -12,6 +12,7 @@ interface Props {
   currentTrack: string;
   onStart: () => void;
   onSelectTrack: (url: string) => void;
+  onWarmUp?: () => void;
   tracks: { name: string; url: string }[];
 }
 
@@ -35,6 +36,7 @@ export function PsycommuBoot({
   currentTrack,
   onStart,
   onSelectTrack,
+  onWarmUp,
   tracks,
 }: Props) {
   const [bootLine, setBootLine] = useState(0);
@@ -89,32 +91,35 @@ export function PsycommuBoot({
     return () => clearTimeout(t);
   }, [bootLine, bootChar, phase]);
 
-  // ── Click anywhere during boot → skip to end ──
+  // ── Click anywhere during boot → skip to end + warm up AudioContext ──
   const handleOverlayClick = useCallback(() => {
+    onWarmUp?.(); // user gesture → AudioContext can resume
     if (phase === "complete" || fadeOut) return;
     skipRef.current = true;
     setBootLine(BOOT_LINES.length - 1);
     setBootChar(BOOT_LINES[BOOT_LINES.length - 1].val.length);
     setProgress(100);
     setPhase("complete");
-  }, [phase, fadeOut]);
+  }, [phase, fadeOut, onWarmUp]);
 
   // ── Engage (after boot complete) ──
   const handleEngage = useCallback(() => {
     if (isLoading || startedRef.current) return;
+    onWarmUp?.(); // user gesture → AudioContext can resume
     startedRef.current = true;
     setFadeOut(true);
     setTimeout(() => onStart(), 600);
-  }, [isLoading, onStart]);
+  }, [isLoading, onStart, onWarmUp]);
 
   const handleSelect = useCallback(
     (url: string) => {
       if (isLoading || startedRef.current) return;
+      onWarmUp?.(); // user gesture → AudioContext can resume
       startedRef.current = true;
       setFadeOut(true);
       setTimeout(() => onSelectTrack(url), 600);
     },
-    [isLoading, onSelectTrack],
+    [isLoading, onSelectTrack, onWarmUp],
   );
 
   const isComplete = phase === "complete" || phase === "skip";

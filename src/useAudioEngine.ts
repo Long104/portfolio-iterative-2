@@ -28,6 +28,11 @@ export function useAudioEngine() {
   const [isPreloaded, setIsPreloaded] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(TRACKS[0].url);
 
+  /** Warm up AudioContext (call from user gesture handler during boot). */
+  const warmUp = useCallback(async () => {
+    await engineRef.current.warmUp();
+  }, []);
+
   /** Preload default track in background during boot — no playback. */
   const preload = useCallback(async (url: string) => {
     if (isPreloaded) return;
@@ -69,9 +74,9 @@ export function useAudioEngine() {
       await engineRef.current.start();
       setIsPlaying(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to start audio";
-      setError(msg);
-      console.error("[AudioEngine]", msg);
+      // Browser likely blocked AudioContext.resume() (autoplay policy).
+      // That's fine — user can click play on the audio bar to start.
+      console.warn("[AudioEngine] Autoplay blocked — user will need to click play", e);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +99,7 @@ export function useAudioEngine() {
   return {
     isPlaying, isLoading, error,
     isPreloaded, currentTrack,
-    preload, loadTrack, engage,
+    warmUp, preload, loadTrack, engage,
     pause, toggle, getData,
   };
 }
