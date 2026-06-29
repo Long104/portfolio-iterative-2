@@ -76,21 +76,21 @@ function App() {
   }, [started]);
 
   const handleStart = useCallback(async () => {
+    setStarted(true); // show HUD/content immediately — don't wait for audio
     if (isPreloaded) {
       await engage();
     } else {
       await loadTrack(currentTrack);
     }
-    setStarted(true);
   }, [isPreloaded, engage, loadTrack, currentTrack]);
 
   const handleSelectTrack = useCallback(async (url: string) => {
+    setStarted(true); // show HUD/content immediately
     if (isPreloaded && url === currentTrack) {
       await engage();
     } else {
       await loadTrack(url);
     }
-    setStarted(true);
   }, [isPreloaded, engage, loadTrack, currentTrack]);
 
   const handleSectionChange = useCallback((index: number) => {
@@ -141,6 +141,7 @@ function App() {
       {!started && (
         <PsycommuBoot
           isLoading={isLoading}
+          isPreloaded={isPreloaded}
           error={error}
           currentTrack={currentTrack}
           onStart={handleStart}

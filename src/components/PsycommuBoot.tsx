@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Props {
   isLoading: boolean;
+  isPreloaded: boolean;
   error: string | null;
   currentTrack: string;
   onStart: () => void;
@@ -29,6 +30,7 @@ const LINE_PAUSE_MS = 60;  // pause between lines (was 120)
 
 export function PsycommuBoot({
   isLoading,
+  isPreloaded,
   error,
   currentTrack,
   onStart,
@@ -116,6 +118,13 @@ export function PsycommuBoot({
   );
 
   const isComplete = phase === "complete" || phase === "skip";
+
+  // ── Auto-engage when boot complete + audio preloaded ──
+  useEffect(() => {
+    if (!isComplete || !isPreloaded || startedRef.current) return;
+    const t = setTimeout(() => handleEngage(), 1200);
+    return () => clearTimeout(t);
+  }, [isComplete, isPreloaded, handleEngage]);
 
   return (
     <div
