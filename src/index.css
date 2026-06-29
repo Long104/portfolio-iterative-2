@@ -499,6 +499,48 @@ html.cursor-hidden * {
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* ── Nav pill (liquid glass — refractive takes over backdrop-filter & borderRadius) ── */
+.nav-pill {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--glass-bg);
+  padding: 5px 10px;
+  border: 1px solid var(--glass-border);
+  transition: border-color 0.3s ease;
+}
+
+.nav-pill:hover {
+  border-color: var(--glass-border-hover);
+}
+
+.nav-pill__item {
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 4px 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-pill__item:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-pill__item--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .section {
@@ -518,10 +560,21 @@ html.cursor-hidden * {
     gap: 24px;
   }
 
-  .hud--tl { left: 20px; top: 20px; }
-  .hud--tr { right: 20px; top: 20px; }
+  .hud--tl { left: 20px; top: 48px; }
+  .hud--tr { right: 20px; top: 48px; }
   .hud--bl { left: 20px; bottom: 20px; }
   .hud--br { right: 20px; bottom: 20px; }
+
+  .nav-pill {
+    top: 12px;
+    gap: 2px;
+    padding: 4px 8px;
+  }
+
+  .nav-pill__item {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
 }
 
 /* ── Reduced motion ── */

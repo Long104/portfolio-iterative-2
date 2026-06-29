@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import "@fontsource-variable/jetbrains-mono/index.css";
 
 import Scene from "./Scene";
 import { useAudioEngine, TRACKS } from "./useAudioEngine";
 import { HUD } from "./components/HUD";
-import { ScrollContainer } from "./components/ScrollContainer";
+import { ScrollContainer, type ScrollContainerHandle } from "./components/ScrollContainer";
+import { NavPill } from "./components/NavPill";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { RefractiveDiv } from "./components/Glass";
 import {
@@ -21,6 +22,7 @@ function App() {
   const [started, setStarted] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollRef = useRef<ScrollContainerHandle>(null);
   const {
     isLoading,
     error,
@@ -66,7 +68,7 @@ function App() {
 
       {/* ── Layer 1: Scrollable content ── */}
       {started && (
-        <ScrollContainer onSectionChange={handleSectionChange}>
+        <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange}>
           <HeroSection />
           <AboutSection />
           <ExperienceSection />
@@ -78,6 +80,10 @@ function App() {
       {/* ── Layer 2: HUD (always visible after start) ── */}
       {started && (
         <>
+          <NavPill
+            activeIndex={activeSection}
+            onNavigate={(i) => scrollRef.current?.scrollToSection(i)}
+          />
           <div
             className="scroll-progress"
             style={{ width: `${scrollProgress}%` }}
