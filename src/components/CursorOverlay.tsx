@@ -283,6 +283,7 @@ export function CursorOverlay() {
     let firstMove = false;
     let hover = false;
     let clicking = false;
+    let lastMoveTime = 0; // timestamp of last pointermove — gates idle sparkles
 
     // Reticle rotation + lock-on easing
     let rotation = 0;
@@ -300,6 +301,7 @@ export function CursorOverlay() {
       }
       target.x = e.clientX;
       target.y = e.clientY;
+      lastMoveTime = performance.now();
     };
     const onOver = (e: MouseEvent): void => {
       const el = e.target;
@@ -416,7 +418,7 @@ export function CursorOverlay() {
         const n = Math.min(4, Math.ceil(speed / 40 + audio.level * 2));
         for (let i = 0; i < n; i++) spawn(dot.x, dot.y);
       }
-      if (t - lastIdle > IDLE_INTERVAL_MS) {
+      if (t - lastMoveTime < 2000 && t - lastIdle > IDLE_INTERVAL_MS) {
         lastIdle = t;
         spawn(dot.x, dot.y, { size: 4 + Math.random() * 4 });
       }

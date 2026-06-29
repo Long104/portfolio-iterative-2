@@ -32,12 +32,18 @@ function App() {
     loadTrack,
   } = useAudioEngine();
 
-  // ── Scroll progress tracking ──
+  // ── Scroll progress tracking (rAF-throttled — prevents 120 re-renders/sec) ──
   useEffect(() => {
     if (!started) return;
+    let ticking = false;
     function onScroll() {
-      const max = document.body.scrollHeight - window.innerHeight;
-      setScrollProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const max = document.body.scrollHeight - window.innerHeight;
+        setScrollProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
+        ticking = false;
+      });
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
