@@ -73,9 +73,22 @@ export function ScrollContainer({ onSectionChange, children }: ScrollContainerPr
     // Also listen to resize (viewport height changes)
     window.addEventListener("resize", updateActiveSection);
 
+    // ── Keyboard navigation (arrow up/down to jump between sections) ──
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      e.preventDefault();
+      const dir = e.key === "ArrowDown" ? 1 : -1;
+      const nextIndex = Math.max(0, Math.min(sections.length - 1, lastIndex + dir));
+      if (nextIndex !== lastIndex && sections[nextIndex]) {
+        sections[nextIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", updateActiveSection);
+      window.removeEventListener("keydown", onKeyDown);
       lenis.destroy();
     };
   }, [onSectionChange]);

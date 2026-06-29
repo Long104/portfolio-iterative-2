@@ -66,6 +66,32 @@ html.lenis body {
   flex-direction: column;
   justify-content: center;
   padding: 80px 48px;
+  position: relative;
+}
+
+/* Subtle radial vignette so text stays readable over the bright vortex.
+   Vortex glow bleeds through at edges — glass panels refract it. */
+.section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(1, 49, 74, 0.3) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Centered variant (contact section) */
+.section--centered {
+  align-items: center;
+  text-align: center;
+}
+
+.section-label--center {
+  text-align: center;
 }
 
 /* ── HUD ── */
@@ -195,6 +221,12 @@ html.lenis body {
   max-width: 720px;
 }
 
+/* Last card in odd-numbered grid spans full width */
+.project-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: calc(50% - 8px);
+}
+
 .project-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -248,7 +280,9 @@ html.lenis body {
 .contact {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 12px;
+  text-align: center;
 }
 
 .contact__link {
@@ -258,12 +292,13 @@ html.lenis body {
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   letter-spacing: -0.01em;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
   pointer-events: auto;
 }
 
 .contact__link:hover {
   color: rgba(255, 255, 255, 1);
+  transform: scale(1.02);
 }
 
 .contact__footer {
@@ -271,6 +306,7 @@ html.lenis body {
   color: rgba(255, 255, 255, 0.25);
   margin-top: 48px;
   letter-spacing: 0.05em;
+  text-align: center;
 }
 
 /* ── Start overlay ── */
