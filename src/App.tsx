@@ -4,6 +4,7 @@ import "@fontsource-variable/jetbrains-mono/index.css";
 import Scene from "./Scene";
 import { useAudioEngine, TRACKS } from "./useAudioEngine";
 import { HUD } from "./components/HUD";
+import { PsycommuBoot } from "./components/PsycommuBoot";
 import { ScrollContainer, type ScrollContainerHandle } from "./components/ScrollContainer";
 import { NavPill } from "./components/NavPill";
 import { CursorOverlay } from "./components/CursorOverlay";
@@ -103,39 +104,16 @@ function App() {
         </>
       )}
 
-      {/* ── Click-to-start overlay ── */}
+      {/* ── Psycommu Boot Sequence ── */}
       {!started && (
-        <div className="start-overlay" onClick={handleStart}>
-          {error ? (
-            <p style={{ color: "#ff6b6b", fontSize: "14px", fontFamily: "var(--mono)" }}>
-              {error}
-            </p>
-          ) : (
-            <>
-              <p className="start-overlay__title">
-                {isLoading ? "loading..." : "click to enter"}
-              </p>
-              <p className="start-overlay__subtitle">audio-reactive experience</p>
-              <div className="track-pills">
-                {TRACKS.map((track) => (
-                  <button
-                    key={track.url}
-                    className={
-                      "track-pill" +
-                      (currentTrack === track.url ? " track-pill--active" : "")
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectTrack(track.url);
-                    }}
-                  >
-                    {track.name}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <PsycommuBoot
+          isLoading={isLoading}
+          error={error}
+          currentTrack={currentTrack}
+          onStart={handleStart}
+          onSelectTrack={handleSelectTrack}
+          tracks={TRACKS}
+        />
       )}
 
       {/* ── Layer 3: Cursor overlay (desktop only, self-gated) ── */}
