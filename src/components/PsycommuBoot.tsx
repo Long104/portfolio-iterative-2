@@ -24,8 +24,8 @@ const BOOT_LINES = [
   { addr: "SYS", val: "SYSTEM ONLINE — omega psycommu active" },
 ];
 
-const CHAR_MS = 15;       // ms per character (was 28)
-const LINE_PAUSE_MS = 120; // pause between lines (was 300)
+const CHAR_MS = 8;        // ms per character (was 15)
+const LINE_PAUSE_MS = 60;  // pause between lines (was 120)
 
 export function PsycommuBoot({
   isLoading,
@@ -75,7 +75,7 @@ export function PsycommuBoot({
         setPhase("booting");
         setBootLine((l) => l + 1);
         setBootChar(0);
-      }, 350); // was 600
+      }, 180); // was 350
       return () => clearTimeout(t);
     }
 
