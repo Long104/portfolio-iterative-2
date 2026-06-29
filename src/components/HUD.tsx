@@ -39,18 +39,19 @@ export function HUD({
         <div className="hud__hint">{trackName}</div>
       </div>
 
-      {/* Bottom-left: contextual tagline */}
-      <div className="hud hud--bl">
-        <div className="hud__counter">{SECTION_TAGS[sectionIndex]}</div>
-      </div>
+      {/* Bottom-left: contextual tagline — hidden on hero to show 3D full-screen */}
+      {sectionIndex > 0 && (
+        <div className="hud hud--bl">
+          <div className="hud__counter">{SECTION_TAGS[sectionIndex]}</div>
+        </div>
+      )}
 
-      {/* Bottom-right: section counter */}
-      <div className="hud hud--br">
-        <div className="hud__counter">{counter}</div>
-        {sectionIndex === 0 && (
-          <div className="hud__hint">scroll to begin</div>
-        )}
-      </div>
+      {/* Bottom-right: section counter — hidden on hero to show 3D full-screen */}
+      {sectionIndex > 0 && (
+        <div className="hud hud--br">
+          <div className="hud__counter">{counter}</div>
+        </div>
+      )}
     </>
   );
 }
