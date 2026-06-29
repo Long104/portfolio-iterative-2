@@ -970,7 +970,7 @@ html.cursor-hidden * {
   background: transparent;
   border: none;
   border-radius: 16px;
-  padding: 4px 14px;
+  padding: 6px 14px;
   color: rgba(255, 255, 255, 0.6);
   font-size: 11px;
   font-family: var(--mono);
@@ -978,11 +978,8 @@ html.cursor-hidden * {
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  line-height: 1.2;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .nav-pill__item:hover {
@@ -992,21 +989,6 @@ html.cursor-hidden * {
 .nav-pill__item--active {
   background: rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 1);
-}
-
-.nav-pill__name {
-  font-size: 11px;
-  letter-spacing: 0.05em;
-}
-
-.nav-pill__code {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: rgba(255, 75, 216, 0.5);
-}
-
-.nav-pill__item--active .nav-pill__code {
-  color: rgba(255, 75, 216, 0.8);
 }
 
 /* ── Responsive ── */
@@ -1047,10 +1029,6 @@ html.cursor-hidden * {
   .nav-pill__item {
     font-size: 10px;
     padding: 3px 8px;
-  }
-
-  .nav-pill__code {
-    display: none;
   }
 }
 
