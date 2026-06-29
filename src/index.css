@@ -6,8 +6,8 @@
 
 :root {
   --hud-opacity: 0.75;
-  --glass-bg: transparent;
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(10, 15, 25, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(255, 255, 255, 0.25);
   --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
@@ -34,9 +34,9 @@
   --theme-accent: #9B59B6;
   --theme-accent2: #2ECC71;
   --theme-accent3: #8E44AD;
-  --glass-bg: transparent;
-  --glass-border: rgba(155, 89, 182, 0.08);
-  --glass-border-hover: rgba(46, 204, 113, 0.2);
+  --glass-bg: rgba(15, 5, 25, 0.35);
+  --glass-border: rgba(155, 89, 182, 0.1);
+  --glass-border-hover: rgba(46, 204, 113, 0.25);
   --bracket-color: rgba(155, 89, 182, 0.25);
   --bracket-color-hover: rgba(46, 204, 113, 0.5);
 }
@@ -252,6 +252,10 @@ html.cursor-hidden * {
   background: var(--glass-bg);
   padding: 40px;
   max-width: 680px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.4);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ── Gundam corner brackets ──
@@ -379,6 +383,10 @@ html.cursor-hidden * {
   padding: 28px 24px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
 }
 
 .project-card:hover {
@@ -866,6 +874,9 @@ html.cursor-hidden * {
   background: var(--glass-bg);
   padding: 6px 12px;
   border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.2);
   transition: border-color 0.3s ease;
 }
 
@@ -943,6 +954,9 @@ html.cursor-hidden * {
   background: var(--glass-bg);
   padding: 6px 12px;
   border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.3);
   transition: border-color 0.3s ease;
 }
 

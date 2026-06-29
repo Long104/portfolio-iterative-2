@@ -9,7 +9,8 @@ import { PsycommuWaveform } from "./components/PsycommuWaveform";
 import { ScrollContainer, type ScrollContainerHandle } from "./components/ScrollContainer";
 import { NavPill } from "./components/NavPill";
 import { CursorOverlay } from "./components/CursorOverlay";
-import { RefractiveDiv } from "./components/Glass";
+import { RefractiveDiv, buildSmallConfig } from "./components/Glass";
+import { useDeviceOrientation } from "./useDeviceOrientation";
 import {
   HeroSection,
   AboutSection,
@@ -30,6 +31,7 @@ function App() {
     () => (localStorage.getItem("kira-theme") as Theme) || "gquuuuuux",
   );
   const scrollRef = useRef<ScrollContainerHandle>(null);
+  const specularAngle = useDeviceOrientation();
 
   // ── Apply theme to root element ──
   useEffect(() => {
@@ -158,15 +160,7 @@ function App() {
       {started && (
         <RefractiveDiv
           className="audio-bar"
-          refraction={{
-            radius: 28,
-            blur: 4,
-            glassThickness: 80,
-            bezelWidth: 24,
-            refractiveIndex: 1.8,
-            specularOpacity: 0.72,
-            specularAngle: 2.007,
-          }}
+          refraction={buildSmallConfig(specularAngle)}
         >
           <button
             className="audio-bar__btn"

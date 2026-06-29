@@ -1,6 +1,6 @@
 // ── NavPill — Clan Battle Terminal ──
 
-import { RefractiveDiv, buildGlassConfig } from "./Glass";
+import { RefractiveDiv, buildNavConfig } from "./Glass";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 
 const SECTIONS = ["pilot", "about", "experience", "work", "contact"] as const;
@@ -15,7 +15,7 @@ export function NavPill({ activeIndex, onNavigate }: NavPillProps) {
   return (
     <RefractiveDiv
       className="nav-pill"
-      refraction={buildGlassConfig(specularAngle)}
+      refraction={buildNavConfig(specularAngle)}
     >
       {SECTIONS.map((name, i) => (
         <button
