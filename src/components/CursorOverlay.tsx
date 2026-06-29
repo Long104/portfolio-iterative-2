@@ -1,15 +1,8 @@
-// ── Kira-Kira Cursor Overlay ─────────────────────────────
-// SEED-mode cross sparkles that trail the cursor, audio-reactive.
+// ── Kira-Kira Gundam Reticle Cursor ──────────────────────
+// Targeting reticle inspired by Gundam cockpit HUDs.
+// Rotating ring + tick marks, corner brackets, crosshair, SEED sparkle trail.
+// Audio-reactive: bass punch, beat bursts, lock-on state on hover.
 // Runs on its own 60fps rAF loop — independent of R3F's 30fps demand loop.
-// Self-gates: desktop only (pointer: fine).
-//
-// Architecture:
-//   • Dual-element cursor: dot (snappy) + ring (laggy) = elastic premium feel
-//   • Object pool of 120 sparkles (ring buffer, no GC churn)
-//   • Pre-rendered sprite per palette color (drawImage = GPU, not gradient creation)
-//   • Energy-based beat detection on bass band
-//   • Spawn sources: movement + beat burst + idle trickle + click
-//   • Additive blending (globalCompositeOperation = 'lighter')
 
 import { useEffect, useMemo, useRef } from "react";
 import { getAudioData } from "../useAudioEngine";
@@ -25,7 +18,7 @@ const PALETTE = [
 const MAX_SPARKLES = 120;
 const DOT_LERP = 0.22; // snappy — marks exact click position
 const RING_LERP = 0.12; // laggy — creates elastic, premium feel
-const BEAT_HISTORY = 26; // ~430ms at 60fps
+const BEAT_HISTORY = 26;
 const BEAT_DEBOUNCE_MS = 110;
 const IDLE_INTERVAL_MS = 80;
 const SPRITE_SIZE = 64;
@@ -35,12 +28,12 @@ interface Sparkle {
   y: number;
   vx: number;
   vy: number;
-  life: number; // 1 → 0 over lifespan
-  lifespan: number; // seconds
+  life: number;
+  lifespan: number;
   size: number;
   rot: number;
   rotSpeed: number;
-  phase: number; // twinkle offset
+  phase: number;
   color: string;
 }
 
@@ -53,7 +46,6 @@ function hexA(hex: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// ── Weighted palette pick ────────────────────────────────
 function pickColor(): string {
   const r = Math.random();
   let acc = 0;
@@ -65,15 +57,12 @@ function pickColor(): string {
 }
 
 // ── Pre-render SEED sparkle sprite (cached per color) ────
-// drawImage with transform = 1 GPU op. Creating gradients per-frame would be
-// 360 gradient creations/frame (120 sparkles × 3 gradients) → janky.
 function makeSparkleSprite(color: string): HTMLCanvasElement {
   const c = document.createElement("canvas");
   c.width = c.height = SPRITE_SIZE;
   const x = c.getContext("2d")!;
   const cx = SPRITE_SIZE / 2;
 
-  // Soft radial halo
   const halo = x.createRadialGradient(cx, cx, 0, cx, cx, SPRITE_SIZE * 0.35);
   halo.addColorStop(0, hexA(color, 0.6));
   halo.addColorStop(0.5, hexA(color, 0.18));
@@ -81,7 +70,6 @@ function makeSparkleSprite(color: string): HTMLCanvasElement {
   x.fillStyle = halo;
   x.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
 
-  // Vertical cross arm (gradient: transparent → color → transparent)
   const v = x.createLinearGradient(cx, 0, cx, SPRITE_SIZE);
   v.addColorStop(0, hexA(color, 0));
   v.addColorStop(0.5, hexA(color, 1));
@@ -93,7 +81,6 @@ function makeSparkleSprite(color: string): HTMLCanvasElement {
   x.lineTo(cx, SPRITE_SIZE - 2);
   x.stroke();
 
-  // Horizontal cross arm
   const h = x.createLinearGradient(0, cx, SPRITE_SIZE, cx);
   h.addColorStop(0, hexA(color, 0));
   h.addColorStop(0.5, hexA(color, 1));
@@ -104,7 +91,6 @@ function makeSparkleSprite(color: string): HTMLCanvasElement {
   x.lineTo(SPRITE_SIZE - 2, cx);
   x.stroke();
 
-  // White-hot core
   x.fillStyle = hexA("#FFFFFF", 0.95);
   x.beginPath();
   x.arc(cx, cx, 1.6, 0, Math.PI * 2);
@@ -113,53 +99,135 @@ function makeSparkleSprite(color: string): HTMLCanvasElement {
   return c;
 }
 
-// ── Ring renderer (outer, laggy — visual anchor) ────────
-function drawRing(
+// ── Tick mark on ring perimeter ──────────────────────────
+function drawTick(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  r: number,
-  color: string,
-  alpha: number,
-  treble: number,
+  angle: number,
+  ringR: number,
+  length: number,
 ): void {
-  ctx.globalAlpha = alpha;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
   ctx.beginPath();
-  ctx.arc(x, y, r + treble * 2, 0, Math.PI * 2);
+  ctx.moveTo(cos * ringR, sin * ringR);
+  ctx.lineTo(cos * (ringR + length), sin * (ringR + length));
   ctx.stroke();
 }
 
-// ── Dot renderer (inner, snappy — precise click point) ──
-function drawDot(
+// ── L-shaped corner bracket ──────────────────────────────
+function drawBracket(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  r: number,
+  bx: number, by: number,
+  len: number,
+  dx: number, dy: number,
+): void {
+  ctx.beginPath();
+  ctx.moveTo(bx, by + dy * len);
+  ctx.lineTo(bx, by);
+  ctx.lineTo(bx + dx * len, by);
+  ctx.stroke();
+}
+
+// ── Gundam targeting reticle ────────────────────────────
+// Draws: rotating ring + ticks (scanning), fixed brackets + crosshair (frame),
+// center dot (precise click point). Lock-on state on hover.
+function drawReticle(
+  ctx: CanvasRenderingContext2D,
+  rx: number, ry: number,       // reticle center (laggy ring position)
+  dx: number, dy: number,       // dot center (snappy precise position)
+  rotation: number,
+  hover: boolean,
+  clicking: boolean,
+  lockAlpha: number,            // 0..1 eased hover state
   bass: number,
 ): void {
-  ctx.globalAlpha = 1;
+  const color = hover ? "#FF4FD8" : "#FFFFFF";
+  const baseR = hover ? 22 : 16;
+  const ringR = baseR * (1 + bass * 0.35) * (clicking ? 0.75 : 1);
 
-  // Glow halo
-  const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
-  glow.addColorStop(0, hexA("#FFFFFF", 0.35 + bass * 0.3));
+  // ═══ Rotating elements: ring + tick marks (scanning) ═══
+  ctx.save();
+  ctx.translate(rx, ry);
+  ctx.rotate(rotation);
+
+  // Outer ring
+  ctx.strokeStyle = hexA(color, 0.4 + lockAlpha * 0.4);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Main ticks at 0°, 90°, 180°, 270°
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = hexA(color, 0.55 + lockAlpha * 0.3);
+  for (let i = 0; i < 4; i++) {
+    drawTick(ctx, (i / 4) * Math.PI * 2, ringR, 5);
+  }
+
+  // Minor ticks at 45°, 135°, 225°, 315°
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = hexA(color, 0.25 + lockAlpha * 0.2);
+  for (let i = 0; i < 4; i++) {
+    drawTick(ctx, ((i + 0.5) / 4) * Math.PI * 2, ringR, 3);
+  }
+
+  ctx.restore();
+
+  // ═══ Fixed elements: corner brackets (screen-aligned targeting frame) ═══
+  // On lock-on: brackets contract inward + tighten
+  const bo = hover ? ringR * 0.5 : ringR + 5;
+  const bl = hover ? 6 : 8;
+  const ba = hover ? 0.9 : 0.45;
+
+  ctx.strokeStyle = hexA(color, ba);
+  ctx.lineWidth = 1.5;
+  drawBracket(ctx, rx - bo, ry - bo, bl, 1, 1);    // NW
+  drawBracket(ctx, rx + bo, ry - bo, bl, -1, 1);   // NE
+  drawBracket(ctx, rx - bo, ry + bo, bl, 1, -1);   // SW
+  drawBracket(ctx, rx + bo, ry + bo, bl, -1, -1);  // SE
+
+  // ═══ Crosshair lines (gaps near center) ═══
+  const gap = 5;
+  const armEnd = ringR - 2;
+  if (armEnd > gap + 2) {
+    ctx.strokeStyle = hexA(color, 0.3 + lockAlpha * 0.3);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rx + gap, ry); ctx.lineTo(rx + armEnd, ry);
+    ctx.moveTo(rx - gap, ry); ctx.lineTo(rx - armEnd, ry);
+    ctx.moveTo(rx, ry + gap); ctx.lineTo(rx, ry + armEnd);
+    ctx.moveTo(rx, ry - gap); ctx.lineTo(rx, ry - armEnd);
+    ctx.stroke();
+  }
+
+  // ═══ Lock-on micro-text ═══
+  if (lockAlpha > 0.03) {
+    ctx.font = "8px 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace";
+    ctx.fillStyle = hexA("#FF4FD8", lockAlpha * 0.7);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("◉ LOCK", rx + ringR + 10, ry);
+  }
+
+  // ═══ Center dot (at snappy position — precise click point) ═══
+  ctx.globalAlpha = 1;
+  const glowR = 14;
+  const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, glowR);
+  glow.addColorStop(0, hexA("#FFFFFF", 0.3 + bass * 0.3));
   glow.addColorStop(0.4, hexA("#FFFFFF", 0.06));
   glow.addColorStop(1, hexA("#FFFFFF", 0));
   ctx.fillStyle = glow;
-  ctx.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
+  ctx.fillRect(dx - glowR, dy - glowR, glowR * 2, glowR * 2);
 
-  // Core
   ctx.fillStyle = "#FFFFFF";
   ctx.beginPath();
-  ctx.arc(x, y, r * (1 + bass * 0.3), 0, Math.PI * 2);
+  ctx.arc(dx, dy, 2 + bass, 0, Math.PI * 2);
   ctx.fill();
 }
 
 export function CursorOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Gate: desktop pointer only (no touch).
   const enabled = useMemo(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(pointer: fine)").matches;
@@ -177,8 +245,6 @@ export function CursorOverlay() {
     let w = window.innerWidth;
     let h = window.innerHeight;
 
-    // NOTE: const arrows (not function declarations) so TS preserves null-narrowing
-    // of canvas/ctx inside closures. Function declarations are hoisted → TS widens.
     const resize = (): void => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = window.innerWidth;
@@ -198,13 +264,18 @@ export function CursorOverlay() {
 
     // ── Pointer state — dual element ──
     const target = { x: w / 2, y: h / 2 };
-    const dot = { x: w / 2, y: h / 2 };   // fast follow — precise click point
-    const ring = { x: w / 2, y: h / 2 };  // slow follow — visual anchor
+    const dot = { x: w / 2, y: h / 2 };
+    const ring = { x: w / 2, y: h / 2 };
     let prevX = dot.x;
     let prevY = dot.y;
     let firstMove = false;
     let hover = false;
     let clicking = false;
+
+    // Reticle rotation + lock-on easing
+    let rotation = 0;
+    let rotSpeed = 0;       // eases toward target speed
+    let lockAlpha = 0;      // eases toward hover state
 
     const onMove = (e: PointerEvent): void => {
       if (!firstMove) {
@@ -224,7 +295,6 @@ export function CursorOverlay() {
     };
     const onDown = (): void => {
       clicking = true;
-      // Click sparkle burst from dot position
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2 + Math.random() * 0.4;
         spawn(dot.x + Math.cos(a) * 8, dot.y + Math.sin(a) * 8, {
@@ -241,7 +311,7 @@ export function CursorOverlay() {
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
 
-    // ── Sparkle object pool (ring buffer) ──
+    // ── Sparkle object pool ──
     const pool: Sparkle[] = [];
     for (let i = 0; i < MAX_SPARKLES; i++) {
       pool.push({
@@ -281,31 +351,20 @@ export function CursorOverlay() {
         spawn(
           dot.x + Math.cos(a) * radius,
           dot.y + Math.sin(a) * radius,
-          {
-            vx: Math.cos(a) * speed,
-            vy: Math.sin(a) * speed,
-            size: 8 + Math.random() * 6,
-          },
+          { vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, size: 8 + Math.random() * 6 },
         );
       }
     }
 
-    // ── Beat detection (energy-based onset) ──
-    // Tracks running bass energy. When instantaneous bass exceeds an adaptive
-    // threshold (mean × 1.35 + floor, divided by 1+√variance for self-tuning),
-    // fires a beat — debounced to 110ms.
+    // ── Beat detection ──
     const bassHistory = new Float32Array(BEAT_HISTORY);
     let bhIdx = 0;
     let bhFilled = 0;
     let lastBeat = 0;
-
-    // ── Idle trickle timer ──
     let lastIdle = 0;
 
-    // ── Hide native cursor ──
     document.documentElement.classList.add("cursor-hidden");
 
-    // ── Main rAF loop ──
     let rafId = 0;
     let lastT = performance.now();
 
@@ -316,32 +375,35 @@ export function CursorOverlay() {
 
       const audio = getAudioData();
 
-      // ── Dual-element lerp: dot snaps fast, ring lags behind ──
+      // ── Dual-element lerp ──
       dot.x += (target.x - dot.x) * DOT_LERP;
       dot.y += (target.y - dot.y) * DOT_LERP;
       ring.x += (target.x - ring.x) * RING_LERP;
       ring.y += (target.y - ring.y) * RING_LERP;
-
-      // Speed based on dot (the precise one)
       const speed = Math.hypot(dot.x - prevX, dot.y - prevY);
       prevX = dot.x;
       prevY = dot.y;
 
-      // Pre-first-move: render cursor at center, no sparkles yet
+      // ── Reticle rotation: spins while scanning, stops on lock-on ──
+      const targetRotSpeed = hover ? 0 : 0.3; // rad/s
+      rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
+      rotation += dt * rotSpeed;
+
+      // ── Lock-on alpha easing ──
+      lockAlpha += ((hover ? 1 : 0) - lockAlpha) * 0.15;
+
+      // Pre-first-move
       if (!firstMove) {
         ctx.clearRect(0, 0, w, h);
-        drawRing(ctx, ring.x, ring.y, 16, "#FFFFFF", 0.6, 0);
-        drawDot(ctx, dot.x, dot.y, 3, 0);
+        drawReticle(ctx, ring.x, ring.y, dot.x, dot.y, rotation, false, false, 0, 0);
         return;
       }
 
-      // ── Spawn: movement-driven ──
+      // ── Spawn sparkles ──
       if (speed > 2) {
         const n = Math.min(4, Math.ceil(speed / 40 + audio.level * 2));
         for (let i = 0; i < n; i++) spawn(dot.x, dot.y);
       }
-
-      // ── Spawn: idle ambient trickle ──
       if (t - lastIdle > IDLE_INTERVAL_MS) {
         lastIdle = t;
         spawn(dot.x, dot.y, { size: 4 + Math.random() * 4 });
@@ -379,7 +441,7 @@ export function CursorOverlay() {
         s.y += s.vy;
         s.vx *= 0.96;
         s.vy *= 0.96;
-        s.vy -= 0.02; // ember-rise
+        s.vy -= 0.02;
         s.rot += s.rotSpeed;
       }
 
@@ -387,7 +449,7 @@ export function CursorOverlay() {
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = "lighter";
 
-      // Sparkles (additive)
+      // Sparkles
       const time = t / 1000;
       for (let i = 0; i < MAX_SPARKLES; i++) {
         const s = pool[i];
@@ -405,15 +467,17 @@ export function CursorOverlay() {
         ctx.restore();
       }
 
-      // ── Ring (outer, laggy — visual anchor) ──
-      const ringBaseR = hover ? 24 : 16;
-      const ringR = ringBaseR * (1 + audio.bass * 0.5) * (clicking ? 0.75 : 1);
-      const ringColor = hover ? "#FF4FD8" : "#FFFFFF";
-      const ringAlpha = hover ? 0.85 : 0.5;
-      drawRing(ctx, ring.x, ring.y, ringR, ringColor, ringAlpha, audio.treble);
-
-      // ── Dot (inner, snappy — precise click point) ──
-      drawDot(ctx, dot.x, dot.y, 3, audio.bass);
+      // ── Gundam targeting reticle ──
+      drawReticle(
+        ctx,
+        ring.x, ring.y,
+        dot.x, dot.y,
+        rotation,
+        hover,
+        clicking,
+        lockAlpha,
+        audio.bass,
+      );
 
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
