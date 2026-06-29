@@ -63,7 +63,16 @@ export function ExperienceSection() {
       <div className="section-label">// experience</div>
       <GlassPanel>
         <div className="experience">
-          {EXPERIENCE.map((job, i) => (
+          {/* Current status — reverse chronological, newest first */}
+          <div className="exp-item exp-item--current">
+            <div className="exp-item__period exp-item__period--current">now</div>
+            <div className="exp-item__body">
+              <div className="exp-item__role exp-item__role--current">
+                {CURRENT_STATUS}
+              </div>
+            </div>
+          </div>
+          {[...EXPERIENCE].reverse().map((job, i) => (
             <div key={i} className="exp-item">
               <div className="exp-item__period">{job.period}</div>
               <div className="exp-item__body">
@@ -73,15 +82,6 @@ export function ExperienceSection() {
               </div>
             </div>
           ))}
-          {/* Current status */}
-          <div className="exp-item exp-item--current">
-            <div className="exp-item__period exp-item__period--current">now</div>
-            <div className="exp-item__body">
-              <div className="exp-item__role exp-item__role--current">
-                {CURRENT_STATUS}
-              </div>
-            </div>
-          </div>
         </div>
       </GlassPanel>
     </section>
