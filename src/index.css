@@ -260,8 +260,12 @@ html.cursor-hidden * {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.exp-item:first-child {
+  border-top: none;
+}
+
 .exp-item:last-child {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
 }
 
 .exp-item__period {
