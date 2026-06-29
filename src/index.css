@@ -233,15 +233,42 @@ html.cursor-hidden * {
 
 /* ── Glass panel (refractive wrapper) ── */
 .glass-panel {
+  position: relative;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
   padding: 40px;
   max-width: 680px;
-  transition: border-color 0.3s ease;
 }
 
-.glass-panel:hover {
-  border-color: var(--glass-border-hover);
+/* ── Gundam corner brackets ──
+   Each corner has two 1px-thick lines forming an L-shape with a small gap.
+   Uses 8 layered linear-gradients with opacity transition for hover. */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+  --al: 16px; /* arm length */
+  --ag: 5px;  /* corner gap */
+  background:
+    /* TL */
+    linear-gradient(to right, rgba(255,255,255,0.2) var(--al), transparent 0) var(--ag) 0 / var(--al) 1px no-repeat,
+    linear-gradient(to bottom, rgba(255,255,255,0.2) var(--al), transparent 0) 0 var(--ag) / 1px var(--al) no-repeat,
+    /* TR */
+    linear-gradient(to left, rgba(255,255,255,0.2) var(--al), transparent 0) calc(100% - var(--ag)) 0 / var(--al) 1px no-repeat,
+    linear-gradient(to bottom, rgba(255,255,255,0.2) var(--al), transparent 0) calc(100% - 0px) var(--ag) / 1px var(--al) no-repeat,
+    /* BL */
+    linear-gradient(to right, rgba(255,255,255,0.2) var(--al), transparent 0) var(--ag) calc(100% - 0px) / var(--al) 1px no-repeat,
+    linear-gradient(to top, rgba(255,255,255,0.2) var(--al), transparent 0) 0 calc(100% - var(--ag)) / 1px var(--al) no-repeat,
+    /* BR */
+    linear-gradient(to left, rgba(255,255,255,0.2) var(--al), transparent 0) calc(100% - var(--ag)) calc(100% - 0px) / var(--al) 1px no-repeat,
+    linear-gradient(to top, rgba(255,255,255,0.2) var(--al), transparent 0) calc(100% - 0px) calc(100% - var(--ag)) / 1px var(--al) no-repeat;
+}
+
+.glass-panel:hover::before {
+  opacity: 1;
 }
 
 /* ── Experience timeline ── */
@@ -319,17 +346,41 @@ html.cursor-hidden * {
 }
 
 .project-card {
+  position: relative;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
   padding: 28px 24px;
   cursor: pointer;
-  transition: border-color 0.3s ease, transform 0.2s ease;
-  position: relative;
+  transition: transform 0.2s ease;
 }
 
 .project-card:hover {
-  border-color: var(--glass-border-hover);
   transform: translateY(-2px);
+}
+
+/* ── Corner brackets on project cards ── */
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+  --al: 14px;
+  --ag: 4px;
+  background:
+    linear-gradient(to right, rgba(255,255,255,0.15) var(--al), transparent 0) var(--ag) 0 / var(--al) 1px no-repeat,
+    linear-gradient(to bottom, rgba(255,255,255,0.15) var(--al), transparent 0) 0 var(--ag) / 1px var(--al) no-repeat,
+    linear-gradient(to left, rgba(255,255,255,0.15) var(--al), transparent 0) calc(100% - var(--ag)) 0 / var(--al) 1px no-repeat,
+    linear-gradient(to bottom, rgba(255,255,255,0.15) var(--al), transparent 0) calc(100% - 0px) var(--ag) / 1px var(--al) no-repeat,
+    linear-gradient(to right, rgba(255,255,255,0.15) var(--al), transparent 0) var(--ag) calc(100% - 0px) / var(--al) 1px no-repeat,
+    linear-gradient(to top, rgba(255,255,255,0.15) var(--al), transparent 0) 0 calc(100% - var(--ag)) / 1px var(--al) no-repeat,
+    linear-gradient(to left, rgba(255,255,255,0.15) var(--al), transparent 0) calc(100% - var(--ag)) calc(100% - 0px) / var(--al) 1px no-repeat,
+    linear-gradient(to top, rgba(255,255,255,0.15) var(--al), transparent 0) calc(100% - 0px) calc(100% - var(--ag)) / 1px var(--al) no-repeat;
+}
+
+.project-card:hover::before {
+  opacity: 1;
 }
 
 .project-card__num {
