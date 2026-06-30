@@ -907,6 +907,16 @@ html.cursor-hidden * {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.15s ease, color 0.2s ease;
+}
+
+.audio-bar__btn:hover {
+  color: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.audio-bar__btn:active {
+  transform: scale(0.9);
 }
 
 .audio-bar__divider {
@@ -935,7 +945,13 @@ html.cursor-hidden * {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.3s ease,
+              transform 0.15s ease;
+}
+
+.audio-bar__track:active {
+  transform: scale(0.95);
 }
 
 .audio-bar__track--active {
@@ -964,6 +980,11 @@ html.cursor-hidden * {
 .audio-bar__theme:hover {
   border-color: rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+}
+
+.audio-bar__theme:active {
+  transform: scale(0.93);
 }
 
 /* ── Nav pill (liquid glass — refractive takes over backdrop-filter & borderRadius) ── */
@@ -983,6 +1004,27 @@ html.cursor-hidden * {
     0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+/* ── Sliding active indicator ── */
+.nav-pill__indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 0;
+  background: color-mix(in srgb, var(--theme) 25%, transparent);
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: 0;
+  /* GSAP animates left + width */
+}
+
+.nav-pill__segmented {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+
 .nav-pill__item {
   background: transparent;
   border: none;
@@ -995,8 +1037,10 @@ html.cursor-hidden * {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.3s ease;
   line-height: 1;
+  position: relative;
+  z-index: 2;
 }
 
 .nav-pill__item:hover {
@@ -1004,7 +1048,6 @@ html.cursor-hidden * {
 }
 
 .nav-pill__item--active {
-  background: color-mix(in srgb, var(--theme) 25%, transparent);
   color: rgba(255, 255, 255, 1);
 }
 
