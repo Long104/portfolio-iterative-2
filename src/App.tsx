@@ -179,12 +179,9 @@ function App() {
           phase={bootPhaseNarrowed}
           isLoading={isLoading}
           error={error}
-          currentTrack={currentTrack}
           onStart={handleStart}
-          onSelectTrack={handleSelectTrack}
           onWarmUp={warmUp}
           onExitComplete={handleExitComplete}
-          tracks={TRACKS}
         />
       )}
 

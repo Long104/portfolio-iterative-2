@@ -12,12 +12,9 @@ interface Props {
   phase: "enter" | "exit";
   isLoading: boolean;
   error: string | null;
-  currentTrack: string;
   onStart: () => void;
-  onSelectTrack: (url: string) => void;
   onWarmUp?: () => void;
   onExitComplete: () => void;
-  tracks: { name: string; url: string }[];
 }
 
 const BOOT_LINES = [
@@ -36,12 +33,9 @@ export function PsycommuBoot({
   phase,
   isLoading,
   error,
-  currentTrack,
   onStart,
-  onSelectTrack,
   onWarmUp,
   onExitComplete,
-  tracks,
 }: Props) {
   const [bootLine, setBootLine] = useState(0);
   const [bootChar, setBootChar] = useState(0);
@@ -162,16 +156,6 @@ export function PsycommuBoot({
     onStart(); // parent sets phase → "exit" which triggers the cinematic animation
   }, [isLoading, onStart, onWarmUp]);
 
-  const handleSelect = useCallback(
-    (url: string) => {
-      if (isLoading || startedRef.current) return;
-      onWarmUp?.();
-      startedRef.current = true;
-      onSelectTrack(url);
-    },
-    [isLoading, onSelectTrack, onWarmUp],
-  );
-
   const isComplete = bootPhase === "complete" || bootPhase === "skip";
   const isExiting = phase === "exit";
 
@@ -262,7 +246,6 @@ export function PsycommuBoot({
             {error ? (
               <p className="psycommu-boot__error">{error}</p>
             ) : (
-              <>
                 <div className="psycommu-boot__launch">
                   <button
                     className="psycommu-boot__launch-btn"
@@ -275,27 +258,6 @@ export function PsycommuBoot({
                     click to deploy mobile suit
                   </div>
                 </div>
-
-                <div className="track-pills">
-                  {tracks.map((track) => (
-                    <button
-                      key={track.url}
-                      className={
-                        "track-pill" +
-                        (currentTrack === track.url
-                          ? " track-pill--active"
-                          : "")
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelect(track.url);
-                      }}
-                    >
-                      {track.name}
-                    </button>
-                  ))}
-                </div>
-              </>
             )}
           </div>
         )}
