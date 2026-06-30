@@ -242,8 +242,12 @@ export default function SparkleSystem() {
     }
   }
 
-  useFrame((state, delta) => {
-    const time = state.clock.getElapsedTime();
+  // Accumulate time manually — avoids THREE.Clock deprecation warning.
+  const elapsed = useRef(0);
+
+  useFrame((_, delta) => {
+    elapsed.current += delta;
+    const time = elapsed.current;
     const audio = getData();
 
     // Moving-average beat detection — adapts to overall loudness

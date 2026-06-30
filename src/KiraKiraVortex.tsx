@@ -205,8 +205,13 @@ export default function KiraKiraVortex() {
   ], []);
 
   // --- Animation loop ---
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
+  // Accumulate time manually — avoids state.clock.getElapsedTime() which
+  // triggers the THREE.Clock deprecation warning (r183+).
+  const elapsed = useRef(0);
+
+  useFrame((state, delta) => {
+    elapsed.current += delta;
+    const t = elapsed.current;
     const raw = getData(); // raw frequency data from AudioEngine
     const s = smooth.current;
     const scroll = getScrollState();
