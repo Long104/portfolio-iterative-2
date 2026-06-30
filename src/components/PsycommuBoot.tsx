@@ -107,7 +107,7 @@ export function PsycommuBoot({
     // 1. Progress bar fills to 100%
     setProgress(100);
 
-    // 2. Brief white flash overlay (opacity 0 → 0.7 → 0)
+    // 2. Brief white flash overlay (opacity 0 → 0.35 → 0)
     const flash = document.createElement("div");
     flash.className = "psycommu-flash";
     Object.assign(flash.style, {
@@ -117,7 +117,7 @@ export function PsycommuBoot({
     });
     document.body.appendChild(flash);
 
-    tl.to(flash, { opacity: 0.7, duration: 0.12, ease: "power2.out" }, 0)
+    tl.to(flash, { opacity: 0.35, duration: 0.12, ease: "power2.out" }, 0)
       .to(flash, { opacity: 0, duration: 0.35, ease: "power2.in" }, 0.12);
 
     // 3. Boot content scales up + fades
