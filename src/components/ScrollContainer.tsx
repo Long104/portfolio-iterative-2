@@ -122,11 +122,21 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       gsap.ticker.add(tickerCb);
       gsap.ticker.lagSmoothing(0);
 
+      // Recalculate all ScrollTriggers now that Lenis proxy is active.
+      // useScrollReveal hooks in child Sections run before this effect
+      // (children-first ordering), so their triggers were created with
+      // stale scroller positions. refresh() forces recalculation.
+      ScrollTrigger.refresh();
+
       // Initial call
       updateActiveSection();
 
       // Also listen to resize (viewport height changes)
-      window.addEventListener("resize", updateActiveSection);
+      function onResize() {
+        updateActiveSection();
+        ScrollTrigger.refresh();
+      }
+      window.addEventListener("resize", onResize);
 
       // ── Keyboard navigation (arrow up/down to jump between sections) ──
       function onKeyDown(e: KeyboardEvent) {
@@ -142,7 +152,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
 
       return () => {
         gsap.ticker.remove(tickerCb);
-        window.removeEventListener("resize", updateActiveSection);
+        window.removeEventListener("resize", onResize);
         window.removeEventListener("keydown", onKeyDown);
         lenis.destroy();
       };

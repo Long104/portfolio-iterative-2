@@ -22,13 +22,14 @@ export function SectionTransition({ activeSection }: Props) {
   useEffect(() => {
     // Skip first mount — no transition on initial load
     if (lastSection.current === activeSection) return;
+
+    // Capture direction BEFORE overwriting lastSection.current
+    const direction = activeSection > lastSection.current ? 1 : -1;
     lastSection.current = activeSection;
 
     const scan = scanRef.current;
     const flash = flashRef.current;
     if (!scan || !flash) return;
-
-    const direction = activeSection > lastSection.current ? 1 : -1;
 
     // ── Scan line sweep ──
     const tl = gsap.timeline();
