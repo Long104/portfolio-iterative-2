@@ -146,7 +146,7 @@ function App() {
       {contentMounted && (
         <Suspense fallback={<div className="content-layer" />}>
           <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange}>
-            <HeroSection />
+            <HeroSection started={started} />
             <AboutSection />
             <ExperienceSection />
             <WorkSection />
