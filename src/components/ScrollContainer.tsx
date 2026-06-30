@@ -1,10 +1,11 @@
 // ── Scroll Container ──
-// Wraps all sections. Uses Lenis for smooth scroll.
+// Wraps all sections. Uses Lenis for smooth scroll, synced to GSAP ticker.
 // Tracks active section by finding which section's midpoint
 // is closest to the viewport center.
 
 import { useEffect, useRef, useImperativeHandle, forwardRef, type ReactNode } from "react";
 import Lenis from "lenis";
+import { gsap, ScrollTrigger } from "../lib/gsap";
 
 export interface ScrollContainerHandle {
   scrollToSection: (index: number) => void;
@@ -85,16 +86,17 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
         updateActiveSection();
       }
 
-      // Listen to Lenis scroll (throttled)
-      lenis.on("scroll", throttledSectionUpdate);
+      // Listen to Lenis scroll (throttled) + sync ScrollTrigger
+      lenis.on("scroll", () => {
+        throttledSectionUpdate();
+        ScrollTrigger.update();
+      });
 
-      // RAF loop for Lenis
-      let frameId = 0;
-      function raf(time: number) {
-        lenis.raf(time);
-        frameId = requestAnimationFrame(raf);
-      }
-      frameId = requestAnimationFrame(raf);
+      // GSAP ticker drives Lenis — single rAF source of truth.
+      // Replaces manual requestAnimationFrame loop.
+      const tickerCb = (time: number) => lenis.raf(time * 1000);
+      gsap.ticker.add(tickerCb);
+      gsap.ticker.lagSmoothing(0);
 
       // Initial call
       updateActiveSection();
@@ -115,7 +117,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       window.addEventListener("keydown", onKeyDown);
 
       return () => {
-        cancelAnimationFrame(frameId);
+        gsap.ticker.remove(tickerCb);
         window.removeEventListener("resize", updateActiveSection);
         window.removeEventListener("keydown", onKeyDown);
         lenis.destroy();

@@ -19,11 +19,11 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
-  // Three.js / R3F files mutate shader uniforms per-frame in useFrame.
+  // Three.js / R3F + GSAP hooks mutate state imperatively.
   // React Compiler's immutability + refs-during-render rules are
   // fundamentally incompatible with this imperative pattern.
   {
-    files: ['src/KiraKiraVortex.tsx'],
+    files: ['src/KiraKiraVortex.tsx', 'src/hooks/useScrollReveal.ts'],
     rules: {
       'react-hooks/immutability': 'off',
       'react-hooks/refs': 'off',
