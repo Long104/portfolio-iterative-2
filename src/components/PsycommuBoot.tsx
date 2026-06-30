@@ -1,9 +1,6 @@
 // ── Psycommu Boot Sequence ──
 // Omega Psycommu activation screen.
 // Terminal boot sequence → cassette key insert → SYSTEM ONLINE.
-// ── Psycommu Boot Sequence ──
-// Omega Psycommu activation screen.
-// Terminal boot sequence → cassette key insert → SYSTEM ONLINE.
 // Cinematic exit: white flash + scale-up + text scramble → content revealed.
 // Tunnel background runs in an infinite loop underneath.
 
