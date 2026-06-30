@@ -67,7 +67,10 @@ export class AudioEngine {
   /** Fetch + decode audio into memory without starting playback.
    *  Safe to call early — on mount, before user interaction.
    *  Call start() later for instant playback.
-   *  If a different track URL is passed, the old buffer is cleared. */
+   *  If a different track URL is passed, the old buffer is cleared.
+   *
+   *  Checks window.__AUDIO_PRELOAD__ first — if the inline script in
+   *  index.html already fetched + decoded this track, use that directly. */
   async preloadTrack(url: string) {
     if (!this.ctx) await this.init();
     if (!this.ctx) throw new Error("AudioContext not available");
@@ -86,6 +89,36 @@ export class AudioEngine {
     this._currentTrackUrl = url;
     this._offset = 0;
 
+    // ── Check for pre-fetched + pre-decoded buffer from index.html ──
+    const preload = (window as Window & {
+      __AUDIO_PRELOAD__?: Promise<{
+        url: string;
+        buffer: AudioBuffer | null;
+        arrayBuffer?: ArrayBuffer;
+      } | null>;
+    }).__AUDIO_PRELOAD__;
+
+    if (preload) {
+      try {
+        const result = await preload;
+        if (result && result.url === url) {
+          if (result.buffer) {
+            // Fully decoded — use directly (portable across AudioContexts)
+            this._audioBuffer = result.buffer;
+            return;
+          }
+          if (result.arrayBuffer) {
+            // Pre-fetched but not decoded — decode now (skip network fetch)
+            this._audioBuffer = await this.ctx.decodeAudioData(result.arrayBuffer);
+            return;
+          }
+        }
+      } catch {
+        // Preload failed — fall through to normal fetch
+      }
+    }
+
+    // Fallback: normal fetch + decode
     const resp = await fetch(url);
     if (!resp.ok) throw new Error("Failed to load " + url);
     const arrayBuffer = await resp.arrayBuffer();

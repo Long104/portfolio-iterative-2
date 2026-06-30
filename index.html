@@ -5,12 +5,39 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pantorn — software engineer</title>
-
-    <!-- Preload default audio track (starts fetching during boot animation) -->
-    <link rel="preload" href="/far-beyond-the-starts-instrumental.opus" as="fetch" crossorigin />
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- ── Kick off audio fetch + decode BEFORE React loads ── -->
+    <!-- Downloads 3.6MB + decodes in parallel with JS bundle parse.
+         By the time the user clicks LAUNCH, the AudioBuffer is ready. -->
+    <script>
+      window.__AUDIO_PRELOAD__ = (async function () {
+        var url = "/far-beyond-the-starts-instrumental.opus";
+        try {
+          var resp = await fetch(url);
+          if (!resp.ok) return null;
+          var arrayBuffer = await resp.arrayBuffer();
+
+          // Try to decode immediately — AudioContext starts suspended
+          // (no user gesture yet) but decodeAudioData still works.
+          // AudioBuffers are portable across contexts once decoded.
+          try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var buffer = await ctx.decodeAudioData(arrayBuffer);
+            ctx.close();
+            return { url: url, buffer: buffer };
+          } catch (e) {
+            // Safari may block early AudioContext — return raw buffer for later
+            return { url: url, buffer: null, arrayBuffer: arrayBuffer };
+          }
+        } catch (e) {
+          return null;
+        }
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

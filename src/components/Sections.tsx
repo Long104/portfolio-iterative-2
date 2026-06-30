@@ -8,40 +8,34 @@ import { GlassPanel, ProjectCard } from "./Glass";
 import { PROJECTS } from "./projects";
 import { EXPERIENCE, CURRENT_STATUS } from "./experience";
 import { useScrollReveal } from "../hooks/useScrollReveal";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
 // ── Hero (section 0) ──
-// Line reveal triggered by LAUNCH click. Uses dedicated useGSAP instead of
-// useScrollReveal because the hero needs precise timing coordination with
-// the PsycommuBoot exit animation (not a scroll trigger).
+// Line reveal triggered by LAUNCH click.
 //
-// Timing:
-//   t=0.00  LAUNCH clicked → boot exit flash starts
-//   t=0.35  hero line reveal begins (as flash is fading)
-//   t=1.25  hero animation done
+// Two-phase approach (no revert/re-run):
+//   Phase 1 (useGSAP, runs once on mount): SplitText + hide lines
+//   Phase 2 (useEffect[started]): create timeline + play when LAUNCH clicked
 //
-// The hero text stays hidden (opacity:0, y:140%) until `started` flips true.
-// useGSAP with dependencies:[started] reverts the hidden state and replays
-// fresh — clean split + animate in one pass.
+// This avoids the fragile useGSAP revert/re-run cycle that was leaving
+// the text visible but static.
 export function HeroSection({ started }: { started: boolean }) {
   const taglineRef = useRef<HTMLHeadingElement>(null);
+  const splitRef = useRef<{ lines: Element[] } | null>(null);
 
+  // Phase 1: Split text into lines + hide them (runs ONCE, never reverts)
   useGSAP(
     () => {
       const el = taglineRef.current;
       if (!el) return;
 
-      // Reduced motion: simple fade only
       if (PREFERS_REDUCED_MOTION) {
         gsap.set(el, { opacity: 0 });
-        if (!started) return;
-        gsap.to(el, { opacity: 1, duration: 0.5, delay: 0.3, ease: "power2.out" });
         return;
       }
 
-      // Split into lines with overflow:hidden mask wrappers
       const split = new SplitText(el, {
         type: "lines",
         mask: "lines",
@@ -52,34 +46,46 @@ export function HeroSection({ started }: { started: boolean }) {
 
       if (split.lines.length === 0) return;
 
-      // Hide immediately — prevents flash of visible text
+      // Hide immediately — stays hidden until Phase 2 runs
       gsap.set(split.lines, { yPercent: 140, opacity: 0 });
-
-      // Not started yet — stay hidden, wait for LAUNCH
-      if (!started) {
-        return () => split.revert();
-      }
-
-      // Animate lines rising from behind their masks
-      const tl = gsap.timeline({
-        delay: 0.35, // wait for boot flash to start fading
-      });
-
-      tl.to(split.lines, {
-        yPercent: 0,
-        opacity: 1,
-        stagger: 0.12,
-        duration: 0.9,
-        ease: "power4.out",
-      });
+      splitRef.current = split;
 
       return () => {
         split.revert();
-        tl.kill();
+        splitRef.current = null;
       };
     },
-    { scope: taglineRef, revertOnUpdate: true, dependencies: [started] },
+    { scope: taglineRef },
   );
+
+  // Phase 2: Play the reveal animation when `started` flips to true
+  useEffect(() => {
+    if (!started) return;
+
+    const el = taglineRef.current;
+    if (!el) return;
+
+    if (PREFERS_REDUCED_MOTION) {
+      gsap.to(el, { opacity: 1, duration: 0.5, delay: 0.3, ease: "power2.out" });
+      return;
+    }
+
+    const split = splitRef.current;
+    if (!split || split.lines.length === 0) return;
+
+    const tl = gsap.timeline({ delay: 0.35 });
+    tl.to(split.lines, {
+      yPercent: 0,
+      opacity: 1,
+      stagger: 0.12,
+      duration: 0.9,
+      ease: "power4.out",
+    });
+
+    return () => {
+      tl.kill();
+    };
+  }, [started]);
 
   return (
     <section className="section hero" data-section-index={0}>
