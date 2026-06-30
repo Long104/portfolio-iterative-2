@@ -1106,8 +1106,11 @@ html.cursor-hidden * {
     padding: 80px 24px;
   }
 
+  /* Work grid: flex container, not CSS grid (avoids Chrome backdrop-filter bug).
+     Switch to column layout so cards stack full-width. */
   .work-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    max-width: 100%;
   }
 
   .glass-panel {
@@ -1117,6 +1120,13 @@ html.cursor-hidden * {
   .stack-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
+  }
+
+  /* Experience timeline: stack period above body */
+  .exp-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 16px 0;
   }
 
   .hud--tl { left: 20px; top: 48px; }
@@ -1129,16 +1139,94 @@ html.cursor-hidden * {
   .hud__counter { font-size: 12px; }
   .hud__hint { font-size: 10px; }
 
+  /* Nav pill: smaller padding on all sides to fit 5 items */
   .nav-pill {
     top: 12px;
     gap: 2px;
     padding: 5px 10px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-pill::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-pill__segmented {
+    gap: 2px;
   }
 
   .nav-pill__item {
     font-size: 10px;
     padding: 3px 8px;
+    white-space: nowrap;
   }
+
+  /* Audio bar: compact to avoid overflow */
+  .audio-bar {
+    gap: 4px;
+    padding: 4px 8px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .audio-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .audio-bar__track {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .audio-bar__btn {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .audio-bar__theme {
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+}
+
+/* ── Extra small phones ── */
+@media (max-width: 400px) {
+  .nav-pill__item {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .section {
+    padding: 60px 16px;
+  }
+
+  .glass-panel {
+    padding: 20px;
+  }
+
+  .exp-item__role {
+    font-size: 14px;
+  }
+
+  .project-card {
+    flex: 0 0 100%;
+  }
+
+  .hud--tl { left: 12px; top: 44px; }
+  .hud--tr { right: 12px; top: 44px; }
+  .hud--bl { left: 12px; bottom: 12px; }
+  .hud--br { right: 12px; bottom: 12px; }
+
+  .hud__name { font-size: 12px; }
+  .hud__role { font-size: 10px; }
+  .hud__counter { font-size: 11px; }
+  .hud__hint { font-size: 9px; }
 }
 
 /* ── Entrance stagger — systems power up on LAUNCH ── */
