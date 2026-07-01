@@ -395,6 +395,8 @@ html.cursor-hidden * {
 
 /* ── Work section — Pinned horizontal scroll ── */
 .section--work-horizontal {
+  display: flex;
+  align-items: center;
   position: relative;
   overflow: hidden;
   /* Height is auto — content-sized cards determine the height.
@@ -409,6 +411,7 @@ html.cursor-hidden * {
 /* Horizontal track — flex row, no wrap, spans wider than viewport */
 .work-track {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: nowrap;
   align-items: center;
   gap: 80px;
