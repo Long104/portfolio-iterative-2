@@ -388,12 +388,8 @@ export function WorkSection({ started }: { started: boolean }) {
 
   return (
     <section ref={containerRef} className="section section--work-horizontal" data-section-index={3}>
+      <div ref={labelRef} className="section-label work-label">// selected work</div>
       <div ref={trackRef} className="work-track">
-        {/* Label lives in the track as the first visible element */}
-        <div className="work-track__label">
-          <div ref={labelRef} className="section-label">// selected work</div>
-        </div>
-
         {PROJECTS.map((project, i) => (
           <ProjectCard
             key={project.num}

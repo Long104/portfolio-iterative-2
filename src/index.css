@@ -415,14 +415,12 @@ html.cursor-hidden * {
   will-change: transform;
 }
 
-/* Label area — first "card" in the track shows the section label */
-.work-track__label {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 200px;
-  padding-right: 40px;
+/* Label — pinned at top of the section, above the scrolling cards */
+.work-label {
+  position: absolute;
+  top: 48px;
+  left: 48px;
+  z-index: 5;
 }
 
 /* Project card — wide horizontal card with image + text */
@@ -1246,10 +1244,9 @@ html.cursor-hidden * {
     height: auto;
     padding: 0;
   }
-  .work-track__label {
-    padding: 0;
+  .work-label {
+    position: static;
     padding-bottom: 16px;
-    justify-content: flex-start;
   }
   .project-card {
     flex: 0 0 auto;
