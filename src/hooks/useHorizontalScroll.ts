@@ -7,21 +7,24 @@
 // Reduced-motion: no-ops (horizontal scroll is motion).
 //
 // Usage:
-//   useHorizontalScroll(containerRef, trackRef, started)
+//   const tweenRef = useRef<gsap.core.Tween>(null);
+//   useHorizontalScroll(containerRef, trackRef, started, tweenRef);
+//   // Later: tweenRef.current can be used as containerAnimation
 
 import { useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { gsap, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
 /**
  * Pins `containerRef` and horizontally scrolls `trackRef` on vertical scroll.
- * @param container The pinned <section> element
- * @param track The inner <div> containing flex items
- * @param enabled When false, skips setup
+ * Stores the tween in `tweenRef` so per-card ScrollTriggers can use it
+ * as their `containerAnimation`.
  */
 export function useHorizontalScroll(
   container: React.RefObject<HTMLElement | null>,
   track: React.RefObject<HTMLElement | null>,
   enabled: boolean,
+  tweenRef?: MutableRefObject<gsap.core.Tween | null>,
 ) {
   useEffect(() => {
     if (!enabled || PREFERS_REDUCED_MOTION) return;
@@ -33,7 +36,7 @@ export function useHorizontalScroll(
     const scrollDistance = t.scrollWidth - c.clientWidth;
     if (scrollDistance <= 0) return;
 
-    // Create the timeline: pin container + scrub track x
+    // Create the tween: pin container + scrub track x
     const tween = gsap.fromTo(
       t,
       { x: 0 },
@@ -51,14 +54,18 @@ export function useHorizontalScroll(
       },
     );
 
+    // Expose the tween for containerAnimation usage
+    if (tweenRef) tweenRef.current = tween;
+
     // Refresh on resize to recalculate
     const refresh = () => ScrollTrigger.refresh();
     window.addEventListener("resize", refresh);
 
     return () => {
       window.removeEventListener("resize", refresh);
+      if (tweenRef) tweenRef.current = null;
       tween.scrollTrigger?.kill();
       tween.kill();
     };
-  }, [container, track, enabled]);
+  }, [container, track, enabled, tweenRef]);
 }

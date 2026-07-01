@@ -329,60 +329,53 @@ export function WorkSection({ started }: { started: boolean }) {
   });
 
   // ── Pinned horizontal scroll hook ──
-  useHorizontalScroll(containerRef, trackRef, started);
+  const horizontalTween = useRef<gsap.core.Tween>(null);
+  useHorizontalScroll(containerRef, trackRef, started, horizontalTween);
 
-  // ── Refs for each card's image ──
+  // ── Per-card clip-path reveal ──
+  // Each card gets its own ScrollTrigger that wipes the image gradient
+  // from right-to-left as the card enters the pinned viewport.
+  // Uses `containerAnimation` to tie to the horizontal scroll tween.
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const revealTrigger = useRef<ScrollTrigger | null>(null);
+  const revealTriggers = useRef<ScrollTrigger[]>([]);
 
   useEffect(() => {
-    if (!started || !trackRef.current || !containerRef.current) return;
-    const container = containerRef.current;
-    const track = trackRef.current;
+    if (!started || !horizontalTween.current) return;
 
-    // Kill any previous trigger
-    revealTrigger.current?.kill();
-    revealTrigger.current = null;
+    // Kill any previous triggers
+    revealTriggers.current.forEach((st) => st.kill());
+    revealTriggers.current = [];
 
-    const totalScroll = track.scrollWidth - container.clientWidth;
-    if (totalScroll <= 0) return;
+    const containerAnim = horizontalTween.current;
 
     // Set all images to hidden initially
     imageRefs.current.forEach((img) => {
       if (img) gsap.set(img, { clipPath: "inset(0 100% 0 0)" });
     });
 
-    // Single ScrollTrigger with onUpdate — each card's image reveal
-    // tracks how much of the card is visible in the viewport.
-    const st = ScrollTrigger.create({
-      trigger: container,
-      start: "top top",
-      end: "+=" + totalScroll,
-      scrub: 0.5,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const scrollPx = self.progress * totalScroll;
-        imageRefs.current.forEach((imgEl) => {
-          if (!imgEl) return;
-          const card = imgEl.closest(".project-card") as HTMLElement;
-          if (!card) return;
-          const cardW = card.offsetWidth;
-          const cardLeft = card.offsetLeft;
-          // How much of the card's width is currently visible in viewport
-          const cardRightEdge = cardLeft + cardW;
-          const visibleLeft = Math.max(0, cardLeft - scrollPx);
-          const visibleRight = Math.max(0, Math.min(cardW, cardRightEdge - scrollPx));
-          const visibleWidth = Math.max(0, visibleRight - visibleLeft);
-          const pct = Math.max(0, Math.min(100, 100 - (visibleWidth / cardW) * 100));
-          imgEl.style.clipPath = `inset(0 ${pct}% 0 0)`;
-        });
-      },
+    // Per-card trigger: wipes clip-path as card crosses into viewport
+    imageRefs.current.forEach((imgEl) => {
+      if (!imgEl) return;
+      const card = imgEl.closest(".project-card") as HTMLElement;
+      if (!card) return;
+
+      const st = ScrollTrigger.create({
+        trigger: card,
+        containerAnimation: containerAnim,
+        start: "left right",
+        end: "left 30%",
+        scrub: 0.6,
+        onUpdate: (self) => {
+          imgEl.style.clipPath = `inset(0 ${100 - self.progress * 100}% 0 0)`;
+        },
+      });
+
+      revealTriggers.current.push(st);
     });
 
-    revealTrigger.current = st;
-
     return () => {
-      st.kill();
+      revealTriggers.current.forEach((st) => st.kill());
+      revealTriggers.current = [];
     };
   }, [started]);
 
