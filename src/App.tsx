@@ -4,6 +4,7 @@ import type { ScrollContainerHandle } from "./components/ScrollContainer";
 import { setScrollState } from "./scrollStore";
 import { SectionTransition } from "./components/SectionTransition";
 import { ScrollTrigger } from "./lib/gsap";
+import { useParallax } from "./hooks/useParallax";
 
 const Scene = lazy(() => import("./Scene"));
 const ScrollContainer = lazy(() =>
@@ -147,6 +148,15 @@ function App() {
 
   const activeTrackName = TRACKS.find((t) => t.url === currentTrack)?.name ?? "";
   const bootPhaseNarrowed: "enter" | "exit" = bootPhase === "gone" ? "exit" : bootPhase;
+
+  // ── Parallax: glass panels float as you scroll ──
+  // Activates after LAUNCH when content is visible.
+  useParallax(
+    ".glass-panel",
+    25,
+    1.5,
+    started,
+  );
 
   return (
     <>
