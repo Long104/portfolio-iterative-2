@@ -397,6 +397,10 @@ export function WorkSection({ started }: { started: boolean }) {
             imageRef={(el: HTMLDivElement | null) => { imageRefs.current[i] = el; }}
           />
         ))}
+        {/* Spacer — invisible element that creates right breathing room
+            for the last card. When the spacer reaches the left edge,
+            scroll stops and the last card is fully visible. */}
+        <div className="work-track__spacer" aria-hidden="true" />
       </div>
     </section>
   );

@@ -423,6 +423,15 @@ html.cursor-hidden * {
   will-change: transform;
 }
 
+/* Invisible spacer at end of track — creates right breathing room
+   for the last card. SOTD pattern: scroll stops when spacer reaches
+   left edge, leaving natural gap. */
+.work-track__spacer {
+  flex: 0 0 80px;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Project card — wide horizontal card with image + text */
 .project-card {
   flex: 0 0 min(40vw, 400px);
