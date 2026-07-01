@@ -5,6 +5,8 @@
 //
 // Pattern: ScrollTrigger pin + gsap.fromTo track x scrub.
 // Reduced-motion: no-ops (horizontal scroll is motion).
+// Responsive: uses matchMedia("(max-width: 768px)") to dynamically
+// destroy/recreate the tween when viewport crosses the CSS breakpoint.
 //
 // Usage:
 //   const tweenRef = useRef<gsap.core.Tween>(null);
@@ -27,46 +29,100 @@ export function useHorizontalScroll(
   tweenRef?: MutableRefObject<gsap.core.Tween | null>,
 ) {
   useEffect(() => {
-    const isMobileViewport = window.innerWidth <= 768;
-    if (!enabled || PREFERS_REDUCED_MOTION || isMobileViewport) return;
     const c = container.current;
     const t = track.current;
     if (!c || !t) return;
 
-    // Calculate how far the track must travel
-    const scrollDistance = t.scrollWidth - c.clientWidth;
-    if (scrollDistance <= 0) return;
+    // ── Media query matching the CSS breakpoint ──
+    // When this matches (≤768px), horizontal scroll is destroyed.
+    const mq = window.matchMedia("(max-width: 768px)");
 
-    // Create the tween: pin container + scrub track x
-    const tween = gsap.fromTo(
-      t,
-      { x: 0 },
-      {
-        x: -scrollDistance,
-        ease: "none",
-        scrollTrigger: {
-          trigger: c,
-          pin: true,
-          start: "top top",
-          end: () => "+=" + (t.scrollWidth - c.clientWidth),
-          scrub: 1,
-          invalidateOnRefresh: true,
+    let tween: gsap.core.Tween | null = null;
+
+    // ── Create the pinned horizontal scroll tween ──
+    function createTween() {
+      if (!c || !t) return;
+      // Already exists? Kill first so we can re-create fresh.
+      destroyTween();
+
+      if (!enabled || PREFERS_REDUCED_MOTION) return;
+
+      const scrollDistance = t.scrollWidth - c.clientWidth;
+      if (scrollDistance <= 0) return;
+
+      tween = gsap.fromTo(
+        t,
+        { x: 0 },
+        {
+          x: -scrollDistance,
+          ease: "none",
+          scrollTrigger: {
+            trigger: c,
+            pin: true,
+            start: "top top",
+            end: () => "+=" + (t.scrollWidth - c.clientWidth),
+            scrub: 1,
+            invalidateOnRefresh: true,
+          },
         },
-      },
-    );
+      );
 
-    // Expose the tween for containerAnimation usage
-    if (tweenRef) tweenRef.current = tween;
+      if (tweenRef) tweenRef.current = tween;
+      ScrollTrigger.refresh();
+    }
 
-    // Refresh on resize to recalculate
-    const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("resize", refresh);
+    // ── Destroy the tween and reset ──
+    function destroyTween() {
+      if (!t) return;
+      if (tween) {
+        tween.scrollTrigger?.kill();
+        tween.kill();
+        tween = null;
+        gsap.set(t, { x: 0 });
+        if (tweenRef) tweenRef.current = null;
+        ScrollTrigger.refresh();
+      }
+    }
+
+    // ── React to viewport crossing the breakpoint ──
+    // Uses two mechanisms:
+    //   1. matchMedia "change" event — fires in real browsers on resize/orientation
+    //   2. window "resize" event — fallback for headless/test environments where
+    //      matchMedia change doesn't fire (e.g. CDP viewport resizing)
+    function syncTween() {
+      if (mq.matches) {
+        destroyTween();
+      } else {
+        createTween();
+      }
+    }
+
+    function handleChange(_e: MediaQueryListEvent) {
+      syncTween();
+    }
+
+    function handleResize() {
+      // Only act if the mq state actually changed (not every resize pixel)
+      if ((mq.matches && tween) || (!mq.matches && !tween)) {
+        syncTween();
+      }
+    }
+
+    // ── Initial setup ──
+    if (!mq.matches) {
+      createTween();
+    }
+
+    // ── Listen for dynamic resize / orientation changes ──
+    mq.addEventListener("change", handleChange);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", refresh);
-      if (tweenRef) tweenRef.current = null;
-      tween.scrollTrigger?.kill();
-      tween.kill();
+      mq.removeEventListener("change", handleChange);
+      window.removeEventListener("resize", handleResize);
+      destroyTween();
     };
+    // Deliberately re-run when refs/enabled change (refs are stable in practice,
+    // but React may call the callback with a new closure).
   }, [container, track, enabled, tweenRef]);
 }
