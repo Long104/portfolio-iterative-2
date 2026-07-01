@@ -22,7 +22,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "typescript · webgl · glsl",
     desc: "A volumetric particle renderer that simulates interstellar gas clouds in real-time. Built from scratch on raw WebGL.",
     url: "#",
-    image: "linear-gradient(135deg, #0c0e1a 0%, #1a1040 40%, #2d1b69 70%, #4a2c8a 100%)",
+    image: "linear-gradient(135deg, #1a1040 0%, #3d1f8a 40%, #7a4fd4 70%, #b088ff 100%)",
   },
   {
     num: "02",
@@ -30,7 +30,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "react · three.js · audio api",
     desc: "Immersive audio-visual tunnel experience. The 3D vortex pulses to music frequency analysis in real-time.",
     url: "#",
-    image: "linear-gradient(135deg, #0a1628 0%, #0d3b66 40%, #1a6b8a 70%, #3a9bba 100%)",
+    image: "linear-gradient(135deg, #0d3b66 0%, #1a7ab5 40%, #4ab8e8 70%, #80d8ff 100%)",
   },
   {
     num: "03",
@@ -38,7 +38,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "typescript · websockets · yjs",
     desc: "Peer-to-peer collaborative editor with CRDT-based conflict resolution. Multiple users edit the same document simultaneously.",
     url: "#",
-    image: "linear-gradient(135deg, #1a0a0a 0%, #4a1525 40%, #8a2040 70%, #c03555 100%)",
+    image: "linear-gradient(135deg, #4a1020 0%, #8a2035 40%, #d04055 70%, #ff7080 100%)",
   },
   {
     num: "04",
@@ -46,7 +46,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "glsl · webgpu · vite",
     desc: "Interactive GLSL editor with live preview, shader graph visualizer, and a library of 50+ community shader examples.",
     url: "#",
-    image: "linear-gradient(135deg, #0a1a0a 0%, #0d3d1a 40%, #1a6b35 70%, #3a9a55 100%)",
+    image: "linear-gradient(135deg, #0d3d1a 0%, #1a7a35 40%, #40b860 70%, #70f090 100%)",
   },
   {
     num: "05",
@@ -54,6 +54,6 @@ export const PROJECTS: readonly Project[] = [
     stack: "rust · wasm · cloudflare",
     desc: "High-performance serverless functions compiled to WebAssembly. Image processing, JSON parsing, and data transformation at the edge.",
     url: "#",
-    image: "linear-gradient(135deg, #1a1a0a 0%, #3d3d0d 40%, #6b6b1a 70%, #9a9a3a 100%)",
+    image: "linear-gradient(135deg, #3d3d0d 0%, #7a7a1a 40%, #b8b840 70%, #f0f070 100%)",
   },
 ] as const;

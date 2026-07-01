@@ -352,7 +352,8 @@ export function WorkSection({ started }: { started: boolean }) {
       if (img) gsap.set(img, { clipPath: "inset(0 100% 0 0)" });
     });
 
-    // Single ScrollTrigger with onUpdate — each card reveals as it enters view
+    // Single ScrollTrigger with onUpdate — each card's image reveal
+    // tracks how much of the card is visible in the viewport.
     const st = ScrollTrigger.create({
       trigger: container,
       start: "top top",
@@ -360,19 +361,19 @@ export function WorkSection({ started }: { started: boolean }) {
       scrub: 0.5,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
-        const progress = self.progress;
+        const scrollPx = self.progress * totalScroll;
         imageRefs.current.forEach((imgEl) => {
           if (!imgEl) return;
           const card = imgEl.closest(".project-card") as HTMLElement;
           if (!card) return;
-          const cardLeft = card.offsetLeft;
           const cardW = card.offsetWidth;
-          const startFrac = Math.max(0, (cardLeft + cardW - container.clientWidth + 80) / totalScroll);
-          const endFrac = Math.min(1, (cardLeft + cardW * 0.3) / totalScroll);
-          const range = endFrac - startFrac;
-          if (range <= 0) return;
-          const cardProgress = Math.min(1, Math.max(0, (progress - startFrac) / range));
-          const pct = (1 - cardProgress) * 100;
+          const cardLeft = card.offsetLeft;
+          // How much of the card's width is currently visible in viewport
+          const cardRightEdge = cardLeft + cardW;
+          const visibleLeft = Math.max(0, cardLeft - scrollPx);
+          const visibleRight = Math.max(0, Math.min(cardW, cardRightEdge - scrollPx));
+          const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+          const pct = Math.max(0, Math.min(100, 100 - (visibleWidth / cardW) * 100));
           imgEl.style.clipPath = `inset(0 ${pct}% 0 0)`;
         });
       },
