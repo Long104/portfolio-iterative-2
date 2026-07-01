@@ -131,6 +131,7 @@ export function ProjectCard({
       <div className="project-card__info">
         <div className="project-card__num">{project.num}</div>
         <div className="project-card__title">{project.title}</div>
+        <div className="project-card__desc">{project.desc}</div>
         <div className="project-card__stack">{project.stack}</div>
       </div>
       <div ref={arrowRef} className="project-card__arrow">{"→"}</div>
