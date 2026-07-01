@@ -399,7 +399,7 @@ html.cursor-hidden * {
 .section--work-horizontal {
   position: relative;
   overflow: hidden;
-  height: min(100vh, 600px);
+  height: 70vh;
   width: 100%;
   padding: 0;
   display: flex;
@@ -1148,9 +1148,6 @@ html.cursor-hidden * {
 
 /* ── Tablet / iPad (768–1023px) ── */
 @media (min-width: 769px) and (max-width: 1023px) {
-  .section--work-horizontal {
-    height: min(100vh, 500px);
-  }
   .work-label {
     padding: 32px 32px 0;
   }
