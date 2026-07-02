@@ -24,6 +24,7 @@ import { AudioBar } from "./components/AudioBar";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { ProjectDetail } from "./components/ProjectDetail";
 import type { Project } from "./components/projects";
+import { initAudioUI } from "./lib/audio-ui";
 
 import {
   HeroSection,
@@ -139,6 +140,7 @@ function App() {
 
   const handleStart = useCallback(async () => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
+    initAudioUI(); // create AudioContext inside trusted click
     setBootPhase("exit"); // start GSAP cinematic exit (flash + scale + scramble)
     setStarted(true); // show post-launch UI + enable scroll tracking
     if (isPreloaded) {
@@ -150,6 +152,7 @@ function App() {
 
   const handleSelectTrack = useCallback(async (url: string) => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
+    initAudioUI(); // create AudioContext inside trusted click
     setBootPhase("exit");
     setStarted(true);
     if (isPreloaded && url === currentTrack) {
