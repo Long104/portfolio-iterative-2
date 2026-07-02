@@ -8,7 +8,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { getAudioData } from "../useAudioEngine";
 import { MAX_DPR } from "../perf";
 import { PREFERS_REDUCED_MOTION } from "../lib/gsap";
-import { getScrollState } from "../scrollStore";
 
 // ── Palette (discrete, matches shaders) ──────────────────
 const PALETTE = [
@@ -249,27 +248,6 @@ export function CursorOverlay() {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(pointer: fine)").matches;
   }, []);
-
-  // ── Hide canvas during scroll to save GPU, show when idle ──
-  useEffect(() => {
-    if (!enabled) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const SCROLL_HIDE_THRESHOLD = 2; // px/frame — above this = scrolling
-    const CHECK_INTERVAL_MS = 150;
-
-    const interval = setInterval(() => {
-      const v = getScrollState().velocity;
-      if (v > SCROLL_HIDE_THRESHOLD) {
-        canvas.style.opacity = "0";
-      } else {
-        canvas.style.opacity = "1";
-      }
-    }, CHECK_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;
