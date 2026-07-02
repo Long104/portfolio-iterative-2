@@ -164,14 +164,17 @@ export const AboutSection = memo(function AboutSection() {
     <section className="section" data-section-index={1}>
       <div ref={labelRef} className="section-label">// about</div>
       <GlassPanel>
-        <p ref={textRef} className="about__text">
-          i'm a software developer from thailand. <br />
-          i build things i want to use myself. <br />
-          <span>
-            currently exploring ai integration, webgl, and optimizing
-            web apps for performance. in my free time, chess and rubik's cubes.
-          </span>
-        </p>
+        <div className="about__header">
+          <img src="/profile-small.jpg" alt="pantorn chuavallee" className="about__photo" />
+          <p ref={textRef} className="about__text">
+            i'm a software developer from thailand. <br />
+            i build things i want to use myself. <br />
+            <span>
+              currently exploring ai integration, webgl, and optimizing
+              web apps for performance. in my free time, chess and rubik's cubes.
+            </span>
+          </p>
+        </div>
 
         <div className="stack-grid">
           {Object.entries(STACK).map(([category, items], idx) => {

@@ -220,6 +220,22 @@ html.cursor-hidden * {
   max-width: 640px;
 }
 
+.about__header {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.about__photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
 .about__text {
   font-size: clamp(18px, 2.5vw, 28px);
   line-height: 1.5;

@@ -71,11 +71,34 @@ export function ProjectCard({
       }
     }
 
+    // ── Click: cinematic fade before opening project ──
+    function onClick(e: Event) {
+      e.preventDefault();
+      const overlay = document.createElement("div");
+      Object.assign(overlay.style, {
+        position: "fixed", inset: "0", zIndex: "200",
+        background: "#01314a", pointerEvents: "none", opacity: "0",
+      });
+      document.body.appendChild(overlay);
+      gsap.to(overlay, {
+        opacity: 1, duration: 0.15, ease: "power2.in",
+        onComplete: () => {
+          window.open(project.url, "_blank", "noopener,noreferrer");
+          gsap.to(overlay, {
+            opacity: 0, duration: 0.3, delay: 0.1,
+            onComplete: () => overlay.remove(),
+          });
+        },
+      });
+    }
+
     card.addEventListener("mouseenter", onEnter);
     card.addEventListener("mouseleave", onLeave);
+    card.addEventListener("click", onClick);
     return () => {
       card.removeEventListener("mouseenter", onEnter);
       card.removeEventListener("mouseleave", onLeave);
+      card.removeEventListener("click", onClick);
       tweenRef.current?.kill();
     };
   }, [mergedCardRef]);

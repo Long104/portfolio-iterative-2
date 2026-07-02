@@ -18,7 +18,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "go · next.js · postgresql",
     desc: "A money management application for tracking spending. Go backend, Next.js frontend. Future AI integration for spending recommendations.",
     url: "https://github.com/Long104/SenZen",
-    image: "/cashwise.png",
+    image: "/cashwise.jpg",
   },
   {
     num: "02",
@@ -26,7 +26,7 @@ export const PROJECTS: readonly Project[] = [
     stack: "react · liveblocks · firebase",
     desc: "Real-time collaborative editor with AI translation. Clerk auth, Liveblocks for multi-user editing, Blocknote text editor, Cloudflare Workers for AI.",
     url: "https://github.com/Long104/notion-clone",
-    image: "/notion-clone.png",
+    image: "/notion-clone.jpg",
   },
   {
     num: "03",
@@ -34,6 +34,6 @@ export const PROJECTS: readonly Project[] = [
     stack: "cloudflare workers · llama 3.3",
     desc: "AI-powered clipboard extension that helps users understand concepts faster via a sidebar chat powered by LLaMA 3.3, running on Cloudflare Workers edge.",
     url: "https://github.com/Long104/AI-Clipboard-extension",
-    image: "/clipboard-ai.png",
+    image: "/clipboard-ai.jpg",
   },
 ] as const;
