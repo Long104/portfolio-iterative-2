@@ -7,6 +7,7 @@ import { useDeviceOrientation } from "../useDeviceOrientation";
 import { PsycommuWaveform } from "./PsycommuWaveform";
 import { TRACKS } from "../useAudioEngine";
 import { gsap } from "../lib/gsap";
+import { playHoverSound, playClickSound } from "../lib/audio-ui";
 
 interface AudioBarProps {
   isPlaying: boolean;
@@ -42,6 +43,8 @@ export function AudioBar({
     function onDown() { gsap.to(el, { scale: 0.85, duration: 0.1, ease: "power2.out" }); }
     function onUp() { gsap.to(el, { scale: 1, duration: 0.3, ease: "back.out(3)" }); }
 
+    function onEnter() { playHoverSound(); }
+
     function onMove(e: MouseEvent) {
       if (!canHover) return;
       const rect = el.getBoundingClientRect();
@@ -59,12 +62,14 @@ export function AudioBar({
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointerup", onUp);
     el.addEventListener("pointerleave", onUp);
+    el.addEventListener("mouseenter", onEnter);
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
     return () => {
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("pointerleave", onUp);
+      el.removeEventListener("mouseenter", onEnter);
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
@@ -111,7 +116,7 @@ export function AudioBar({
       <button
         ref={playBtnRef}
         className="audio-bar__btn"
-        onClick={toggle}
+        onClick={() => { playClickSound(); toggle(); }}
         aria-label={isPlaying ? "Pause" : "Play"}
       >
         {isPlaying ? "\u23F8" : "\u25B6"}
@@ -132,7 +137,7 @@ export function AudioBar({
               "audio-bar__track" +
               (currentTrack === track.url ? " audio-bar__track--active" : "")
             }
-            onClick={() => handleSelectTrack(track.url)}
+            onClick={() => { playClickSound(); handleSelectTrack(track.url); }}
           >
             {track.name}
           </button>
@@ -143,7 +148,7 @@ export function AudioBar({
 
       <button
         className="audio-bar__theme"
-        onClick={onToggleTheme}
+        onClick={() => { playClickSound(); onToggleTheme(); }}
         aria-label={`Switch to ${theme === "gquuuuuux" ? "GFreD" : "GQuuuuuuX"} theme`}
       >
         {theme === "gquuuuuux" ? "gMS-Ω" : "gMS-κ"}

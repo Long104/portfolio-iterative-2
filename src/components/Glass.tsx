@@ -4,14 +4,14 @@ import { gsap } from "../lib/gsap";
 import { PROJECTS } from "./projects";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildPanelConfig, buildNavConfig } from "./glass-configs";
-import { playHoverSound, playOpenSound } from "../lib/audio-ui";
+import { playHoverSound, playOpenSound, playClickSound } from "../lib/audio-ui";
 
 // ── Glass Panel (large — About/Experience sections) ──
 export function GlassPanel({ children }: { children: ReactNode }) {
   const specularAngle = useDeviceOrientation();
   const refraction = useMemo(() => buildPanelConfig(specularAngle), [specularAngle]);
   return (
-    <RefractiveDiv refraction={refraction} className="glass-panel">
+    <RefractiveDiv refraction={refraction} className="glass-panel" onClick={playClickSound}>
       {children}
     </RefractiveDiv>
   );
