@@ -3,18 +3,20 @@ import { useThree } from "@react-three/fiber";
 import { getScrollState } from "./scrollStore";
 
 // ==========================================
-// FRAME LIMITER — adaptive fps with idle throttling
+// FRAME LIMITER — adaptive fps with idle & section-aware throttling
 // ==========================================
 //
-// All tiers start at 30fps to reduce thermal throttling during scroll.
-// When the user stops scrolling (velocity drops to 0 for 2s), drops to 15fps
-// to let the GPU rest while keeping the tunnel visible with subtle animation.
-// Any scroll input immediately restores full 30fps.
+// Three-tier frame rate:
+//   ACTIVE (scrolling, any section)  → 30fps
+//   IDLE (sections 0-3, 2s no scroll) → 15fps  — subtle tunnel animation
+//   LAST SECTION (section 4, 2s no scroll) → 5fps  — contact is mostly static bg
 //
+// Any scroll input immediately restores 30fps.
 // In frameloop="demand" mode, R3F only renders when invalidate() is called.
 
 const ACTIVE_FPS = 30;
 const IDLE_FPS = 15;
+const LAST_SECTION_IDLE_FPS = 5; // contact section — tunnel is just static bg, save GPU
 const IDLE_TIMEOUT_MS = 2000;  // 2 seconds of no scroll → idle
 
 export default function FrameLimiter() {
@@ -27,13 +29,14 @@ export default function FrameLimiter() {
   // Watch scroll velocity — if near-zero for IDLE_TIMEOUT_MS, switch to idle fps
   useEffect(() => {
     function checkIdle() {
-      const velocity = getScrollState().velocity;
+      const { velocity, sectionIndex } = getScrollState();
       if (velocity < 0.5) {
         // User has stopped scrolling — start idle timer
         if (!idleTimerRef.current) {
+          const idleFps = sectionIndex >= 4 ? LAST_SECTION_IDLE_FPS : IDLE_FPS;
           idleTimerRef.current = setTimeout(() => {
             idleTimerRef.current = null;
-            fpsRef.current = IDLE_FPS;
+            fpsRef.current = idleFps;
           }, IDLE_TIMEOUT_MS);
         }
       } else {
@@ -41,8 +44,8 @@ export default function FrameLimiter() {
         if (idleTimerRef.current) {
           clearTimeout(idleTimerRef.current);
           idleTimerRef.current = null;
-          fpsRef.current = ACTIVE_FPS;
         }
+        fpsRef.current = ACTIVE_FPS;
       }
     }
 
