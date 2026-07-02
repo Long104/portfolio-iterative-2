@@ -341,6 +341,7 @@ export function CursorOverlay() {
       target.x = e.clientX;
       target.y = e.clientY;
       lastMoveTime = performance.now();
+      resume(); // wake up from deep idle if paused
     };
     const onOver = (e: MouseEvent): void => {
       const el = e.target;
@@ -421,15 +422,34 @@ export function CursorOverlay() {
     let rafId = 0;
     let lastT = performance.now();
     let lastFrameTime = 0; // for idle throttle
+    let paused = false; // deep idle: rAF cancelled entirely
+
+    const IDLE_PAUSE_MS = 4000; // 4s no movement → pause rAF entirely
+
+    function resume() {
+      if (!paused) return;
+      paused = false;
+      lastT = performance.now();
+      lastFrameTime = 0;
+      rafId = requestAnimationFrame(frame);
+    }
 
     const frame = (t: number): void => {
       rafId = requestAnimationFrame(frame);
       const dt = Math.min((t - lastT) / 1000, 0.05);
       lastT = t;
 
-      // ── Idle throttle: drop to ~15fps (66ms between frames) when cursor
-      // hasn't moved for IDLE_CUTOFF_MS. Frees CPU for the 3D loop.
-      // On next pointermove, full 60fps resumes within 1 frame (~16ms).
+      // ── Two-stage idle: throttle at IDLE_CUTOFF_MS, pause at IDLE_PAUSE_MS ──
+      if (t - lastMoveTime > IDLE_PAUSE_MS) {
+        // Deep idle: cancel rAF entirely to free CPU for the 3D scene.
+        // Canvas will be redrawn on next pointermove via resume().
+        if (!paused) {
+          paused = true;
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        return;
+      }
       if (t - lastMoveTime > IDLE_CUTOFF_MS) {
         if (t - lastFrameTime < IDLE_FRAME_MS) {
           // Still need to update rotation or it'll snap when resuming
