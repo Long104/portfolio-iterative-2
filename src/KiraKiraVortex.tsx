@@ -198,14 +198,14 @@ export default function KiraKiraVortex() {
   const camLookAt = useRef(new Vector3(0, 0, 0));
   const currentLookAt = useRef(new Vector3(0, 0, 0));
 
-  // Per-section camera positions — each section has a distinct angle + zoom
-  // Mouse parallax adds on top of these base positions
+  // Per-section camera positions — each section has a distinct angle
+  // Subtle variety — not jarring. Mouse parallax adds on top.
   const SECTION_CAMERAS: { pos: [number, number, number]; look: [number, number, number] }[] = useMemo(() => [
-    { pos: [0,    0,    6.0], look: [0, 0, 0] },  // 0: hero — pulled back, full vortex
-    { pos: [0.3,  0.2,  5.0], look: [0, 0, 0] },  // 1: about — drift right, sun shifts
-    { pos: [-0.2, 0.1,  4.5], look: [0, 0, 0] },  // 2: experience — closer, intimate
-    { pos: [0,   -0.2,  5.5], look: [0, 0, 0] },  // 3: work — pulled back for h-scroll
-    { pos: [0.5,  0.3,  3.5], look: [0, 0, 0] },  // 4: contact — zoomed in, dramatic
+    { pos: [0,    0,    5.5], look: [0, 0, 0] },  // 0: hero — slightly pulled back
+    { pos: [0.2,  0.15, 5.0], look: [0, 0, 0] },  // 1: about — gentle drift right
+    { pos: [-0.15, 0.1, 4.7], look: [0, 0, 0] },  // 2: experience — slightly closer
+    { pos: [0,   -0.15, 5.3], look: [0, 0, 0] },  // 3: work — pulled back for h-scroll
+    { pos: [0.3,  0.2,  4.2], look: [0, 0, 0] },  // 4: contact — zoomed in moderately
   ], []);
 
   // --- Animation loop ---
@@ -294,10 +294,10 @@ export default function KiraKiraVortex() {
 
     // ── Scroll-reactive particle speed ──
     // Particle speed increases with scroll depth + scroll velocity (momentum feel)
-    const velBoost = Math.min(Math.abs(scroll.velocity) / 50, 1.5);
-    const speedBoost = 0.15 + p * 0.25 + velBoost * 0.3;
+    const velBoost = Math.min(Math.abs(scroll.velocity) / 200, 0.6);
+    const speedBoost = 0.15 + p * 0.25 + velBoost * 0.15;
     paintMat.uniforms.uSpeed.value = speedBoost;
-    flareMat.uniforms.uSpeed.value = speedBoost * 1.2 + velBoost * 0.4;
+    flareMat.uniforms.uSpeed.value = speedBoost * 1.2 + velBoost * 0.2;
   });
 
   return (
