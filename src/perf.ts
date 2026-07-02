@@ -4,9 +4,9 @@
 //
 // Four tiers:
 //   mobile — phones (30fps, 1.0 DPR, 2000 particles, no blur, quantized orientation)
-//   tablet — iPads, Android tablets (60fps, 1.25 DPR, 2500 particles, blur, smooth)
-//   low    — low-end desktops (30fps, 1.25 DPR, 3000 particles, blur, smooth)
-//   high   — high-end desktops (60fps, 1.5 DPR, 3000 particles, blur, smooth)
+//   tablet — iPads, Android tablets (30fps, 1.25 DPR, 4500 particles, blur, smooth)
+//   low    — low-end desktops (30fps, 1.25 DPR, 3500 particles, blur, smooth)
+//   high   — high-end desktops (30fps, 1.5 DPR, 5500 particles, blur, smooth)
 export type PerfTier = "mobile" | "tablet" | "low" | "high";
 
 export function detectPerfTier(): PerfTier {
@@ -40,14 +40,18 @@ export const PAINT_COUNT =
   PERF_TIER === "mobile"
     ? 2000
     : PERF_TIER === "tablet"
-      ? 2500
-      : 3000;
+      ? 4500
+      : PERF_TIER === "low"
+        ? 3500
+        : 5500;
 export const FLARE_COUNT =
   PERF_TIER === "mobile"
     ? 1000
     : PERF_TIER === "tablet"
-      ? 1500
-      : 2000;
+      ? 2500
+      : PERF_TIER === "low"
+        ? 1500
+        : 3000;
 export const MAX_DPR =
   PERF_TIER === "mobile"
     ? 1
