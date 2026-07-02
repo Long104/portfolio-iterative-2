@@ -420,24 +420,21 @@ export function CursorOverlay() {
 
     let rafId = 0;
     let lastT = performance.now();
-    let lastFrameTime = 0; // for idle throttle
+    let lastFrameTime = 0; // for 30fps + idle throttle
 
     const frame = (t: number): void => {
       rafId = requestAnimationFrame(frame);
       const dt = Math.min((t - lastT) / 1000, 0.05);
       lastT = t;
 
-      // ── Idle throttle: drop to ~15fps (66ms between frames) when cursor
-      // hasn't moved for IDLE_CUTOFF_MS. Frees CPU for the 3D loop.
-      // On next pointermove, full 60fps resumes within 1 frame (~16ms).
-      if (t - lastMoveTime > IDLE_CUTOFF_MS) {
-        if (t - lastFrameTime < IDLE_FRAME_MS) {
-          // Still need to update rotation or it'll snap when resuming
-          const targetRotSpeed = hover ? 0 : 0.3;
-          rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
-          rotation += dt * rotSpeed;
-          return;
-        }
+      // 30fps base throttle (33ms). Idle drops further to ~15fps (IDLE_FRAME_MS).
+      const minInterval = t - lastMoveTime > IDLE_CUTOFF_MS ? IDLE_FRAME_MS : 33;
+      if (t - lastFrameTime < minInterval) {
+        // Keep rotation smooth during skipped frames — prevents snap on resume
+        const targetRotSpeed = hover ? 0 : 0.3;
+        rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
+        rotation += dt * rotSpeed;
+        return;
       }
       lastFrameTime = t;
 

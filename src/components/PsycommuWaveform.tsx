@@ -27,9 +27,16 @@ export function PsycommuWaveform() {
 
     let raf = 0;
     let lastNonZero = false;
+    let lastFrameTime = 0; // 30fps throttle
 
     function draw() {
       raf = requestAnimationFrame(draw);
+
+      // 30fps throttle — waveform updates at 30fps are visually identical to 60fps
+      const now = performance.now();
+      if (now - lastFrameTime < 33) return;
+      lastFrameTime = now;
+
       const data = getAudioData();
 
       // Skip paint when audio is silent (bass, mid, treble all zero)

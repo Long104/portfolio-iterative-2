@@ -106,9 +106,17 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
     let tunnelAlpha = 1;
     let elapsed = 0;
     let lastT = performance.now();
+    let lastFrameTime = 0; // 30fps throttle
     let raf = 0;
 
     const frame = (t: number) => {
+      raf = requestAnimationFrame(frame);
+
+      // 30fps throttle — tunnel animation at 30fps looks identical to 60fps
+      const now = performance.now();
+      if (now - lastFrameTime < 33) return;
+      lastFrameTime = now;
+
       const dt = Math.min((t - lastT) / 1000, 0.05);
       lastT = t;
       elapsed += dt;
@@ -117,8 +125,9 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       if (phaseRef.current === "done") {
         tunnelAlpha = Math.max(tunnelAlpha - dt * 2, 0);
         if (tunnelAlpha <= 0.005) {
+          cancelAnimationFrame(raf); // cancel the next frame we just scheduled
           ctx.clearRect(0, 0, w, h);
-          return; // rAF loop ends — no more frames
+          return;
         }
       }
 
@@ -206,8 +215,6 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       ctx.globalCompositeOperation = "source-over";
 
       ctx.globalAlpha = 1;
-
-      raf = requestAnimationFrame(frame);
     };
 
     raf = requestAnimationFrame(frame);
