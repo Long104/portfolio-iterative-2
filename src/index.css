@@ -446,8 +446,8 @@ html.cursor-hidden * {
   content: "";
   position: absolute;
   left: 11px;
-  top: 8px;
-  bottom: 8px;
+  top: 26px;  /* align with first dot center */
+  bottom: 20px;  /* align with last dot center */
   width: 1px;
   background: linear-gradient(
     to bottom,
@@ -468,26 +468,26 @@ html.cursor-hidden * {
 /* Glowing dot node */
 .tl-item__dot {
   position: relative;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   margin-top: 6px;
-  margin-left: 7px;
+  margin-left: 6px;
   z-index: 1;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4), 0 0 12px rgba(255, 255, 255, 0.15);
 }
 
 /* "NOW" dot — pulsing magenta */
 .tl-item__dot--current {
   background: #4ade80;
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6), 0 0 20px rgba(74, 222, 128, 0.3);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.6), 0 0 24px rgba(74, 222, 128, 0.3);
   animation: tlDotPulse 1.6s ease-in-out infinite;
 }
 
 @keyframes tlDotPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(74, 222, 128, 0.5), 0 0 16px rgba(74, 222, 128, 0.2); }
-  50% { box-shadow: 0 0 14px rgba(74, 222, 128, 0.8), 0 0 28px rgba(74, 222, 128, 0.4); }
+  0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 0 0 20px rgba(74, 222, 128, 0.2); }
+  50% { box-shadow: 0 0 18px rgba(74, 222, 128, 0.8), 0 0 32px rgba(74, 222, 128, 0.4); }
 }
 
 .tl-item__content {
