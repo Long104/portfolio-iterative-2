@@ -205,7 +205,7 @@ export default function KiraKiraVortex() {
     { pos: [0.2,  0.15, 5.0], look: [0, 0, 0] },  // 1: about — gentle drift right
     { pos: [-0.15, 0.1, 4.7], look: [0, 0, 0] },  // 2: experience — slightly closer
     { pos: [0,   -0.15, 5.3], look: [0, 0, 0] },  // 3: work — pulled back for h-scroll
-    { pos: [0.3,  0.2,  4.2], look: [0, 0, 0] },  // 4: contact — zoomed in moderately
+    { pos: [0,    0,    4.5], look: [0, 0, 0] },  // 4: contact — centered, slightly zoomed
   ], []);
 
   // --- Animation loop ---
