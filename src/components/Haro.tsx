@@ -105,11 +105,11 @@ export function Haro({ sectionIndex }: Props) {
       return;
     }
 
-    // Eyes flash magenta
+    // Eyes flash red
     const eyes = [eL, eR];
     gsap.timeline()
-      .to(eyes, { attr: { fill: "#FF4FD8" }, duration: 0.08 })
-      .to(eyes, { attr: { fill: "rgba(255,255,255,0.9)" }, duration: 0.3, delay: 0.12 });
+      .to(eyes, { attr: { fill: "#ef4444" }, duration: 0.08 })
+      .to(eyes, { attr: { fill: "#01314a" }, duration: 0.3, delay: 0.12 });
 
     // Antenna twitch
     const ants = [aL, aR];
@@ -168,9 +168,9 @@ export function Haro({ sectionIndex }: Props) {
 
           {/* ── Eyes: ". ." ── */}
           <circle ref={eyeLRef} cx="17" cy="22" r="2"
-            fill="rgba(255,255,255,0.9)" />
+            fill="#01314a" />
           <circle ref={eyeRRef} cx="31" cy="22" r="2"
-            fill="rgba(255,255,255,0.9)" />
+            fill="#01314a" />
 
           {/* ── Mouth / status bar ── */}
           <rect x="20" y="35" width="8" height="1.5" rx="0.75" fill="rgba(0,0,0,0.15)" />
