@@ -1,5 +1,5 @@
 // ── Companion Robot: "ORBIT" ──
-// Floating mecha drone with simple dash eyes "- -".
+// Floating mecha drone with simple dot eyes ". .".
 // Pure SVG + GSAP — floats, blinks, narrates section changes.
 
 import { useEffect, useRef } from "react";
@@ -21,8 +21,8 @@ interface Props {
 
 export function Haro({ sectionIndex }: Props) {
   const bodyRef = useRef<HTMLDivElement>(null);
-  const eyeLRef = useRef<SVGLineElement>(null);
-  const eyeRRef = useRef<SVGLineElement>(null);
+  const eyeLRef = useRef<SVGCircleElement>(null);
+  const eyeRRef = useRef<SVGCircleElement>(null);
   const antLRef = useRef<SVGPathElement>(null);
   const antRRef = useRef<SVGPathElement>(null);
   const speechRef = useRef<HTMLSpanElement>(null);
@@ -74,10 +74,8 @@ export function Haro({ sectionIndex }: Props) {
       const { y } = getMouseState();
       const dy = -y * 1.2;
       // Eyes shift vertically with cursor
-      eyeLEl.setAttribute("y1", String(22 + dy));
-      eyeLEl.setAttribute("y2", String(22 + dy));
-      eyeREl.setAttribute("y1", String(22 + dy));
-      eyeREl.setAttribute("y2", String(22 + dy));
+      eyeLEl.setAttribute("cy", String(22 + dy));
+      eyeREl.setAttribute("cy", String(22 + dy));
       // Antenna tilt
       const { x } = getMouseState();
       const tilt = x * 3;
@@ -110,8 +108,8 @@ export function Haro({ sectionIndex }: Props) {
     // Eyes flash magenta
     const eyes = [eL, eR];
     gsap.timeline()
-      .to(eyes, { attr: { stroke: "#FF4FD8" }, duration: 0.08 })
-      .to(eyes, { attr: { stroke: "rgba(255,255,255,0.9)" }, duration: 0.3, delay: 0.12 });
+      .to(eyes, { attr: { fill: "#FF4FD8" }, duration: 0.08 })
+      .to(eyes, { attr: { fill: "rgba(255,255,255,0.9)" }, duration: 0.3, delay: 0.12 });
 
     // Antenna twitch
     const ants = [aL, aR];
@@ -168,11 +166,11 @@ export function Haro({ sectionIndex }: Props) {
           <rect x="6.5" y="27" width="1" height="4" rx="0.5" fill="rgba(74,222,128,0.3)" />
           <rect x="40.5" y="27" width="1" height="4" rx="0.5" fill="rgba(74,222,128,0.3)" />
 
-          {/* ── Eyes: "- -" ── */}
-          <line ref={eyeLRef} x1="15" y1="22" x2="19" y2="22"
-            stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" />
-          <line ref={eyeRRef} x1="29" y1="22" x2="33" y2="22"
-            stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" />
+          {/* ── Eyes: ". ." ── */}
+          <circle ref={eyeLRef} cx="17" cy="22" r="2"
+            fill="rgba(255,255,255,0.9)" />
+          <circle ref={eyeRRef} cx="31" cy="22" r="2"
+            fill="rgba(255,255,255,0.9)" />
 
           {/* ── Mouth / status bar ── */}
           <rect x="20" y="35" width="8" height="1.5" rx="0.75" fill="rgba(0,0,0,0.15)" />
