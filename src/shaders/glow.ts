@@ -46,8 +46,8 @@ export const glowFragment = /* glsl */ `
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Master early-out — sun bass expands the reach on beat
-    if (dist > 0.42 + uSunBass * 0.06) discard;
+    // Master early-out — tighter threshold, glow is near-invisible past 0.25
+    if (dist > 0.35 + uSunBass * 0.06) discard;
 
     float angle = atan(centered.y, centered.x);
     vec3 totalColor = vec3(0.0);

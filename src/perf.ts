@@ -59,4 +59,4 @@ export const MAX_DPR =
       ? 1.25
       : PERF_TIER === "low"
         ? 1.25
-        : 1.5;
+        : 1.25;
