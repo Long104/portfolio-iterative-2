@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 — signal lost</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      :root {
+        --theme-bg: #01314a;
+        --theme: #FF4FD8;
+        --theme-accent2: #1BBCB2;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+        --display: "Space Grotesk", system-ui, sans-serif;
+      }
+
+      body {
+        background: var(--theme-bg);
+        color: rgba(255, 255, 255, 0.9);
+        font-family: var(--mono);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* ── Scanline overlay ── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 3px,
+          rgba(0, 0, 0, 0.03) 3px,
+          rgba(0, 0, 0, 0.03) 4px
+        );
+      }
+
+      .container {
+        max-width: 480px;
+        width: 100%;
+        padding: 0 24px;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ── Header ── */
+      .header {
+        margin-bottom: 32px;
+      }
+
+      .sysname {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .subsys {
+        display: block;
+        font-size: 9px;
+        letter-spacing: 0.15em;
+        color: rgba(255, 75, 216, 0.5);
+        text-transform: uppercase;
+      }
+
+      /* ── Error code ── */
+      .code {
+        font-family: var(--display);
+        font-size: clamp(80px, 18vw, 140px);
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 16px;
+        position: relative;
+      }
+
+      .code::after {
+        content: "404";
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: var(--theme);
+        opacity: 0.3;
+        transform: translate(3px, 3px);
+        z-index: -1;
+      }
+
+      /* ── Error message ── */
+      .message {
+        font-size: 13px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+      }
+
+      .detail {
+        font-size: 11px;
+        color: rgba(255, 75, 216, 0.6);
+        letter-spacing: 0.03em;
+        margin-bottom: 32px;
+      }
+
+      /* ── Register lines (decorative) ── */
+      .registers {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 32px;
+      }
+
+      .reg-line {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+        font-size: 12px;
+        opacity: 0.5;
+      }
+
+      .reg-addr {
+        color: rgba(255, 75, 216, 0.6);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        min-width: 44px;
+      }
+
+      .reg-val {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+      }
+
+      .reg-check {
+        color: rgba(255, 100, 100, 0.7);
+        font-size: 11px;
+      }
+
+      /* ── Return button ── */
+      .return-btn {
+        display: inline-block;
+        position: relative;
+        padding: 14px 40px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--theme);
+        text-decoration: none;
+        transition: all 0.25s ease;
+        clip-path: polygon(
+          8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%,
+          0% 100%, 0% 8px
+        );
+        box-shadow:
+          inset 0 0 0 1px color-mix(in srgb, var(--theme) 20%, transparent),
+          0 0 16px color-mix(in srgb, var(--theme) 15%, transparent);
+      }
+
+      .return-btn::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        width: 18px;
+        height: 18px;
+        border-top: 2px solid var(--theme);
+        border-left: 2px solid var(--theme);
+      }
+
+      .return-btn::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+        width: 18px;
+        height: 18px;
+        border-bottom: 2px solid var(--theme);
+        border-right: 2px solid var(--theme);
+      }
+
+      .return-btn:hover {
+        background: color-mix(in srgb, var(--theme) 10%, transparent);
+        box-shadow:
+          inset 0 0 0 1px var(--theme),
+          0 0 24px var(--theme),
+          0 0 48px color-mix(in srgb, var(--theme) 20%, transparent);
+      }
+
+      /* ── Blinking cursor ── */
+      .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 14px;
+        background: var(--theme-accent2);
+        margin-left: 4px;
+        animation: blink 0.8s step-end infinite;
+        vertical-align: middle;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+
+      /* ── Entrance animation ── */
+      .container > * {
+        animation: fadeUp 0.5s ease-out both;
+      }
+      .container > *:nth-child(1) { animation-delay: 0.1s; }
+      .container > *:nth-child(2) { animation-delay: 0.2s; }
+      .container > *:nth-child(3) { animation-delay: 0.3s; }
+      .container > *:nth-child(4) { animation-delay: 0.4s; }
+      .container > *:nth-child(5) { animation-delay: 0.5s; }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <span class="sysname">PSYCOMMU SYSTEM</span>
+        <span class="subsys">// SUB-SYSTEM: NAVIGATION</span>
+      </div>
+
+      <div class="code">404</div>
+
+      <div class="message">
+        signal lost — the requested coordinate does not exist in this sector.
+      </div>
+      <div class="detail">ERR: ROUTE_NOT_FOUND &nbsp;|&nbsp; STATUS: 0x194<span class="cursor"></span></div>
+
+      <div class="registers">
+        <div class="reg-line">
+          <span class="reg-addr">0x00</span>
+          <span class="reg-val">psycommu link</span>
+          <span class="reg-check">OK</span>
+        </div>
+        <div class="reg-line">
+          <span class="reg-addr">0x01</span>
+          <span class="reg-val">audio driver</span>
+          <span class="reg-check">OK</span>
+        </div>
+        <div class="reg-line">
+          <span class="reg-addr">0x02</span>
+          <span class="reg-val">route lookup</span>
+          <span class="reg-check" style="color: rgba(255, 100, 100, 0.8)">FAIL</span>
+        </div>
+      </div>
+
+      <a href="/" class="return-btn">RETURN TO BASE</a>
+    </div>
+
+    <script>
+      // Auto-redirect after 10 seconds
+      setTimeout(function() { window.location.href = "/"; }, 10000);
+    </script>
+  </body>
+</html>
