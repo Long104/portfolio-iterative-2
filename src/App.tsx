@@ -3,7 +3,6 @@ import "./fonts.css";
 import type { ScrollContainerHandle } from "./components/ScrollContainer";
 import { setScrollState } from "./scrollStore";
 import { setMouseState } from "./mouseStore";
-import { SectionTransition } from "./components/SectionTransition";
 import { ScrollTrigger } from "./lib/gsap";
 import { useParallax } from "./hooks/useParallax";
 import { requestOrientationPermission } from "./useDeviceOrientation";
@@ -202,9 +201,6 @@ function App() {
           <Scene />
         </Suspense>
       </div>
-
-      {/* ── Section transition scan effect ── */}
-      {started && <SectionTransition activeSection={activeSection} />}
 
       {/* ── Layer 1: Scrollable content (pre-mounted during boot) ── */}
       {contentMounted && (

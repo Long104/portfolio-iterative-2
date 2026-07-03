@@ -1906,37 +1906,6 @@ html.cursor-hidden * {
 }
 
 /* ── Section Transition — Targeting Scan ── */
-.section-transition {
-  position: fixed;
-  inset: 0;
-  z-index: 45;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.section-transition__scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 2px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--theme-accent) 20%,
-    var(--theme-accent2) 50%,
-    var(--theme-accent) 80%,
-    transparent 100%);
-  box-shadow: 0 0 12px var(--theme-accent),
-              0 0 24px color-mix(in srgb, var(--theme-accent) 50%, transparent);
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .section-transition {
-    display: none;
-  }
-}
-
 /* ── Motion hierarchy: section label slide-from-left variant ── */
 .section-label {
 }
