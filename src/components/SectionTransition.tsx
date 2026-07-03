@@ -17,6 +17,7 @@ export function SectionTransition({ activeSection }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scanRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+  const flareRef = useRef<HTMLDivElement>(null);
   const lastSection = useRef(activeSection);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
@@ -34,7 +35,8 @@ export function SectionTransition({ activeSection }: Props) {
 
     const scan = scanRef.current;
     const flash = flashRef.current;
-    if (!scan || !flash) return;
+    const flare = flareRef.current;
+    if (!scan || !flash || !flare) return;
 
     // Kill any previous timeline before creating a new one
     timelineRef.current?.kill();
@@ -66,6 +68,17 @@ export function SectionTransition({ activeSection }: Props) {
       ease: "power2.in",
     });
 
+    // ── Radial flare burst — soft energy glow ──
+    tl.fromTo(flare,
+      { opacity: 0, scale: 0.85 },
+      { opacity: 0.4, scale: 1, duration: 0.25, ease: "power2.out" },
+      "-=0.25",
+    ).to(flare, {
+      opacity: 0,
+      duration: 0.4,
+      ease: "power2.in",
+    });
+
     // Fade scan line after sweep
     tl.to(scan, {
       opacity: 0,
@@ -87,6 +100,8 @@ export function SectionTransition({ activeSection }: Props) {
     <div ref={containerRef} className="section-transition" aria-hidden="true">
       {/* Scan line */}
       <div ref={scanRef} className="section-transition__scan" />
+      {/* Radial flare burst */}
+      <div ref={flareRef} className="section-transition__flare" />
       {/* Flash overlay */}
       <div ref={flashRef} className="section-transition__flash" />
     </div>

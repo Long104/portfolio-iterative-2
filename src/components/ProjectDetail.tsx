@@ -21,6 +21,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const wasBodyOverflow = useRef<string>("");
+  const prevFocusRef = useRef<HTMLElement | null>(null);
 
   // ── Open animation: staggered entrance ──
   // Sequence: backdrop → panel → image → header → desc → techs stagger → highlights stagger → links
@@ -161,6 +162,56 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [project, animateClose]);
+
+  // ── Focus trap: Tab cycles inside overlay, restore focus on close ──
+  useEffect(() => {
+    if (!project) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+    const panelEl: HTMLDivElement = panel;
+
+    // Save previously focused element (the project card that was clicked)
+    prevFocusRef.current = document.activeElement as HTMLElement;
+
+    // Focus close button after open animation finishes
+    const focusTimer = setTimeout(() => {
+      const closeBtn = panel.querySelector<HTMLButtonElement>(".project-detail__close");
+      closeBtn?.focus();
+    }, 500);
+
+    function onTab(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+
+      const focusables = Array.from(
+        panelEl.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onTab);
+
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener("keydown", onTab);
+      // Restore focus to the element that opened the overlay
+      prevFocusRef.current?.focus();
+    };
+  }, [project]);
 
   // ── Click outside panel ──
   function onBackdropClick(e: React.MouseEvent) {
