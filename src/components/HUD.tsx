@@ -32,7 +32,7 @@ export function HUD({
   trackName,
   isPlaying,
 }: HUDProps) {
-  const counter = `${String(sectionIndex + 1).padStart(2, "0")}/${String(totalSections).padStart(2, "0")}`;
+  const counter = `sector ${String(sectionIndex + 1).padStart(2, "0")}/${String(totalSections).padStart(2, "0")}`;
 
   const tagRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);

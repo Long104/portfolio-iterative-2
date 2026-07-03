@@ -240,8 +240,8 @@ function App() {
           <HUD
             sectionIndex={activeSection}
             totalSections={TOTAL_SECTIONS}
-            audioStatus={isPlaying ? "audio: on" : "audio: off"}
-            trackName={activeTrackName}
+            audioStatus={isPlaying ? "psycommu: online" : "psycommu: standby"}
+            trackName={`// ${activeTrackName}`}
             isPlaying={isPlaying}
           />
         </>
