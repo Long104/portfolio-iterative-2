@@ -231,7 +231,7 @@ function App() {
             sectionIndex={activeSection}
             totalSections={TOTAL_SECTIONS}
             audioStatus={isPlaying ? "psycommu: online" : "psycommu: standby"}
-            trackName={`// ${activeTrackName}`}
+            trackName={`BGM: ${activeTrackName}`}
             isPlaying={isPlaying}
           />
         </>

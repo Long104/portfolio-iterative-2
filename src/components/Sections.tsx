@@ -19,7 +19,7 @@ import { getMouseState } from "../mouseStore";
 // Three-tier typography hierarchy:
 //   1. PANTORN CHUAVALLEE — massive, SplitText line reveal (the hero moment)
 //   2. software engineer — small mono subtitle
-//   3. "building things that feel alive" — secondary display tagline
+//   3. "ready for deployment" — secondary display tagline
 //
 // Two-phase approach (no revert/re-run):
 //   Phase 1 (useGSAP, runs once on mount): SplitText + hide lines
@@ -141,15 +141,13 @@ export function HeroSection({ started }: { started: boolean }) {
         </h1>
         <div ref={roleRef} className="hero__role">software engineer</div>
         <div ref={taglineRef} className="hero__tagline">
-          building things that feel alive.
+          ready for deployment.
         </div>
       </div>
       <div className="hero__scroll-hint">↓ scroll</div>
     </section>
   );
 }
-
-// ── About (section 1) ──
 const STACK = {
   languages: ["go", "typescript", "python", "sql"],
   frameworks: ["next.js", "react", "tailwind", "three.js", "go (fiber)", "grpc"],
@@ -213,7 +211,7 @@ export const AboutSection = memo(function AboutSection() {
 
   return (
     <section className="section" data-section-index={1}>
-      <div ref={labelRef} className="section-label">// about</div>
+      <div ref={labelRef} className="section-label">about</div>
       <GlassPanel>
         <div className="about__header">
           <img src="/profile-small.jpg" alt="pantorn chuavallee" className="about__photo" />
@@ -346,7 +344,7 @@ export const ExperienceSection = memo(function ExperienceSection() {
 
   return (
     <section className="section" data-section-index={2}>
-      <div ref={labelRef} className="section-label">// experience</div>
+      <div ref={labelRef} className="section-label">experience</div>
       <GlassPanel>
         <div className="timeline">
           <ExpItem
@@ -462,7 +460,7 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
 
   return (
     <section ref={containerRef} className="section section--work-horizontal" data-section-index={3}>
-      <div ref={labelRef} className="section-label work-label">// selected work</div>
+      <div ref={labelRef} className="section-label work-label">selected work</div>
       <div ref={trackRef} className="work-track">
         {PROJECTS.map((project, i) => (
           <ProjectCard
@@ -605,7 +603,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
 
   return (
     <section ref={sectionRef} className="section" data-section-index={4}>
-      <div ref={labelRef} className="section-label">// currently</div>
+      <div ref={labelRef} className="section-label">currently</div>
 
       {/* System header with live clock */}
       <div className="currently__header">
@@ -726,8 +724,8 @@ export const ContactSection = memo(function ContactSection() {
   return (
     <section className="section section--centered" data-section-index={5}>
       <div ref={headlineRef} className="contact__headline">
-        let's build <br />
-        <span>something.</span>
+        open <br />
+        <span>channel.</span>
       </div>
       <div ref={linksRef} className="contact">
         <a className="contact__email" href="mailto:longpantorn@gmail.com">
@@ -745,7 +743,7 @@ export const ContactSection = memo(function ContactSection() {
           </a>
         </div>
       </div>
-      <div ref={footerRef} className="contact__footer">© 2026 Pantorn Chuavallee — built with webgl & liquid glass</div>
+      <div ref={footerRef} className="contact__footer">pilot: pantorn chuavallee — ms: gquuuuuux</div>
     </section>
   );
 });

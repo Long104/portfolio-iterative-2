@@ -49,7 +49,7 @@ export function HUD({
       {/* Top-left: identity — drops down */}
       <div className="hud hud--tl">
         <div className="hud__name">Pantorn Chuavallee</div>
-        <div className="hud__role">software engineer</div>
+        <div className="hud__role">pilot</div>
       </div>
 
       {/* Top-right: audio status — slides in from right */}
