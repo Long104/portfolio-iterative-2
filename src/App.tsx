@@ -22,6 +22,7 @@ import { NavOverlay } from "./components/NavOverlay";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { AudioBar } from "./components/AudioBar";
 import { CursorOverlay } from "./components/CursorOverlay";
+import { TacticalRadar } from "./components/TacticalRadar";
 import { ProjectDetail } from "./components/ProjectDetail";
 import type { Project } from "./components/projects";
 import { initAudioUI } from "./lib/audio-ui";
@@ -235,6 +236,7 @@ function App() {
             onNavigate={(i) => scrollRef.current?.scrollToSection(i)}
           />
           <ScrollProgress progress={scrollProgress} />
+          <TacticalRadar activeSection={activeSection} totalSections={TOTAL_SECTIONS} />
           <HUD
             sectionIndex={activeSection}
             totalSections={TOTAL_SECTIONS}

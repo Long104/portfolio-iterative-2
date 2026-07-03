@@ -1905,6 +1905,53 @@ html.cursor-hidden * {
   color: rgba(255, 255, 255, 1);
 }
 
+/* ── Tactical Radar (desktop only) ── */
+.tactical-radar {
+  position: fixed;
+  bottom: 56px;
+  right: 32px;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.85;
+  animation: hudFadeIn 0.5s ease-out 0.4s both;
+}
+
+@media (max-width: 1023px) {
+  .tactical-radar { display: none; }
+}
+
+/* ── Target lock-on reticle (project cards) ── */
+.project-card__lock-on {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-card__lock-text {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 75, 216, 0.9);
+  text-shadow: 0 0 8px rgba(255, 75, 216, 0.4);
+  text-transform: uppercase;
+}
+
+.project-card__lock-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 75, 216, 0.9);
+  box-shadow: 0 0 6px rgba(255, 75, 216, 0.6);
+}
+
 /* ── Section Transition — Targeting Scan ── */
 .section-transition {
   position: fixed;

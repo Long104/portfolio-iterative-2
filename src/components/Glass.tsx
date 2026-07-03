@@ -4,14 +4,14 @@ import { gsap } from "../lib/gsap";
 import { PROJECTS } from "./projects";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildPanelConfig, buildNavConfig } from "./glass-configs";
-import { playHoverSound, playOpenSound, playClickSound } from "../lib/audio-ui";
+import { playHoverSound, playOpenSound } from "../lib/audio-ui";
 
 // ── Glass Panel (large — About/Experience sections) ──
 export function GlassPanel({ children }: { children: ReactNode }) {
   const specularAngle = useDeviceOrientation();
   const refraction = useMemo(() => buildPanelConfig(specularAngle), [specularAngle]);
   return (
-    <RefractiveDiv refraction={refraction} className="glass-panel" onClick={playClickSound}>
+    <RefractiveDiv refraction={refraction} className="glass-panel">
       {children}
     </RefractiveDiv>
   );
@@ -36,6 +36,7 @@ export function ProjectCard({
   const localCardRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<HTMLDivElement>(null);
   const bracketRef = useRef<HTMLDivElement>(null);
+  const lockOnRef = useRef<HTMLDivElement>(null);
   const tweenRef = useRef<gsap.core.Timeline | null>(null);
   const mergedCardRef = cardRef || localCardRef;
   const refraction = useMemo(() => buildNavConfig(specularAngle), [specularAngle]);
@@ -54,7 +55,8 @@ export function ProjectCard({
       playHoverSound();
       if (tweenRef.current) tweenRef.current.kill();
       tweenRef.current = gsap.timeline()
-        .to(card, { scale: 1.03, duration: 0.3, ease: "power2.out" }, 0);
+        .to(card, { scale: 1.03, duration: 0.3, ease: "power2.out" }, 0)
+        .to(lockOnRef.current, { opacity: 1, duration: 0.15, ease: "power2.out" }, 0.1);
       if (arrow) {
         tweenRef.current.to(arrow, { x: 6, y: -6, duration: 0.25, ease: "power2.out" }, 0);
       }
@@ -66,7 +68,8 @@ export function ProjectCard({
     function onLeave() {
       if (tweenRef.current) tweenRef.current.kill();
       tweenRef.current = gsap.timeline()
-        .to(card, { scale: 1, duration: 0.4, ease: "power3.out" }, 0);
+        .to(card, { scale: 1, duration: 0.4, ease: "power3.out" }, 0)
+        .to(lockOnRef.current, { opacity: 0, duration: 0.2, ease: "power2.out" }, 0);
       if (arrow) {
         tweenRef.current.to(arrow, { x: 0, y: 0, duration: 0.3, ease: "power3.out" }, 0);
       }
@@ -107,6 +110,12 @@ export function ProjectCard({
 
       {/* ── Corner brackets (animated by GSAP on hover) ── */}
       <div ref={bracketRef} className="project-card__brackets" />
+
+      {/* ── Target lock-on indicator (shows "LOCK ON" on hover) ── */}
+      <div ref={lockOnRef} className="project-card__lock-on">
+        <span className="project-card__lock-dot" />
+        <span className="project-card__lock-text">lock on</span>
+      </div>
 
       {/* ── Text overlay ── */}
       <div className="project-card__info">
