@@ -482,7 +482,62 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
   );
 }
 
-// ── Contact (section 4) — Grand Finale ──
+// ── Currently (section 4) — What I'm into right now ──
+// Two-column key→value layout. No glass panel — bare text on vortex.
+// Creates visual rhythm: hero (bare) → glass → glass → cards → bare → finale
+const CURRENTLY_ITEMS = [
+  { key: "learning", value: "WebGPU, system design, distributed systems" },
+  { key: "building", value: "this portfolio — 3D vortex with audio reactivity" },
+  { key: "reading", value: "Designing Data-Intensive Applications" },
+  { key: "playing", value: "chess (1200 elo), rubik's cube (sub-30s pb)" },
+  { key: "watching", value: "gundam gquuuuuux" },
+] as const;
+
+export const CurrentlySection = memo(function CurrentlySection() {
+  const labelRef = useScrollReveal<HTMLDivElement>({
+    split: "chars",
+    stagger: 0.02,
+    x: "-60%",
+    y: "0%",
+    start: "top 90%",
+    end: "top 65%",
+    duration: 0.4,
+    ease: "power2.out",
+  });
+
+  return (
+    <section className="section" data-section-index={4}>
+      <div ref={labelRef} className="section-label">// currently</div>
+      <div className="currently">
+        {CURRENTLY_ITEMS.map((item) => (
+          <CurrentlyRow key={item.key} itemKey={item.key} value={item.value} />
+        ))}
+      </div>
+    </section>
+  );
+});
+
+function CurrentlyRow({ itemKey, value }: { itemKey: string; value: string }) {
+  const rowRef = useScrollReveal<HTMLDivElement>({
+    split: "words",
+    stagger: 0.04,
+    x: "-30%",
+    y: "0%",
+    start: "top 88%",
+    end: "top 68%",
+    duration: 0.5,
+    ease: "power2.out",
+  });
+
+  return (
+    <div className="currently__row" ref={rowRef}>
+      <span className="currently__key">{itemKey}</span>
+      <span className="currently__value">{value}</span>
+    </div>
+  );
+}
+
+// ── Contact (section 5) — Grand Finale ──
 export const ContactSection = memo(function ContactSection() {
   const headlineRef = useScrollReveal<HTMLDivElement>({
     split: "lines",
@@ -555,7 +610,7 @@ export const ContactSection = memo(function ContactSection() {
   }, []);
 
   return (
-    <section className="section section--centered" data-section-index={4}>
+    <section className="section section--centered" data-section-index={5}>
       <div ref={headlineRef} className="contact__headline">
         let's build <br />
         <span>something.</span>

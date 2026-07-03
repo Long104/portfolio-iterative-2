@@ -13,6 +13,7 @@ const SECTION_TAGS = [
   "engineering × visual art",
   "where i've worked",
   "selected work",
+  "what i'm into right now",
   "let's talk",
 ];
 

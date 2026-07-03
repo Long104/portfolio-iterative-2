@@ -14,7 +14,7 @@ import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
-const SECTIONS = ["pilot", "about", "experience", "work", "contact"] as const;
+const SECTIONS = ["pilot", "about", "experience", "work", "now", "contact"] as const;
 
 const SOCIAL_LINKS: { label: string; href: string }[] = [
   { label: "github", href: "https://github.com" },

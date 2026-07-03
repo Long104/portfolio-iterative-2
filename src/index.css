@@ -53,7 +53,8 @@ html {
 :root[data-active-section="1"] { --theme-bg: #0d1a3e; }  /* About — purple shift */
 :root[data-active-section="2"] { --theme-bg: #0a1e2e; }  /* Experience — deep navy */
 :root[data-active-section="3"] { --theme-bg: #01314a; }  /* Work — base blue */
-:root[data-active-section="4"] { --theme-bg: #012a3a; }  /* Contact — teal shift */
+:root[data-active-section="4"] { --theme-bg: #0a1a2e; }  /* Currently — dark indigo */
+:root[data-active-section="5"] { --theme-bg: #012a3a; }  /* Contact — teal shift */
 
 html,
 body,
@@ -692,6 +693,54 @@ html.cursor-hidden * {
 .project-card:hover .project-card__arrow {
   color: rgba(255, 255, 255, 0.8);
   transform: translate(2px, -2px);
+}
+
+/* ── Currently — key/value layout (no glass panel) ── */
+.currently {
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.currently__row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 24px;
+  align-items: baseline;
+}
+
+.currently__key {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 75, 216, 0.6);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.currently__value {
+  font-family: var(--display);
+  font-size: clamp(15px, 1.8vw, 19px);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .currently__row {
+    grid-template-columns: 90px 1fr;
+    gap: 16px;
+  }
+
+  .currently__key {
+    font-size: 10px;
+  }
+
+  .currently__value {
+    font-size: 14px;
+  }
 }
 
 /* ── Contact — Grand Finale ── */

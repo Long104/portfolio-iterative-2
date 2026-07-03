@@ -31,10 +31,11 @@ import {
   AboutSection,
   ExperienceSection,
   WorkSection,
+  CurrentlySection,
   ContactSection,
 } from "./components/Sections";
 
-const TOTAL_SECTIONS = 5;
+const TOTAL_SECTIONS = 6;
 
 type Theme = "gquuuuuux" | "gfreed";
 
@@ -216,6 +217,7 @@ function App() {
             <AboutSection />
             <ExperienceSection />
             <WorkSection started={started} onOpenProject={handleOpenProject} />
+            <CurrentlySection />
             <ContactSection />
           </ScrollContainer>
         </Suspense>
