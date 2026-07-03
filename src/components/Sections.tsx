@@ -13,6 +13,7 @@ import { useRef, useEffect, memo } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import { playHoverSound } from "../lib/audio-ui";
+import { getMouseState } from "../mouseStore";
 
 // ── Hero (section 0) — Cinematic name reveal ──
 // Three-tier typography hierarchy:
@@ -103,6 +104,32 @@ export function HeroSection({ started }: { started: boolean }) {
 
     return () => {
       tl.kill();
+    };
+  }, [started]);
+
+  // Phase 3: Mouse-following 3D tilt on the name (after reveal completes)
+  useEffect(() => {
+    if (!started || PREFERS_REDUCED_MOTION) return;
+    const el = nameRef.current;
+    if (!el) return;
+
+    const setRotateY = gsap.quickTo(el, "rotateY", { duration: 0.8, ease: "power2.out" });
+    const setRotateX = gsap.quickTo(el, "rotateX", { duration: 0.8, ease: "power2.out" });
+
+    function onTick() {
+      const { x, y } = getMouseState();
+      setRotateY(x * 4);   // ±4deg horizontal
+      setRotateX(-y * 3);  // ±3deg vertical (inverted)
+    }
+
+    // Start with no tilt, activate after reveal animation finishes (~1.5s)
+    const startTimer = setTimeout(() => {
+      gsap.ticker.add(onTick);
+    }, 1800);
+
+    return () => {
+      clearTimeout(startTimer);
+      gsap.ticker.remove(onTick);
     };
   }, [started]);
 

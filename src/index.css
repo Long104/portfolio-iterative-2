@@ -46,6 +46,15 @@ html {
   scroll-behavior: auto;
 }
 
+/* ── Section color progression ── */
+/* Subtle background tint shifts per section for visual rhythm.
+   Body already has transition: background 0.5s ease. */
+:root[data-active-section="0"] { --theme-bg: #01314a; }  /* Hero — base blue */
+:root[data-active-section="1"] { --theme-bg: #0d1a3e; }  /* About — purple shift */
+:root[data-active-section="2"] { --theme-bg: #0a1e2e; }  /* Experience — deep navy */
+:root[data-active-section="3"] { --theme-bg: #01314a; }  /* Work — base blue */
+:root[data-active-section="4"] { --theme-bg: #012a3a; }  /* Contact — teal shift */
+
 html,
 body,
 #root {
@@ -204,6 +213,7 @@ html.cursor-hidden * {
   display: flex;
   flex-direction: column;
   gap: 0;
+  perspective: 1200px;
 }
 
 /* Tier 1: NAME — massive, dominant */
@@ -215,6 +225,8 @@ html.cursor-hidden * {
   letter-spacing: -0.045em;
   color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  transform-style: preserve-3d;
+  transform-origin: center;
 }
 
 .hero__name span {

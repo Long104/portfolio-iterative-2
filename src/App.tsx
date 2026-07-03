@@ -173,6 +173,7 @@ function App() {
   const handleSectionChange = useCallback((index: number) => {
     setActiveSection(index);
     setScrollState({ sectionIndex: index });
+    document.documentElement.setAttribute("data-active-section", String(index));
   }, []);
 
   const handleOpenProject = useCallback((project: Project) => {
