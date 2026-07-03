@@ -23,6 +23,7 @@ import { ScrollProgress } from "./components/ScrollProgress";
 import { AudioBar } from "./components/AudioBar";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { TacticalRadar } from "./components/TacticalRadar";
+import { Haro } from "./components/Haro";
 import { ProjectDetail } from "./components/ProjectDetail";
 import type { Project } from "./components/projects";
 import { initAudioUI } from "./lib/audio-ui";
@@ -237,6 +238,7 @@ function App() {
           />
           <ScrollProgress progress={scrollProgress} />
           <TacticalRadar activeSection={activeSection} totalSections={TOTAL_SECTIONS} />
+          <Haro sectionIndex={activeSection} />
           <HUD
             sectionIndex={activeSection}
             totalSections={TOTAL_SECTIONS}

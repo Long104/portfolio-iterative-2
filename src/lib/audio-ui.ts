@@ -8,15 +8,12 @@
 //   close  → system shutdown (descending slide)
 //   nav    → radar sweep (soft triangle whoosh)
 //
-// Volume philosophy (SOTD standard):
-//   Background music: -16.5dB   (gain 0.15) — distant ambient
-//   UI sounds:        -14 to -12dB (gain 0.20-0.25) — crisp, cut through
-//   Ducking: music drops 70% (gain 0.15→0.05) for 120ms on each UI sound
-//
+// All sounds are quiet (~-16dB peak) — tactile feedback, not a soundtrack.
 // Silently no-ops when prefers-reduced-motion is set.
-// IMPORTANT: call initAudioUI() inside a trusted user gesture (e.g., LAUNCH click).
-
-import { duckMusic } from "../audio";
+//
+// IMPORTANT: call initAudioUI() inside a trusted user gesture (e.g., LAUNCH click)
+// so the AudioContext is created in a non-suspended state. Otherwise the
+// browser may reject AudioContext creation/resume from hover/keyboard events.
 
 // ── Gate: respect reduced motion (sensory sensitivity) ──
 const PREFERS_REDUCED_MOTION =
@@ -36,13 +33,15 @@ export function initAudioUI(): void {
   initAttempted = true;
   ctx = new AudioContext();
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
+    ctx.resume().catch(() => {
+      // Resume failed — sounds will fail silently, which is acceptable.
+    });
   }
 }
 
 function getCtx(): AudioContext | null {
   if (PREFERS_REDUCED_MOTION) return null;
-  if (!ctx) return null;
+  if (!ctx) return null; // not initialised (call initAudioUI in a click handler)
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
   }
@@ -80,24 +79,24 @@ function tone(
 export function playHoverSound(): void {
   const c = getCtx();
   if (!c) return;
-  duckMusic(80, 0.3);
   const t = c.currentTime;
   const osc = c.createOscillator();
   const gain = c.createGain();
 
   osc.type = "sine";
+  // Base frequency with light vibrato (FM at ~40Hz)
   osc.frequency.setValueAtTime(1000, t);
   osc.frequency.linearRampToValueAtTime(1400, t + 0.04);
   const vibrato = c.createOscillator();
   vibrato.frequency.value = 40;
   vibrato.type = "sine";
   const vibratoGain = c.createGain();
-  vibratoGain.gain.value = 15;
+  vibratoGain.gain.value = 15; // ±15Hz wobble
   vibrato.connect(vibratoGain).connect(osc.frequency);
   vibrato.start(t);
   vibrato.stop(t + 0.08);
 
-  gain.gain.setValueAtTime(0.20, t);
+  gain.gain.setValueAtTime(0.08, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   osc.connect(gain).connect(c.destination);
   osc.start(t);
@@ -107,8 +106,7 @@ export function playHoverSound(): void {
 // ── Cockpit switch click ──
 // Short percussive pop — frequency drops quickly, like a mechanical switch.
 export function playClickSound(): void {
-  duckMusic(80, 0.3);
-  tone(600, 300, 0.06, 0.25, "sine");
+  tone(600, 300, 0.06, 0.12, "sine");
 }
 
 // ── System power-up arpeggio (open overlay) ──
@@ -116,23 +114,20 @@ export function playClickSound(): void {
 export function playOpenSound(): void {
   const c = getCtx();
   if (!c) return;
-  duckMusic(180, 0.25);
   const t = c.currentTime;
-  tone(300, 300, 0.05, 0.22, "sine", t);
-  tone(600, 600, 0.05, 0.22, "sine", t + 0.04);
-  tone(1000, 1000, 0.08, 0.18, "sine", t + 0.08);
+  tone(300, 300, 0.05, 0.10, "sine", t);
+  tone(600, 600, 0.05, 0.10, "sine", t + 0.04);
+  tone(1000, 1000, 0.08, 0.08, "sine", t + 0.08);
 }
 
 // ── System shutdown (close overlay) ──
 // Slow descending slide — 800Hz → 200Hz over 150ms.
 export function playCloseSound(): void {
-  duckMusic(150, 0.25);
-  tone(800, 200, 0.15, 0.20, "sine");
+  tone(800, 200, 0.15, 0.08, "sine");
 }
 
 // ── Radar sweep (nav section change) ──
 // Soft triangle whoosh — low volume, warm character.
 export function playNavSound(): void {
-  duckMusic(100, 0.3);
-  tone(500, 700, 0.1, 0.12, "triangle");
+  tone(500, 700, 0.1, 0.05, "triangle");
 }

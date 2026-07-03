@@ -1,7 +1,5 @@
 // AudioEngine — Web Audio API wrapper for audio-reactive visuals
 // Provides bass / mid / treble / overall level extraction from an audio file.
-// Also exposes duckMusic() for UI sound ducking — background music dips
-// momentarily when a UI interaction sound plays, following SOTD convention.
 
 export interface AudioData {
   bass: number; // 0–1, low frequencies (~20–250 Hz)
@@ -12,31 +10,6 @@ export interface AudioData {
 
 const NUM_BINS = 256; // AnalyserNode fftSize=512 → 256 frequency bins
 const FRAME_CACHE_MS = 16; // cache getData() for ~16ms — 5 consumers share 1 hardware read
-
-// ── Ducking: UI sounds can briefly lower background music ──
-// Stored as module-level singleton so audio-ui.ts can call it without importing the engine.
-let _duckGain: AudioParam | null = null;
-let _duckTimeout: ReturnType<typeof setTimeout> | null = null;
-
-export function registerDuckGain(gain: AudioParam) {
-  _duckGain = gain;
-}
-
-/**
- * Briefly reduce music gain so UI sounds punch through.
- * @param durationMs  how long the duck lasts (default 120ms)
- * @param depth       multiplier for gain during duck (default 0.3 = 70% reduction)
- */
-export function duckMusic(durationMs = 120, depth = 0.3) {
-  if (!_duckGain) return;
-  if (_duckTimeout) clearTimeout(_duckTimeout);
-  const original = _duckGain.value;
-  _duckGain.value = original * depth;
-  _duckTimeout = setTimeout(() => {
-    if (_duckGain) _duckGain.value = original;
-    _duckTimeout = null;
-  }, durationMs);
-}
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
@@ -69,8 +42,7 @@ export class AudioEngine {
     this.analyser.fftSize = NUM_BINS * 2; // 512
     this.analyser.smoothingTimeConstant = 0.5; // light analyser smoothing; per-layer smoothing happens in component
     this.gainNode = this.ctx.createGain();
-    this.gainNode.gain.value = 0.15;
-    registerDuckGain(this.gainNode.gain);
+    this.gainNode.gain.value = 0.3;
 
     // analyser → gain → destination
     this.analyser.connect(this.gainNode);

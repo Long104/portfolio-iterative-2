@@ -155,10 +155,6 @@ html.cursor-hidden * {
   top: 24px; right: 32px; text-align: right;
   animation: hudFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
 }
-.hud--bl {
-  bottom: 24px; left: 32px;
-  animation: hudSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both;
-}
 .hud--br {
   bottom: 24px; right: 32px; text-align: right;
   animation: hudFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.34s both;
@@ -1584,9 +1580,8 @@ html.cursor-hidden * {
   /* Show hamburger trigger */
   .nav-trigger { display: flex; }
 
-  /* HUD: hide audio status (top-right) and tagline (bottom-left) */
+  /* HUD: hide audio status (top-right) on mobile */
   .hud--tr { display: none; }
-  .hud--bl { display: none; }
 }
 
 @media (min-width: 1024px) {
@@ -1645,7 +1640,6 @@ html.cursor-hidden * {
 
   .hud--tl { left: 20px; top: 48px; }
   .hud--tr { right: 20px; top: 48px; }
-  .hud--bl { left: 20px; bottom: 20px; }
   .hud--br { right: 20px; bottom: 20px; }
 
   .hud__name { font-size: 14px; }
@@ -1752,7 +1746,6 @@ html.cursor-hidden * {
 
   .hud--tl { left: 12px; top: 44px; }
   .hud--tr { right: 12px; top: 44px; }
-  .hud--bl { left: 12px; bottom: 12px; }
   .hud--br { right: 12px; bottom: 12px; }
 
   .hud__name { font-size: 12px; }
@@ -1824,11 +1817,6 @@ html.cursor-hidden * {
 @keyframes dotPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
   50%      { opacity: 0.35; box-shadow: 0 0 12px rgba(74, 222, 128, 0.9); }
-}
-
-/* ── Tagline / counter crossfade ── */
-.hud__crossfade {
-  transition: opacity 0.25s ease;
 }
 
 .nav-pill {
@@ -1903,6 +1891,39 @@ html.cursor-hidden * {
 ::selection {
   background: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 1);
+}
+
+/* ── Haro Companion (desktop only) ── */
+.haro {
+  position: fixed;
+  bottom: 24px;
+  left: 32px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  animation: hudSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+
+.haro__body {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.haro__speech {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(74, 222, 128, 0.7);
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  padding-bottom: 10px;
+  min-height: 1.2em;
+  white-space: nowrap;
+}
+
+@media (max-width: 1023px) {
+  .haro { display: none; }
 }
 
 /* ── Tactical Radar (desktop only) ── */

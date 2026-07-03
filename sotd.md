@@ -16,7 +16,7 @@ What judges would love:
 - Audio-reactive vortex with mouse parallax ← genuinely original
 - Psycommu boot sequence ← memorable signature moment
 - Chromatic sparkle system ← beautiful detail
-- Adaptive 60fps + performance ← technical excellence
+- Adaptive 60fps + performance ← technical excellence // no just do 30fps
 - Space Grotesk + JetBrains Mono pair ← typographic sophistication
 - Magnetic buttons + scroll velocity ← premium feel
 What judges would dock points for:
