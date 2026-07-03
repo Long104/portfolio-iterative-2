@@ -1842,28 +1842,6 @@ html.cursor-hidden * {
 }
 
 /* ── Scroll progress bar (gradient + audio-reactive glow) ── */
-.scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  z-index: 60;
-  pointer-events: none;
-  background: linear-gradient(90deg, #FF4FD8, #1BBCB2);
-  /* Width set by JS / GSAP ticker */
-}
-
-.scroll-progress__glow {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 3px;
-  width: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
-  pointer-events: none;
-  /* Opacity + blur + width driven by GSAP ticker */
-}
-
 /* ── SplitText scroll-reveal utilities ── */
 /* SplitText adds these classes internally; we style the mask wrappers. */
 .split-line {
@@ -1951,14 +1929,6 @@ html.cursor-hidden * {
   box-shadow: 0 0 12px var(--theme-accent),
               0 0 24px color-mix(in srgb, var(--theme-accent) 50%, transparent);
   opacity: 0;
-}
-
-.section-transition__flash {
-  position: absolute;
-  inset: 0;
-  background: var(--theme-accent);
-  opacity: 0;
-  mix-blend-mode: screen;
 }
 
 @media (prefers-reduced-motion: reduce) {

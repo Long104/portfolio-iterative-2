@@ -1,7 +1,6 @@
 // ── Section Transition — Gundam Targeting Scan ──
 // When the active section changes, a thin scan line sweeps top→bottom
-// across the viewport, followed by a brief flash. Gives each section
-// change a "lock-on" ritual instead of content just appearing.
+// across the viewport. Gives each section change a "lock-on" ritual.
 //
 // Layer: fixed, above content (z-index 45), below HUD (z-index 50).
 // Pointer-events: none — never blocks interaction.
@@ -16,7 +15,6 @@ interface Props {
 export function SectionTransition({ activeSection }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scanRef = useRef<HTMLDivElement>(null);
-  const flashRef = useRef<HTMLDivElement>(null);
   const lastSection = useRef(activeSection);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
@@ -33,8 +31,7 @@ export function SectionTransition({ activeSection }: Props) {
     lastSection.current = activeSection;
 
     const scan = scanRef.current;
-    const flash = flashRef.current;
-    if (!scan || !flash) return;
+    if (!scan) return;
 
     // Kill any previous timeline before creating a new one
     timelineRef.current?.kill();
@@ -53,21 +50,7 @@ export function SectionTransition({ activeSection }: Props) {
       y: direction > 0 ? "100vh" : "0vh",
       duration: 0.5,
       ease: "power2.inOut",
-    });
-
-    // ── Brief flash on scan completion ──
-    tl.fromTo(flash,
-      { opacity: 0 },
-      { opacity: 0.06, duration: 0.1, ease: "power2.out" },
-      "-=0.15",
-    ).to(flash, {
-      opacity: 0,
-      duration: 0.3,
-      ease: "power2.in",
-    });
-
-    // Fade scan line after sweep
-    tl.to(scan, {
+    }).to(scan, {
       opacity: 0,
       duration: 0.2,
     }, "-=0.2");
@@ -85,10 +68,7 @@ export function SectionTransition({ activeSection }: Props) {
 
   return (
     <div ref={containerRef} className="section-transition" aria-hidden="true">
-      {/* Scan line */}
       <div ref={scanRef} className="section-transition__scan" />
-      {/* Flash overlay */}
-      <div ref={flashRef} className="section-transition__flash" />
     </div>
   );
 }

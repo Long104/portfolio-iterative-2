@@ -19,7 +19,6 @@ import { HUD } from "./components/HUD";
 import { PsycommuBoot } from "./components/PsycommuBoot";
 import { NavPill } from "./components/NavPill";
 import { NavOverlay } from "./components/NavOverlay";
-import { ScrollProgress } from "./components/ScrollProgress";
 import { AudioBar } from "./components/AudioBar";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { ProjectDetail } from "./components/ProjectDetail";
@@ -44,7 +43,6 @@ function App() {
   const [contentMounted, setContentMounted] = useState(false);
   const [bootPhase, setBootPhase] = useState<"enter" | "exit" | "gone">("enter");
   const [activeSection, setActiveSection] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("kira-theme") as Theme) || "gquuuuuux",
   );
@@ -112,7 +110,6 @@ function App() {
       requestAnimationFrame(() => {
         const max = document.body.scrollHeight - window.innerHeight;
         const pct = max > 0 ? window.scrollY / max : 0;
-        setScrollProgress(pct * 100);
         setScrollState({ progress: pct });
         ticking = false;
       });
@@ -234,7 +231,6 @@ function App() {
             activeIndex={activeSection}
             onNavigate={(i) => scrollRef.current?.scrollToSection(i)}
           />
-          <ScrollProgress progress={scrollProgress} />
           <HUD
             sectionIndex={activeSection}
             totalSections={TOTAL_SECTIONS}
