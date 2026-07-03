@@ -58,22 +58,6 @@ function pickColor(): string {
   return PALETTE[0].hex;
 }
 
-// ── Pre-render dark glow sprite (replaces shadowBlur — CPU fallback avoided) ────
-function makeDarkGlowSprite(): HTMLCanvasElement {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const x = c.getContext("2d")!;
-  const cx = 64;
-  const g = x.createRadialGradient(cx, cx, 0, cx, cx, 64);
-  g.addColorStop(0, "rgba(0,0,0,0.85)");
-  g.addColorStop(0.35, "rgba(0,0,0,0.50)");
-  g.addColorStop(0.6, "rgba(0,0,0,0.20)");
-  g.addColorStop(1, "rgba(0,0,0,0)");
-  x.fillStyle = g;
-  x.fillRect(0, 0, 128, 128);
-  return c;
-}
-
 // ── Pre-render SEED sparkle sprite (cached per color) ────
 function makeSparkleSprite(color: string): HTMLCanvasElement {
   const c = document.createElement("canvas");
@@ -158,17 +142,10 @@ function drawReticle(
   clicking: boolean,
   lockAlpha: number,            // 0..1 eased hover state
   bass: number,
-  glowSprite?: HTMLCanvasElement, // pre-rendered dark glow (replaces shadowBlur)
 ): void {
   const color = hover ? "#FF4FD8" : "#FFFFFF";
   const baseR = hover ? 19 : 13;
   const ringR = baseR * (1 + bass * 0.35) * (clicking ? 0.75 : 1);
-
-  // ── Dark glow for contrast (pre-rendered sprite — no shadowBlur) ──
-  if (glowSprite) {
-    const gs = ringR * 5;
-    ctx.drawImage(glowSprite, rx - gs / 2, ry - gs / 2, gs, gs);
-  }
 
   // ═══ Rotating elements: ring + tick marks (scanning) ═══
   ctx.save();
@@ -224,11 +201,10 @@ function drawReticle(
     ctx.stroke();
   }
 
-  // ═══ Lock-on micro-text (glow behind text via drawImage) ═══
-  if (lockAlpha > 0.03 && glowSprite) {
+  // ═══ Lock-on micro-text ═══
+  if (lockAlpha > 0.03) {
     const tx = rx + ringR + 10;
     const ty = ry;
-    ctx.drawImage(glowSprite, tx - 14, ty - 6, 40, 16);
     ctx.font = "8px 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace";
     ctx.fillStyle = hexA("#FF4FD8", lockAlpha * 0.85);
     ctx.textAlign = "left";
@@ -237,8 +213,6 @@ function drawReticle(
   }
 
   // ═══ Center dot — pure white, no dark outline ═══
-  // The dark glow sprite behind the reticle already provides contrast.
-  // A separate dark outline creates an unwanted black ring around the dot.
   ctx.beginPath();
   ctx.arc(dx, dy, 2, 0, Math.PI * 2);
   ctx.fillStyle = "#FFFFFF";
@@ -316,7 +290,6 @@ export function CursorOverlay() {
     // ── Sprite cache ──
     const sprites: Record<string, HTMLCanvasElement> = {};
     for (const c of PALETTE) sprites[c.hex] = makeSparkleSprite(c.hex);
-    const darkGlowSprite = makeDarkGlowSprite();
 
     // ── Pointer state — dual element ──
     const target = { x: w / 2, y: h / 2 };
@@ -464,7 +437,7 @@ export function CursorOverlay() {
       // Pre-first-move
       if (!firstMove) {
         ctx.clearRect(0, 0, w, h);
-        drawReticle(ctx, ring.x, ring.y, dot.x, dot.y, rotation, false, false, 0, 0, darkGlowSprite);
+        drawReticle(ctx, ring.x, ring.y, dot.x, dot.y, rotation, false, false, 0, 0);
         return;
       }
 
@@ -546,7 +519,6 @@ export function CursorOverlay() {
         clicking,
         lockAlpha,
         audio.bass,
-        darkGlowSprite,
       );
 
       ctx.globalCompositeOperation = "source-over";
