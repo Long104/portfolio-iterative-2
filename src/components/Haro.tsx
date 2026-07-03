@@ -1,6 +1,6 @@
 // ── Companion Robot: "ORBIT" ──
-// Original design — floating mecha drone with two expressive eyes.
-// Pure SVG + GSAP — floats, blinks, tracks cursor, narrates section changes.
+// Floating mecha drone with simple dash eyes "- -".
+// Pure SVG + GSAP — floats, blinks, narrates section changes.
 
 import { useEffect, useRef } from "react";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
@@ -21,10 +21,8 @@ interface Props {
 
 export function Haro({ sectionIndex }: Props) {
   const bodyRef = useRef<HTMLDivElement>(null);
-  const eyeLRef = useRef<SVGEllipseElement>(null);
-  const eyeRRef = useRef<SVGEllipseElement>(null);
-  const irisLRef = useRef<SVGCircleElement>(null);
-  const irisRRef = useRef<SVGCircleElement>(null);
+  const eyeLRef = useRef<SVGLineElement>(null);
+  const eyeRRef = useRef<SVGLineElement>(null);
   const antLRef = useRef<SVGPathElement>(null);
   const antRRef = useRef<SVGPathElement>(null);
   const speechRef = useRef<HTMLSpanElement>(null);
@@ -38,7 +36,7 @@ export function Haro({ sectionIndex }: Props) {
     gsap.to(el, { y: -5, duration: 2.5, ease: "sine.inOut", yoyo: true, repeat: -1 });
   }, []);
 
-  // ── Random blink ──
+  // ── Random blink (opacity fade) ──
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -49,23 +47,23 @@ export function Haro({ sectionIndex }: Props) {
       const eyes = [eyeLRef.current, eyeRRef.current].filter(Boolean);
       if (!eyes.length) return;
       gsap.timeline()
-        .to(eyes, { scaleY: 0.1, duration: 0.04, ease: "power2.in", transformOrigin: "center" })
-        .to(eyes, { scaleY: 1, duration: 0.06, ease: "power2.out", transformOrigin: "center" });
+        .to(eyes, { opacity: 0, duration: 0.04 })
+        .to(eyes, { opacity: 1, duration: 0.08, ease: "power2.out" });
     }
     schedule();
     return () => clearTimeout(timer);
   }, []);
 
-  // ── Eye + antenna cursor tracking ──
+  // ── Cursor tracking (antenna tilt + subtle eye shift) ──
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return;
-    const iL = irisLRef.current;
-    const iR = irisRRef.current;
+    const eL = eyeLRef.current;
+    const eR = eyeRRef.current;
     const aL = antLRef.current;
     const aR = antRRef.current;
-    if (!iL || !iR || !aL || !aR) return;
-    const irisLEl = iL;
-    const irisREl = iR;
+    if (!eL || !eR || !aL || !aR) return;
+    const eyeLEl = eL;
+    const eyeREl = eR;
     const antLEl = aL;
     const antREl = aR;
 
@@ -73,15 +71,15 @@ export function Haro({ sectionIndex }: Props) {
     function tick(t: number) {
       if (t - last < 80) return;
       last = t;
-      const { x, y } = getMouseState();
-      // Irises drift within their eyes
-      const dx = x * 1.5;
-      const dy = -y * 1;
-      irisLEl.setAttribute("cx", String(17 + dx));
-      irisLEl.setAttribute("cy", String(22 + dy));
-      irisREl.setAttribute("cx", String(31 + dx));
-      irisREl.setAttribute("cy", String(22 + dy));
+      const { y } = getMouseState();
+      const dy = -y * 1.2;
+      // Eyes shift vertically with cursor
+      eyeLEl.setAttribute("y1", String(22 + dy));
+      eyeLEl.setAttribute("y2", String(22 + dy));
+      eyeREl.setAttribute("y1", String(22 + dy));
+      eyeREl.setAttribute("y2", String(22 + dy));
       // Antenna tilt
+      const { x } = getMouseState();
       const tilt = x * 3;
       antLEl.setAttribute("transform", `rotate(${-tilt} 14 16)`);
       antREl.setAttribute("transform", `rotate(${tilt} 34 16)`);
@@ -112,8 +110,8 @@ export function Haro({ sectionIndex }: Props) {
     // Eyes flash magenta
     const eyes = [eL, eR];
     gsap.timeline()
-      .to(eyes, { attr: { fill: "#FF4FD8" }, duration: 0.08 })
-      .to(eyes, { attr: { fill: "#01314a" }, duration: 0.3, delay: 0.12 });
+      .to(eyes, { attr: { stroke: "#FF4FD8" }, duration: 0.08 })
+      .to(eyes, { attr: { stroke: "rgba(255,255,255,0.9)" }, duration: 0.3, delay: 0.12 });
 
     // Antenna twitch
     const ants = [aL, aR];
@@ -147,10 +145,6 @@ export function Haro({ sectionIndex }: Props) {
               <stop offset="0%" stopColor="#34d399" />
               <stop offset="100%" stopColor="#6ee7b7" />
             </linearGradient>
-            <linearGradient id="panel-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.15)" />
-              <stop offset="100%" stopColor="rgba(0,0,0,0.08)" />
-            </linearGradient>
           </defs>
 
           {/* ── Antenna ears ── */}
@@ -165,10 +159,8 @@ export function Haro({ sectionIndex }: Props) {
             style={{ filter: "drop-shadow(0 0 6px rgba(74,222,128,0.2))" }} />
 
           {/* ── Panel details ── */}
-          <path d="M 8 22 Q 24 17 40 22" fill="none" stroke="url(#panel-grad)" strokeWidth="0.8" />
+          <path d="M 8 22 Q 24 17 40 22" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7" />
           <path d="M 9 34 Q 24 38 39 34" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="0.6" />
-          <line x1="6" y1="24" x2="5" y2="30" stroke="rgba(0,0,0,0.15)" strokeWidth="0.6" />
-          <line x1="42" y1="24" x2="43" y2="30" stroke="rgba(0,0,0,0.15)" strokeWidth="0.6" />
 
           {/* ── Side thruster vents ── */}
           <rect x="6" y="26" width="2" height="6" rx="1" fill="rgba(0,0,0,0.2)" />
@@ -176,18 +168,11 @@ export function Haro({ sectionIndex }: Props) {
           <rect x="6.5" y="27" width="1" height="4" rx="0.5" fill="rgba(74,222,128,0.3)" />
           <rect x="40.5" y="27" width="1" height="4" rx="0.5" fill="rgba(74,222,128,0.3)" />
 
-          {/* ── Eyes (vertically-elongated ovals with irises) ── */}
-          <g style={{ transition: "transform 0.15s ease-out" }}>
-            <ellipse ref={eyeLRef} cx="17" cy="22" rx="3.5" ry="4.5" fill="#01314a"
-              stroke="rgba(255,255,255,0.2)" strokeWidth="0.6" />
-            <ellipse ref={eyeRRef} cx="31" cy="22" rx="3.5" ry="4.5" fill="#01314a"
-              stroke="rgba(255,255,255,0.2)" strokeWidth="0.6" />
-            {/* Irises */}
-            <circle ref={irisLRef} cx="17" cy="22" r="1.8" fill="rgba(255,255,255,0.85)" />
-            <circle cx="17" cy="22" r="0.8" fill="#01314a" />
-            <circle ref={irisRRef} cx="31" cy="22" r="1.8" fill="rgba(255,255,255,0.85)" />
-            <circle cx="31" cy="22" r="0.8" fill="#01314a" />
-          </g>
+          {/* ── Eyes: "- -" ── */}
+          <line ref={eyeLRef} x1="15" y1="22" x2="19" y2="22"
+            stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" />
+          <line ref={eyeRRef} x1="29" y1="22" x2="33" y2="22"
+            stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" strokeLinecap="round" />
 
           {/* ── Mouth / status bar ── */}
           <rect x="20" y="35" width="8" height="1.5" rx="0.75" fill="rgba(0,0,0,0.15)" />
