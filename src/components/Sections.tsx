@@ -137,8 +137,7 @@ export function HeroSection({ started }: { started: boolean }) {
     <section className="section hero" data-section-index={0}>
       <div className="hero__inner">
         <h1 ref={nameRef} className="hero__name">
-          pantorn <br />
-          <span>chuavallee</span>
+          pantorn <span>chuavallee</span>
         </h1>
         <div ref={roleRef} className="hero__role">software engineer</div>
         <div ref={taglineRef} className="hero__tagline">
