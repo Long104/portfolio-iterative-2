@@ -297,24 +297,26 @@ export const ExperienceSection = memo(function ExperienceSection() {
   return (
     <section className="section" data-section-index={2}>
       <div ref={labelRef} className="section-label">// experience</div>
-      <div className="timeline">
-        <ExpItem
-          period="now"
-          role={CURRENT_STATUS}
-          isCurrent
-        />
-        {EXPERIENCE.map((job, i) => (
+      <GlassPanel>
+        <div className="timeline">
           <ExpItem
-            key={i}
-            period={job.period}
-            role={job.role}
-            company={job.company}
-            location={job.location}
-            description={job.description}
-            isEducation={job.isEducation}
+            period="now"
+            role={CURRENT_STATUS}
+            isCurrent
           />
-        ))}
-      </div>
+          {EXPERIENCE.map((job, i) => (
+            <ExpItem
+              key={i}
+              period={job.period}
+              role={job.role}
+              company={job.company}
+              location={job.location}
+              description={job.description}
+              isEducation={job.isEducation}
+            />
+          ))}
+        </div>
+      </GlassPanel>
     </section>
   );
 });
