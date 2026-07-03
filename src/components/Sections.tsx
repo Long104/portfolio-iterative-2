@@ -101,9 +101,9 @@ export function HeroSection({ started }: { started: boolean }) {
 
 // ── About (section 1) ──
 const STACK = {
-  languages: ["go", "typescript", "python", "lua"],
-  frameworks: ["react", "next.js", "node", "three.js"],
-  tools: ["docker", "kubernetes", "cloudflare", "postgresql", "neovim"],
+  languages: ["go", "typescript", "python", "sql"],
+  frameworks: ["next.js", "react", "tailwind", "three.js", "go (fiber)", "grpc"],
+  cloud: ["aws", "docker", "kubernetes", "terraform", "postgres"],
 };
 
 export const AboutSection = memo(function AboutSection() {
@@ -168,11 +168,11 @@ export const AboutSection = memo(function AboutSection() {
         <div className="about__header">
           <img src="/profile-small.jpg" alt="pantorn chuavallee" className="about__photo" />
           <p ref={textRef} className="about__text">
-            i'm a software developer from thailand. <br />
-            i build things i want to use myself. <br />
+            it graduate & software engineer from bangkok. <br />
+            shipped production code at omise (opn) during a 6-month internship. <br />
             <span>
-              currently exploring ai integration, webgl, and optimizing
-              web apps for performance. in my free time, chess and rubik's cubes.
+              building across go, typescript, and aws. into immersive webgl,
+              ai integration, and systems that feel alive.
             </span>
           </p>
         </div>
@@ -197,21 +197,21 @@ export const AboutSection = memo(function AboutSection() {
   );
 });
 
-// ── Experience Item ──
-// Each text element gets its own useScrollReveal ref.
-// NOT applied to a parent wrapper — SplitText with split:"lines" on nested
-// DOM structure (grid children) breaks the layout because it re-wraps text
-// fragments and creates orphaned/mangled elements.
+// ── Experience Item (Timeline) ──
+// Vertical wire with glowing dot nodes. No glass panel — just the wire.
+// Each text element gets its own useScrollReveal ref for staggered entry.
 
 interface ExpItemData {
   period: string;
   role: string;
   company?: string;
+  location?: string;
   description?: string;
   isCurrent?: boolean;
+  isEducation?: boolean;
 }
 
-function ExpItem({ period, role, company, description, isCurrent }: ExpItemData) {
+function ExpItem({ period, role, company, location, description, isCurrent, isEducation }: ExpItemData) {
   const periodRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
     stagger: 0.02,
@@ -251,32 +251,37 @@ function ExpItem({ period, role, company, description, isCurrent }: ExpItemData)
   });
 
   return (
-    <div className={`exp-item${isCurrent ? " exp-item--current" : ""}`}>
-      <div
-        ref={periodRef}
-        className={`exp-item__period${isCurrent ? " exp-item__period--current" : ""}`}
-      >
-        {period}
-      </div>
-      <div className="exp-item__body">
+    <div className={`tl-item${isCurrent ? " tl-item--current" : ""}${isEducation ? " tl-item--edu" : ""}`}>
+      {/* Glowing dot */}
+      <div className={`tl-item__dot${isCurrent ? " tl-item__dot--current" : ""}`} />
+
+      <div className="tl-item__content">
+        <div
+          ref={periodRef}
+          className={`tl-item__period${isCurrent ? " tl-item__period--current" : ""}`}
+        >
+          {period}
+        </div>
         <div
           ref={roleRef}
-          className={`exp-item__role${isCurrent ? " exp-item__role--current" : ""}`}
+          className={`tl-item__role${isCurrent ? " tl-item__role--current" : ""}`}
         >
           {role}
         </div>
         {company && (
-          <div ref={companyRef} className="exp-item__company">{company}</div>
+          <div ref={companyRef} className="tl-item__company">
+            {company}{location && <span className="tl-item__location"> · {location}</span>}
+          </div>
         )}
         {description && (
-          <div ref={descRef} className="exp-item__desc">{description}</div>
+          <div ref={descRef} className="tl-item__desc">{description}</div>
         )}
       </div>
     </div>
   );
 }
 
-// ── Experience (section 2) ──
+// ── Experience (section 2) — Timeline ──
 export const ExperienceSection = memo(function ExperienceSection() {
   const labelRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
@@ -292,24 +297,24 @@ export const ExperienceSection = memo(function ExperienceSection() {
   return (
     <section className="section" data-section-index={2}>
       <div ref={labelRef} className="section-label">// experience</div>
-      <GlassPanel>
-        <div className="experience">
+      <div className="timeline">
+        <ExpItem
+          period="now"
+          role={CURRENT_STATUS}
+          isCurrent
+        />
+        {EXPERIENCE.map((job, i) => (
           <ExpItem
-            period="now"
-            role={CURRENT_STATUS}
-            isCurrent
+            key={i}
+            period={job.period}
+            role={job.role}
+            company={job.company}
+            location={job.location}
+            description={job.description}
+            isEducation={job.isEducation}
           />
-          {[...EXPERIENCE].reverse().map((job, i) => (
-            <ExpItem
-              key={i}
-              period={job.period}
-              role={job.role}
-              company={job.company}
-              description={job.description}
-            />
-          ))}
-        </div>
-      </GlassPanel>
+        ))}
+      </div>
     </section>
   );
 });

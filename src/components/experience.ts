@@ -1,18 +1,31 @@
-// ── Experience data ──
+// ── Experience data (from resume) ──
 
-export const EXPERIENCE = [
+export interface ExperienceItem {
+  readonly period: string;
+  readonly role: string;
+  readonly company?: string;
+  readonly location?: string;
+  readonly description?: string;
+  readonly isCurrent?: boolean;
+  readonly isEducation?: boolean;
+}
+
+export const EXPERIENCE: readonly ExperienceItem[] = [
   {
-    period: "2025",
-    role: "software developer",
-    company: "freelance",
-    description: "Building web applications with a focus on performance, AI integration, and immersive user experiences. Currently exploring WebGL, audio reactivity, and edge computing.",
+    period: "jun 2025 — dec 2025",
+    role: "software engineer intern",
+    company: "omise (opn)",
+    location: "bangkok, thailand",
+    description:
+      "shipped production UI fixes on the merchant dashboard (vite + design system), fixed i18n language-switching bugs on the payment page, and upgraded next.js 14→15 + buildkite CI. ran POCs for launchdarkly feature flags, mixpanel analytics, and aws quicksight dashboards.",
   },
   {
-    period: "2022 — 2024",
-    role: "full-stack developer",
-    company: "Stamford International University",
-    description: "Developed full-stack applications using Go, Next.js, and TypeScript. Built real-time collaborative tools and AI-powered features using Cloudflare Workers.",
+    period: "nov 2022 — dec 2025",
+    role: "b.sc. information technology",
+    company: "stamford international university",
+    description: "gpa 3.78 / 4.00 — workshops on docker, css battle, and web fundamentals.",
+    isEducation: true,
   },
-] as const;
+];
 
-export const CURRENT_STATUS = "computer science student — open to internships & freelance";
+export const CURRENT_STATUS = "it graduate — open to software engineer roles";

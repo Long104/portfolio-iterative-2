@@ -299,6 +299,10 @@ html.cursor-hidden * {
 .exp-item__role,
 .exp-item__company,
 .exp-item__desc,
+.tl-item__period,
+.tl-item__role,
+.tl-item__company,
+.tl-item__desc,
 .project-card__num,
 .project-card__title,
 .project-card__desc,
@@ -351,65 +355,131 @@ html.cursor-hidden * {
   );
 }
 
-/* ── Experience timeline ── */
-.experience {
-  max-width: 640px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+/* ── Experience Timeline ── */
+/* Vertical wire with glowing dot nodes — no glass panel.
+   Differentiates from About section's glass panel. */
+
+.timeline {
+  position: relative;
+  max-width: 580px;
+  padding-left: 8px;
 }
 
-.exp-item {
+/* Vertical wire */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 75, 216, 0.4) 0%,
+    rgba(255, 75, 216, 0.15) 50%,
+    rgba(27, 188, 178, 0.15) 100%
+  );
+}
+
+.tl-item {
+  position: relative;
   display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 24px;
-  padding: 20px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  grid-template-columns: 32px 1fr;
+  gap: 0;
+  padding: 16px 0 16px 0;
 }
 
-.exp-item:first-child {
-  border-top: none;
+/* Glowing dot node */
+.tl-item__dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  margin-top: 6px;
+  margin-left: 7px;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-.exp-item:last-child {
-  border-bottom: none;
+/* "NOW" dot — pulsing magenta */
+.tl-item__dot--current {
+  background: #4ade80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6), 0 0 20px rgba(74, 222, 128, 0.3);
+  animation: tlDotPulse 1.6s ease-in-out infinite;
 }
 
-.exp-item__period {
+@keyframes tlDotPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(74, 222, 128, 0.5), 0 0 16px rgba(74, 222, 128, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(74, 222, 128, 0.8), 0 0 28px rgba(74, 222, 128, 0.4); }
+}
+
+.tl-item__content {
+  padding-left: 4px;
+}
+
+.tl-item__period {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.5);
-  padding-top: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 4px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
-.exp-item__period--current {
-  color: rgba(120, 220, 120, 0.85);
+.tl-item__period--current {
+  color: rgba(74, 222, 128, 0.85);
 }
 
-.exp-item__role {
-  font-size: 16px;
+.tl-item__role {
+  font-family: var(--display);
+  font-size: clamp(16px, 2vw, 20px);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
-.exp-item__role--current {
-  color: rgba(120, 220, 120, 1);
-  font-size: 14px;
+.tl-item__role--current {
+  color: rgba(74, 222, 128, 1);
+  font-size: clamp(14px, 1.8vw, 17px);
 }
 
-.exp-item__company {
+.tl-item__company {
   font-size: 11px;
   letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 8px;
+  color: rgba(255, 75, 216, 0.7);
+  margin-bottom: 6px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
-.exp-item__desc {
+.tl-item__location {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.tl-item__desc {
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Education items — teal accent for visual differentiation */
+.tl-item--edu .tl-item__company {
+  color: rgba(27, 188, 178, 0.7);
+}
+
+/* ── Timeline responsive ── */
+@media (max-width: 768px) {
+  .timeline {
+    max-width: 100%;
+  }
+
+  .tl-item {
+    grid-template-columns: 28px 1fr;
+  }
 }
 
 /* ── Work section — Pinned horizontal scroll ── */
@@ -1369,11 +1439,14 @@ html.cursor-hidden * {
     gap: 24px;
   }
 
-  /* Experience timeline: stack period above body */
-  .exp-item {
-    grid-template-columns: 1fr;
-    gap: 4px;
-    padding: 16px 0;
+  /* Experience timeline: narrower on mobile */
+  .tl-item {
+    grid-template-columns: 28px 1fr;
+    padding: 12px 0;
+  }
+
+  .tl-item__role {
+    font-size: 15px;
   }
 
   .hud--tl { left: 20px; top: 48px; }
@@ -1479,7 +1552,7 @@ html.cursor-hidden * {
     padding: 20px;
   }
 
-  .exp-item__role {
+  .tl-item__role {
     font-size: 14px;
   }
 
