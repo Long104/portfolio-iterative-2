@@ -580,18 +580,18 @@ export const CurrentlySection = memo(function CurrentlySection() {
         const tl = gsap.timeline({ delay: 0.3 });
 
         // 1. Type header text
-        typeChars(tl, headerTextRef.current!, "> LOCATION: bangkok —", 0.03);
+        typeChars(tl, headerTextRef.current!, "> LOCATION: bangkok —", 0.018);
 
         // 2. Each row: fade in key + arrow, then type value
         CURRENTLY_ITEMS.forEach((item, i) => {
           const key = keyRefs.current[i];
           const arrow = arrowRefs.current[i];
           const val = valueRefs.current[i];
-          const gap = i === 0 ? "-=0.1" : "-=0.05";
+          const gap = i === 0 ? "-=0.05" : "-=0.02";
 
-          if (key) tl.to(key, { opacity: 0.6, duration: 0.15 }, gap);
-          if (arrow) tl.to(arrow, { opacity: 0.4, duration: 0.15 }, "<");
-          if (val) typeChars(tl, val, item.value, 0.022);
+          if (key) tl.to(key, { opacity: 0.6, duration: 0.1 }, gap);
+          if (arrow) tl.to(arrow, { opacity: 0.4, duration: 0.1 }, "<");
+          if (val) typeChars(tl, val, item.value, 0.014);
         });
 
         // 3. Show blinking cursor
