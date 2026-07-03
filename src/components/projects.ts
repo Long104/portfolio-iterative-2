@@ -75,4 +75,22 @@ export const PROJECTS: readonly Project[] = [
       "Works on any website — sidebar chat with text selection context",
     ],
   },
+  {
+    num: "04",
+    title: "kalifinder",
+    stack: "aws · opensearch · bedrock · ecs",
+    desc: "AI product search widget for Shopify & WordPress. OpenSearch full-text + k-NN vector similarity, AWS Bedrock image embeddings, ECS Fargate deployment.",
+    url: "https://github.com/Long104/Kalifinder",
+    github: "https://github.com/Long104/Kalifinder",
+    image: "/kalifinder.jpg",
+    longDescription:
+      "A team project — an AI-powered product search widget for Shopify and WordPress. Built a product sync pipeline with idempotent upserts, safely handling retries without duplicates. Used OpenSearch as the query engine for full-text search, faceted filtering, and k-NN vector similarity in a single round-trip. Integrated AWS Bedrock image embeddings to power 'find similar products' with no self-hosted ML. Deployed on ECS Fargate with auto-scaling; React widget hosted on S3 + CloudFront. All infra managed with Terraform.",
+    techs: ["aws ecs", "opensearch", "aws bedrock", "react", "s3", "cloudfront", "terraform", "sqs"],
+    highlights: [
+      "Product sync pipeline with idempotent upserts — safe retry handling",
+      "OpenSearch: full-text + faceted filtering + k-NN vector similarity in one query",
+      "AWS Bedrock image embeddings for 'find similar' — no self-hosted ML",
+      "ECS Fargate auto-scaling + S3/CloudFront widget + Terraform IaC",
+    ],
+  },
 ] as const;
