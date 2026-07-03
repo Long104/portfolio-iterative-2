@@ -1926,21 +1926,6 @@ html.cursor-hidden * {
   .haro { display: none; }
 }
 
-/* ── Tactical Radar (desktop only) ── */
-.tactical-radar {
-  position: fixed;
-  bottom: 56px;
-  right: 32px;
-  z-index: 50;
-  pointer-events: none;
-  opacity: 0.85;
-  animation: hudFadeIn 0.5s ease-out 0.4s both;
-}
-
-@media (max-width: 1023px) {
-  .tactical-radar { display: none; }
-}
-
 /* ── Target lock-on reticle (project cards) ── */
 .project-card__lock-on {
   position: absolute;
