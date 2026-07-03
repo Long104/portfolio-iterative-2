@@ -236,14 +236,9 @@ function drawReticle(
     ctx.fillText("◉ LOCK", tx, ty);
   }
 
-  // ═══ Center dot — dark outline + bright fill for max visibility ═══
-  // Dark outline ring (drawn twice: first dark, then bright on top)
-  ctx.beginPath();
-  ctx.arc(dx, dy, 3, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.7)";
-  ctx.fill();
-
-  // Bright inner dot
+  // ═══ Center dot — pure white, no dark outline ═══
+  // The dark glow sprite behind the reticle already provides contrast.
+  // A separate dark outline creates an unwanted black ring around the dot.
   ctx.beginPath();
   ctx.arc(dx, dy, 2, 0, Math.PI * 2);
   ctx.fillStyle = "#FFFFFF";
