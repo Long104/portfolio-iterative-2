@@ -695,7 +695,20 @@ html.cursor-hidden * {
   transform: translate(2px, -2px);
 }
 
-/* ── Currently — key/value layout (no glass panel) ── */
+/* ── Currently — terminal readout (no glass panel) ── */
+.currently__header {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(27, 188, 178, 0.7);
+  margin-bottom: 32px;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.currently__clock {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .currently {
   max-width: 580px;
   display: flex;
@@ -705,8 +718,8 @@ html.cursor-hidden * {
 
 .currently__row {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 24px;
+  grid-template-columns: 100px 24px 1fr;
+  gap: 12px;
   align-items: baseline;
 }
 
@@ -719,6 +732,12 @@ html.cursor-hidden * {
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
+.currently__arrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
 .currently__value {
   font-family: var(--display);
   font-size: clamp(15px, 1.8vw, 19px);
@@ -726,12 +745,30 @@ html.cursor-hidden * {
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.4;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  min-height: 1.4em; /* prevent layout shift as text types in */
+}
+
+.currently__cursor {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: rgba(255, 75, 216, 0.7);
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.currently__cursor--blink {
+  animation: currentlyBlink 0.8s step-end infinite;
+}
+
+@keyframes currentlyBlink {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0; }
 }
 
 @media (max-width: 768px) {
   .currently__row {
-    grid-template-columns: 90px 1fr;
-    gap: 16px;
+    grid-template-columns: 80px 20px 1fr;
+    gap: 8px;
   }
 
   .currently__key {

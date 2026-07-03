@@ -9,7 +9,7 @@ import { PROJECTS } from "./projects";
 import { EXPERIENCE, CURRENT_STATUS } from "./experience";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { useHorizontalScroll } from "../hooks/useHorizontalScroll";
-import { useRef, useEffect, memo } from "react";
+import { useRef, useEffect, useState, memo } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import { playHoverSound } from "../lib/audio-ui";
@@ -482,9 +482,10 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
   );
 }
 
-// ── Currently (section 4) — What I'm into right now ──
-// Two-column key→value layout. No glass panel — bare text on vortex.
-// Creates visual rhythm: hero (bare) → glass → glass → cards → bare → finale
+// ── Currently (section 4) — Live Psycommu status readout ──
+// Terminal typewriter effect: header types out, clock ticks live,
+// each row's value types sequentially. Blinking cursor at the end.
+// No glass panel — bare text on vortex, echoes the hero.
 const CURRENTLY_ITEMS = [
   { key: "learning", value: "WebGPU, system design, distributed systems" },
   { key: "building", value: "this portfolio — 3D vortex with audio reactivity" },
@@ -493,7 +494,26 @@ const CURRENTLY_ITEMS = [
   { key: "watching", value: "gundam gquuuuuux" },
 ] as const;
 
+// Helper: type text char-by-char into a GSAP timeline
+function typeChars(
+  tl: gsap.core.Timeline,
+  el: HTMLElement,
+  text: string,
+  charSpeed: number,
+) {
+  const proxy = { n: 0 };
+  tl.to(proxy, {
+    n: text.length,
+    duration: text.length * charSpeed,
+    ease: "none",
+    onUpdate: () => {
+      el.textContent = text.slice(0, Math.round(proxy.n));
+    },
+  });
+}
+
 export const CurrentlySection = memo(function CurrentlySection() {
+  const sectionRef = useRef<HTMLElement>(null);
   const labelRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
     stagger: 0.02,
@@ -505,37 +525,132 @@ export const CurrentlySection = memo(function CurrentlySection() {
     ease: "power2.out",
   });
 
+  const headerTextRef = useRef<HTMLSpanElement>(null);
+  const cursorRef = useRef<HTMLSpanElement>(null);
+  const keyRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const arrowRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const valueRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const typedRef = useRef(false);
+
+  // ── Live Bangkok clock (UTC+7) ──
+  const [clock, setClock] = useState("--:--:--");
+  useEffect(() => {
+    function tick() {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const bkk = new Date(utc + 7 * 3600000);
+      const h = String(bkk.getHours()).padStart(2, "0");
+      const m = String(bkk.getMinutes()).padStart(2, "0");
+      const s = String(bkk.getSeconds()).padStart(2, "0");
+      setClock(`${h}:${m}:${s}`);
+    }
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── Typewriter sequence on scroll enter ──
+  useEffect(() => {
+    if (typedRef.current) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const st = ScrollTrigger.create({
+      trigger: section,
+      start: "top 75%",
+      once: true,
+      onEnter: () => {
+        typedRef.current = true;
+
+        // Reduced motion: show everything instantly
+        if (PREFERS_REDUCED_MOTION) {
+          if (headerTextRef.current) headerTextRef.current.textContent = "> LOCATION: bangkok —";
+          CURRENTLY_ITEMS.forEach((item, i) => {
+            const key = keyRefs.current[i];
+            const arrow = arrowRefs.current[i];
+            const val = valueRefs.current[i];
+            if (key) key.style.opacity = "0.6";
+            if (arrow) arrow.style.opacity = "0.4";
+            if (val) val.textContent = item.value;
+          });
+          if (cursorRef.current) cursorRef.current.style.opacity = "0.7";
+          return;
+        }
+
+        const tl = gsap.timeline({ delay: 0.3 });
+
+        // 1. Type header text
+        typeChars(tl, headerTextRef.current!, "> LOCATION: bangkok —", 0.03);
+
+        // 2. Each row: fade in key + arrow, then type value
+        CURRENTLY_ITEMS.forEach((item, i) => {
+          const key = keyRefs.current[i];
+          const arrow = arrowRefs.current[i];
+          const val = valueRefs.current[i];
+          const gap = i === 0 ? "-=0.1" : "-=0.05";
+
+          if (key) tl.to(key, { opacity: 0.6, duration: 0.15 }, gap);
+          if (arrow) tl.to(arrow, { opacity: 0.4, duration: 0.15 }, "<");
+          if (val) typeChars(tl, val, item.value, 0.022);
+        });
+
+        // 3. Show blinking cursor
+        tl.call(() => {
+          cursorRef.current?.classList.add("currently__cursor--blink");
+        });
+      },
+    });
+
+    return () => st.kill();
+  }, []);
+
   return (
-    <section className="section" data-section-index={4}>
+    <section ref={sectionRef} className="section" data-section-index={4}>
       <div ref={labelRef} className="section-label">// currently</div>
+
+      {/* System header with live clock */}
+      <div className="currently__header">
+        <span ref={headerTextRef}></span>
+        <span className="currently__clock">{clock}</span>
+      </div>
+
+      {/* Key → value rows (values type out on scroll enter) */}
       <div className="currently">
-        {CURRENTLY_ITEMS.map((item) => (
-          <CurrentlyRow key={item.key} itemKey={item.key} value={item.value} />
+        {CURRENTLY_ITEMS.map((item, i) => (
+          <div className="currently__row" key={item.key}>
+            <span
+              className="currently__key"
+              ref={(el) => { keyRefs.current[i] = el; }}
+              style={{ opacity: 0 }}
+            >
+              {item.key}
+            </span>
+            <span
+              className="currently__arrow"
+              ref={(el) => { arrowRefs.current[i] = el; }}
+              style={{ opacity: 0 }}
+            >
+              →
+            </span>
+            <span
+              className="currently__value"
+              ref={(el) => { valueRefs.current[i] = el; }}
+            />
+          </div>
         ))}
       </div>
+
+      {/* Blinking cursor */}
+      <span
+        className="currently__cursor"
+        ref={cursorRef}
+        style={{ opacity: 0 }}
+      >
+        _
+      </span>
     </section>
   );
 });
-
-function CurrentlyRow({ itemKey, value }: { itemKey: string; value: string }) {
-  const rowRef = useScrollReveal<HTMLDivElement>({
-    split: "words",
-    stagger: 0.04,
-    x: "-30%",
-    y: "0%",
-    start: "top 88%",
-    end: "top 68%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
-
-  return (
-    <div className="currently__row" ref={rowRef}>
-      <span className="currently__key">{itemKey}</span>
-      <span className="currently__value">{value}</span>
-    </div>
-  );
-}
 
 // ── Contact (section 5) — Grand Finale ──
 export const ContactSection = memo(function ContactSection() {
