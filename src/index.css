@@ -191,28 +191,75 @@ html.cursor-hidden * {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* ── Hero ── */
+/* ── Hero — cinematic name reveal ── */
 .hero {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
   min-height: 100vh;
-  padding-bottom: 80px;
+  padding: 80px 48px;
 }
 
+.hero__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Tier 1: NAME — massive, dominant */
+.hero__name {
+  font-family: var(--display);
+  font-size: clamp(56px, 14vw, 160px);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.hero__name span {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Tier 2: ROLE — small mono subtitle */
+.hero__role {
+  font-family: var(--mono);
+  font-size: clamp(12px, 1.5vw, 15px);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 75, 216, 0.7);
+  margin-top: 20px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Tier 3: TAGLINE — secondary display, lower contrast */
 .hero__tagline {
   font-family: var(--display);
-  font-size: clamp(28px, 5vw, 56px);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.95);
-  max-width: 600px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  font-size: clamp(16px, 2.2vw, 26px);
+  font-weight: 400;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 16px;
+  max-width: 480px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
-.hero__tagline span {
-  color: rgba(255, 255, 255, 0.6);
+/* Scroll hint */
+.hero__scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 48px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  animation: heroScrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes heroScrollBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.25; }
+  50% { transform: translateY(4px); opacity: 0.5; }
 }
 
 /* ── About ── */
@@ -635,30 +682,70 @@ html.cursor-hidden * {
   transform: translate(2px, -2px);
 }
 
-/* ── Contact ── */
+/* ── Contact — Grand Finale ── */
+.contact__headline {
+  font-family: var(--display);
+  font-size: clamp(48px, 10vw, 120px);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  margin-bottom: 48px;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.contact__headline span {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .contact {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
   text-align: center;
 }
 
-.contact__link {
+/* Primary CTA — email */
+.contact__email {
   font-family: var(--display);
-  font-size: clamp(24px, 4vw, 42px);
+  font-size: clamp(20px, 3.5vw, 36px);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   letter-spacing: -0.01em;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease;
   pointer-events: auto;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.contact__email:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Secondary links — social row */
+.contact__socials {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.contact__link {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: color 0.2s ease;
+  pointer-events: auto;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
 
 .contact__link:hover {
-  color: rgba(255, 255, 255, 1);
-  transform: scale(1.02);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .contact__footer {
@@ -1428,6 +1515,15 @@ html.cursor-hidden * {
 @media (max-width: 768px) {
   .section {
     padding: 80px 24px;
+  }
+
+  .hero {
+    padding: 80px 24px;
+    justify-content: flex-end;
+  }
+
+  .hero__scroll-hint {
+    left: 24px;
   }
 
   .glass-panel {

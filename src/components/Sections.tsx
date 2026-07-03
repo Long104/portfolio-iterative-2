@@ -14,27 +14,29 @@ import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import { playHoverSound } from "../lib/audio-ui";
 
-// ── Hero (section 0) ──
-// Line reveal triggered by LAUNCH click.
+// ── Hero (section 0) — Cinematic name reveal ──
+// Three-tier typography hierarchy:
+//   1. PANTORN CHUAVALLEE — massive, SplitText line reveal (the hero moment)
+//   2. software engineer — small mono subtitle
+//   3. "building things that feel alive" — secondary display tagline
 //
 // Two-phase approach (no revert/re-run):
 //   Phase 1 (useGSAP, runs once on mount): SplitText + hide lines
-//   Phase 2 (useEffect[started]): create timeline + play when LAUNCH clicked
-//
-// This avoids the fragile useGSAP revert/re-run cycle that was leaving
-// the text visible but static.
+//   Phase 2 (useEffect[started]): play timeline when LAUNCH clicked
 export function HeroSection({ started }: { started: boolean }) {
-  const taglineRef = useRef<HTMLHeadingElement>(null);
+  const nameRef = useRef<HTMLHeadingElement>(null);
+  const roleRef = useRef<HTMLDivElement>(null);
+  const taglineRef = useRef<HTMLDivElement>(null);
   const splitRef = useRef<{ lines: Element[] } | null>(null);
 
-  // Phase 1: Split text into lines + hide them (runs ONCE, never reverts)
+  // Phase 1: Split name into lines + hide everything (runs ONCE)
   useGSAP(
     () => {
-      const el = taglineRef.current;
+      const el = nameRef.current;
       if (!el) return;
 
       if (PREFERS_REDUCED_MOTION) {
-        gsap.set(el, { opacity: 0 });
+        gsap.set([el, roleRef.current, taglineRef.current], { opacity: 0 });
         return;
       }
 
@@ -48,8 +50,9 @@ export function HeroSection({ started }: { started: boolean }) {
 
       if (split.lines.length === 0) return;
 
-      // Hide immediately — stays hidden until Phase 2 runs
+      // Hide name lines + role + tagline
       gsap.set(split.lines, { yPercent: 140, opacity: 0 });
+      gsap.set([roleRef.current, taglineRef.current], { opacity: 0, y: 20 });
       splitRef.current = split;
 
       return () => {
@@ -57,18 +60,20 @@ export function HeroSection({ started }: { started: boolean }) {
         splitRef.current = null;
       };
     },
-    { scope: taglineRef },
+    { scope: nameRef },
   );
 
-  // Phase 2: Play the reveal animation when `started` flips to true
+  // Phase 2: Play reveal when LAUNCH clicked
   useEffect(() => {
     if (!started) return;
 
-    const el = taglineRef.current;
+    const el = nameRef.current;
     if (!el) return;
 
     if (PREFERS_REDUCED_MOTION) {
-      gsap.to(el, { opacity: 1, duration: 0.5, delay: 0.3, ease: "power2.out" });
+      gsap.to([el, roleRef.current, taglineRef.current], {
+        opacity: 1, duration: 0.5, delay: 0.3, stagger: 0.15, ease: "power2.out",
+      });
       return;
     }
 
@@ -76,13 +81,25 @@ export function HeroSection({ started }: { started: boolean }) {
     if (!split || split.lines.length === 0) return;
 
     const tl = gsap.timeline({ delay: 0.35 });
+
+    // 1. Name lines — dramatic stagger reveal
     tl.to(split.lines, {
       yPercent: 0,
       opacity: 1,
-      stagger: 0.12,
-      duration: 0.9,
+      stagger: 0.14,
+      duration: 1.0,
       ease: "expo.out",
     });
+
+    // 2. Role subtitle fades up
+    tl.to(roleRef.current, {
+      opacity: 1, y: 0, duration: 0.5, ease: "power2.out",
+    }, "-=0.4");
+
+    // 3. Tagline fades up
+    tl.to(taglineRef.current, {
+      opacity: 1, y: 0, duration: 0.5, ease: "power2.out",
+    }, "-=0.3");
 
     return () => {
       tl.kill();
@@ -91,10 +108,17 @@ export function HeroSection({ started }: { started: boolean }) {
 
   return (
     <section className="section hero" data-section-index={0}>
-      <h1 ref={taglineRef} className="hero__tagline">
-        building things <br />
-        <span>that feel alive.</span>
-      </h1>
+      <div className="hero__inner">
+        <h1 ref={nameRef} className="hero__name">
+          pantorn <br />
+          <span>chuavallee</span>
+        </h1>
+        <div ref={roleRef} className="hero__role">software engineer</div>
+        <div ref={taglineRef} className="hero__tagline">
+          building things that feel alive.
+        </div>
+      </div>
+      <div className="hero__scroll-hint">↓ scroll</div>
     </section>
   );
 }
@@ -431,27 +455,26 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
   );
 }
 
-// ── Contact (section 4) ──
+// ── Contact (section 4) — Grand Finale ──
 export const ContactSection = memo(function ContactSection() {
-  const labelRef = useScrollReveal<HTMLDivElement>({
-    split: "chars",
-    stagger: 0.02,
-    x: "-60%",
-    y: "0%",
-    start: "top 90%",
-    end: "top 65%",
-    duration: 0.4,
-    ease: "power2.out",
-  });
-
-  const linksRef = useScrollReveal<HTMLDivElement>({
+  const headlineRef = useScrollReveal<HTMLDivElement>({
     split: "lines",
     stagger: 0.15,
     y: "120%",
     clipWipe: true,
-    start: "top 70%",
-    end: "top 25%",
+    start: "top 80%",
+    end: "top 40%",
     duration: 1.0,
+    ease: "expo.out",
+  });
+
+  const linksRef = useScrollReveal<HTMLDivElement>({
+    split: "lines",
+    stagger: 0.1,
+    y: "80%",
+    start: "top 65%",
+    end: "top 30%",
+    duration: 0.7,
     ease: "expo.out",
   });
 
@@ -465,12 +488,12 @@ export const ContactSection = memo(function ContactSection() {
     ease: "power2.out",
   });
 
-  // ── Magnetic hover on contact links ──
+  // ── Magnetic hover on email + social links ──
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return;
     if (window.matchMedia("(hover: none)").matches) return;
 
-    const links = linksRef.current?.querySelectorAll<HTMLAnchorElement>(".contact__link");
+    const links = linksRef.current?.querySelectorAll<HTMLAnchorElement>(".contact__email, .contact__link");
     if (!links) return;
 
     const cleanups: (() => void)[] = [];
@@ -506,20 +529,25 @@ export const ContactSection = memo(function ContactSection() {
 
   return (
     <section className="section section--centered" data-section-index={4}>
-      <div ref={labelRef} className="section-label section-label--center">// let's talk</div>
+      <div ref={headlineRef} className="contact__headline">
+        let's build <br />
+        <span>something.</span>
+      </div>
       <div ref={linksRef} className="contact">
-        <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
-          github →
+        <a className="contact__email" href="mailto:longpantorn@gmail.com">
+          longpantorn@gmail.com
         </a>
-        <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee-99a51a341/" target="_blank" rel="noreferrer">
-          linkedin →
-        </a>
-        <a className="contact__link" href="mailto:longpantorn@gmail.com">
-          email →
-        </a>
-        <a className="contact__link" href="https://resume.pantorn.me/resume.pdf" target="_blank" rel="noreferrer">
-          resume →
-        </a>
+        <div className="contact__socials">
+          <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
+            github →
+          </a>
+          <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee-99a51a341/" target="_blank" rel="noreferrer">
+            linkedin →
+          </a>
+          <a className="contact__link" href="https://resume.pantorn.me/resume.pdf" target="_blank" rel="noreferrer">
+            resume →
+          </a>
+        </div>
       </div>
       <div ref={footerRef} className="contact__footer">© 2026 Pantorn Chuavallee — built with webgl & liquid glass</div>
     </section>
