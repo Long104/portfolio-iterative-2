@@ -32,8 +32,9 @@ import {
   CurrentlySection,
   ContactSection,
 } from "./components/Sections";
+import { ArmamentSection } from "./components/Armament";
 
-const TOTAL_SECTIONS = 6;
+const TOTAL_SECTIONS = 7;
 
 type Theme = "gquuuuuux" | "gfreed";
 
@@ -231,6 +232,7 @@ function App() {
           <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange} paused={!started} locked={selectedProject !== null}>
             <HeroSection started={started} />
             <AboutSection />
+            <ArmamentSection />
             <ExperienceSection />
             <WorkSection started={started} onOpenProject={handleOpenProject} hidden={selectedProject !== null} />
             <CurrentlySection />

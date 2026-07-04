@@ -144,12 +144,6 @@ export function HeroSection({ started }: { started: boolean }) {
     </section>
   );
 }
-const STACK = {
-  languages: ["go", "typescript", "python", "sql"],
-  frameworks: ["next.js", "react", "tailwind", "three.js", "go (fiber)", "grpc"],
-  cloud: ["aws", "docker", "kubernetes", "terraform", "postgres"],
-};
-
 export const AboutSection = memo(function AboutSection() {
   const labelRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
@@ -172,39 +166,6 @@ export const AboutSection = memo(function AboutSection() {
     ease: "expo.out",
   });
 
-  const langRef = useScrollReveal<HTMLDivElement>({
-    split: "words",
-    stagger: 0.03,
-    x: "-40%",
-    y: "0%",
-    start: "top 60%",
-    end: "top 25%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
-
-  const frameRef = useScrollReveal<HTMLDivElement>({
-    split: "words",
-    stagger: 0.03,
-    x: "-40%",
-    y: "0%",
-    start: "top 50%",
-    end: "top 20%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
-
-  const toolsRef = useScrollReveal<HTMLDivElement>({
-    split: "words",
-    stagger: 0.03,
-    x: "-40%",
-    y: "0%",
-    start: "top 40%",
-    end: "top 15%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
-
   return (
     <section className="section" data-section-index={1}>
       <div ref={labelRef} className="section-label">about</div>
@@ -215,25 +176,10 @@ export const AboutSection = memo(function AboutSection() {
             it graduate & software engineer from bangkok. <br />
             shipped production code at omise (opn) during a 6-month internship. <br />
             <span>
-              building across go, typescript, and aws. into immersive webgl,
-              ai integration, and systems that feel alive.
+              across go, typescript, and aws — into webgl, ai, and backend
+              systems.
             </span>
           </p>
-        </div>
-
-        <div className="stack-grid">
-          {Object.entries(STACK).map(([category, items], idx) => {
-            const ref = idx === 0 ? langRef : idx === 1 ? frameRef : toolsRef;
-            return (
-              <div key={category} ref={ref} className="stack-col">
-                <ul className="stack-col__list">
-                  {items.map((item) => (
-                    <li key={item} className="stack-col__item">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
         </div>
       </GlassPanel>
     </section>
@@ -349,7 +295,7 @@ export const ExperienceSection = memo(function ExperienceSection() {
   });
 
   return (
-    <section className="section" data-section-index={2}>
+    <section className="section" data-section-index={3}>
       <div ref={labelRef} className="section-label">experience</div>
       <GlassPanel>
         <div className="timeline">
@@ -496,7 +442,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
   }, [started]);
 
   return (
-    <section ref={containerRef} className="section section--work-horizontal" data-section-index={3} style={{ visibility: hidden ? "hidden" : "visible" }}>
+    <section ref={containerRef} className="section section--work-horizontal" data-section-index={4} style={{ visibility: hidden ? "hidden" : "visible" }}>
       <div ref={labelRef} className="section-label work-label">selected work</div>
       <div ref={trackRef} className="work-track">
         {PROJECTS.map((project, i) => (
@@ -521,7 +467,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
 // each row's value types sequentially. Blinking cursor at the end.
 const CURRENTLY_ITEMS = [
   { key: "learning", value: "WebGPU, system design, distributed systems" },
-  { key: "building", value: "this portfolio — 3D vortex with audio reactivity" },
+  { key: "building", value: "this site — 3D tunnel with audio-reactive particles" },
   { key: "reading", value: "Designing Data-Intensive Applications" },
   { key: "playing", value: "chess (1200 elo), rubik's cube (sub-30s pb)" },
   { key: "watching", value: "gundam gquuuuuux" },
@@ -638,7 +584,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="section" data-section-index={4}>
+    <section ref={sectionRef} className="section" data-section-index={5}>
       <div ref={labelRef} className="section-label">currently</div>
 
       <GlassPanel>
@@ -760,7 +706,7 @@ export const ContactSection = memo(function ContactSection() {
   }, []);
 
   return (
-    <section className="section section--centered" data-section-index={5}>
+    <section className="section section--centered" data-section-index={6}>
       <div ref={headlineRef} className="contact__headline">
         open <br />
         <span>channel.</span>
