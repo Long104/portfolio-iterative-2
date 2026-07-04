@@ -47,3 +47,13 @@ export function buildSmallConfig(specularAngle: number) {
     ...SIMPLE_FALLBACK,
   };
 }
+
+/** Circular button (Hamburger menu — radius at half of 52px = near circle) */
+export function buildCircleConfig(specularAngle: number) {
+  return {
+    radius: 26, blur: 1, glassThickness: 60, bezelWidth: 16,
+    refractiveIndex: 1.5, specularOpacity: 0.6, specularAngle,
+    bezelHeightFn: convex,
+    ...SIMPLE_FALLBACK,
+  };
+}

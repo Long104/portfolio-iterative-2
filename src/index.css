@@ -1458,8 +1458,6 @@ html.cursor-hidden * {
   display: none; /* shown via @media (max-width: 1023px) */
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  overflow: hidden;
 }
 
 .nav-trigger__btn {

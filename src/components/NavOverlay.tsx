@@ -10,7 +10,7 @@
 // Both NavPill and NavOverlay stay mounted; CSS toggles display.
 
 import { useRef, useState, useEffect, useMemo } from "react";
-import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
+import { RefractiveDiv, buildCircleConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
@@ -30,7 +30,7 @@ interface NavOverlayProps {
 export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
   const [open, setOpen] = useState(false);
   const specularAngle = useDeviceOrientation();
-  const refraction = useMemo(() => buildSmallConfig(specularAngle), [specularAngle]);
+  const refraction = useMemo(() => buildCircleConfig(specularAngle), [specularAngle]);
 
   const iconLinesRef = useRef<HTMLSpanElement[]>([]);
   const overlayRef = useRef<HTMLDivElement>(null);
