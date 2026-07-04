@@ -10,6 +10,8 @@ export interface AudioData {
 
 const NUM_BINS = 256; // AnalyserNode fftSize=512 → 256 frequency bins
 const FRAME_CACHE_MS = 16; // cache getData() for ~16ms — 5 consumers share 1 hardware read
+const TARGET_VOLUME = 0.3;
+const FADE_SECONDS = 1.5;
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
@@ -25,6 +27,9 @@ export class AudioEngine {
   private _currentTrackUrl: string | null = null;
   private _startTime = 0;
   private _offset = 0;
+
+  /** Cache of decoded AudioBuffers keyed by URL — prevents re-fetching on track switch. */
+  private _bufferCache = new Map<string, AudioBuffer>();
 
   private _cache: AudioData = { bass: 0, mid: 0, treble: 0, level: 0 };
   private _lastReadTime = 0;
@@ -42,7 +47,7 @@ export class AudioEngine {
     this.analyser.fftSize = NUM_BINS * 2; // 512
     this.analyser.smoothingTimeConstant = 0.5; // light analyser smoothing; per-layer smoothing happens in component
     this.gainNode = this.ctx.createGain();
-    this.gainNode.gain.value = 0.3;
+    this.gainNode.gain.value = TARGET_VOLUME;
 
     // analyser → gain → destination
     this.analyser.connect(this.gainNode);
@@ -71,7 +76,7 @@ export class AudioEngine {
   /** Fetch + decode audio into memory without starting playback.
    *  Safe to call early — on mount, before user interaction.
    *  Call start() later for instant playback.
-   *  If a different track URL is passed, the old buffer is cleared.
+   *  Decoded buffers are cached by URL — switching back to a cached track is instant.
    *
    *  Checks window.__AUDIO_PRELOAD__ first — if the inline script in
    *  index.html already fetched + decoded this track, use that directly. */
@@ -79,10 +84,21 @@ export class AudioEngine {
     if (!this.ctx) await this.init();
     if (!this.ctx) throw new Error("AudioContext not available");
 
-    // Same track already loaded — skip
-    if (this._audioBuffer && this._currentTrackUrl === url) return;
+    // Already cached — instant swap, no network
+    const cached = this._bufferCache.get(url);
+    if (cached) {
+      this._audioBuffer = cached;
+      this._currentTrackUrl = url;
+      return;
+    }
 
-    // Different track — stop current source, clear old buffer
+    // Same track already loaded — skip
+    if (this._audioBuffer && this._currentTrackUrl === url) {
+      this._bufferCache.set(url, this._audioBuffer);
+      return;
+    }
+
+    // Different track — stop current source
     if (this.source) {
       try { this.source.stop(); } catch { /* already stopped */ }
       this.source.disconnect();
@@ -107,13 +123,14 @@ export class AudioEngine {
         const result = await preload;
         if (result && result.url === url) {
           if (result.buffer) {
-            // Fully decoded — use directly (portable across AudioContexts)
             this._audioBuffer = result.buffer;
+            this._bufferCache.set(url, result.buffer);
             return;
           }
           if (result.arrayBuffer) {
-            // Pre-fetched but not decoded — decode now (skip network fetch)
-            this._audioBuffer = await this.ctx.decodeAudioData(result.arrayBuffer);
+            const decoded = await this.ctx.decodeAudioData(result.arrayBuffer);
+            this._audioBuffer = decoded;
+            this._bufferCache.set(url, decoded);
             return;
           }
         }
@@ -126,7 +143,9 @@ export class AudioEngine {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error("Failed to load " + url);
     const arrayBuffer = await resp.arrayBuffer();
-    this._audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+    const decoded = await this.ctx.decodeAudioData(arrayBuffer);
+    this._audioBuffer = decoded;
+    this._bufferCache.set(url, decoded);
   }
 
   async start() {
@@ -152,6 +171,57 @@ export class AudioEngine {
     this.source.start(0, this._offset);
     this._startTime = this.ctx.currentTime;
     this._isPlaying = true;
+
+    // Fade in: 0 → target volume over FADE_SECONDS
+    const now = this.ctx.currentTime;
+    this.gainNode!.gain.cancelScheduledValues(now);
+    this.gainNode!.gain.setValueAtTime(0, now);
+    this.gainNode!.gain.linearRampToValueAtTime(TARGET_VOLUME, now + FADE_SECONDS);
+  }
+
+  /** Crossfade from current track to a new one.
+   *  Fades out over FADE_SECONDS, swaps buffer, fades in over FADE_SECONDS.
+   *  The old and new tracks overlap for a smooth transition. */
+  async crossfadeTo(url: string): Promise<void> {
+    if (!this.ctx || !this.gainNode || !this.analyser) return;
+
+    // Make sure target buffer is available
+    await this.preloadTrack(url);
+
+    if (!this._audioBuffer) return;
+
+    const now = this.ctx.currentTime;
+
+    // Fade out current source
+    this.gainNode.gain.cancelScheduledValues(now);
+    this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, now);
+    this.gainNode.gain.linearRampToValueAtTime(0, now + FADE_SECONDS);
+
+    // After fade-out completes, swap source and fade in
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, FADE_SECONDS * 1000);
+    });
+
+    // Swap to new buffer (already loaded by preloadTrack)
+    if (this.source) {
+      try { this.source.stop(); } catch { /* already stopped */ }
+      this.source.disconnect();
+      this.source = null;
+    }
+    this._offset = 0;
+    this.source = this.ctx.createBufferSource();
+    this.source.buffer = this._audioBuffer;
+    this.source.loop = true;
+    this.source.connect(this.analyser);
+    this.source.start(0, 0);
+    this._startTime = this.ctx.currentTime;
+    this._isPlaying = true;
+
+    // Fade in new track
+    const fadeInTime = this.ctx.currentTime;
+    this.gainNode.gain.cancelScheduledValues(fadeInTime);
+    this.gainNode.gain.setValueAtTime(0, fadeInTime);
+    this.gainNode.gain.linearRampToValueAtTime(TARGET_VOLUME, fadeInTime + FADE_SECONDS);
   }
 
   pause() {
@@ -229,6 +299,7 @@ export class AudioEngine {
     this.analyser = null;
     this.gainNode = null;
     this._audioBuffer = null;
+    this._bufferCache.clear();
     this._isPlaying = false;
   }
 }

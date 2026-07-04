@@ -726,22 +726,24 @@ export const ContactSection = memo(function ContactSection() {
         open <br />
         <span>channel.</span>
       </div>
-      <div ref={linksRef} className="contact">
-        <a className="contact__email" href="mailto:longpantorn@gmail.com">
-          longpantorn@gmail.com
-        </a>
-        <div className="contact__socials">
-          <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
-            github →
+      <GlassPanel>
+        <div ref={linksRef} className="contact">
+          <a className="contact__email" href="mailto:longpantorn@gmail.com">
+            longpantorn@gmail.com
           </a>
-          <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee-99a51a341/" target="_blank" rel="noreferrer">
-            linkedin →
-          </a>
-          <a className="contact__link" href="https://resume.pantorn.me/resume.pdf" target="_blank" rel="noreferrer">
-            resume →
-          </a>
+          <div className="contact__socials">
+            <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
+              github →
+            </a>
+            <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee-99a51a341/" target="_blank" rel="noreferrer">
+              linkedin →
+            </a>
+            <a className="contact__link" href="https://resume.pantorn.me/resume.pdf" target="_blank" rel="noreferrer">
+              resume →
+            </a>
+          </div>
         </div>
-      </div>
+      </GlassPanel>
       <div ref={footerRef} className="contact__footer">pilot: pantorn chuavallee — ms: gquuuuuux</div>
     </section>
   );

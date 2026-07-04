@@ -66,6 +66,34 @@ export function useAudioEngine() {
     }
   }, []);
 
+  /** Crossfade from current track to a new one (1.5s out → 1.5s in).
+   *  Uses cached buffer if available — instant swap, no network wait. */
+  const crossfadeTo = useCallback(async (url: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await engineRef.current.crossfadeTo(url);
+      setCurrentTrack(url);
+      setIsPlaying(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to crossfade";
+      setError(msg);
+      console.error("[AudioEngine]", msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /** Background-preload a track without affecting playback.
+   *  Call after LAUNCH to warm the cache so the next switch is instant. */
+  const warmPreload = useCallback(async (url: string) => {
+    try {
+      await engineRef.current.preloadTrack(url);
+    } catch {
+      // Silent — preload is best-effort
+    }
+  }, []);
+
   /** Start playback from preloaded buffer — near-instant. */
   const engage = useCallback(async () => {
     setIsLoading(true);
@@ -102,5 +130,6 @@ export function useAudioEngine() {
     isPreloaded, currentTrack,
     warmUp, preload, loadTrack, engage,
     pause, toggle, getData,
+    crossfadeTo, warmPreload,
   };
 }

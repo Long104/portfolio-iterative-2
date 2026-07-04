@@ -741,7 +741,7 @@ html.cursor-hidden * {
   font-family: var(--display);
   font-size: clamp(15px, 1.8vw, 19px);
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.4;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
   min-height: 1.4em; /* prevent layout shift as text types in */
@@ -780,6 +780,12 @@ html.cursor-hidden * {
 }
 
 /* ── Contact — Grand Finale ── */
+/* Glass panel wraps the contact links for readability over the vortex */
+.glass-panel .contact {
+  position: relative;
+  z-index: 2;
+}
+
 .contact__headline {
   font-family: var(--display);
   font-size: clamp(48px, 10vw, 120px);

@@ -11,6 +11,13 @@ const W = 100;
 const H = 24;
 const DPR = Math.min(2, MAX_DPR);
 
+// Pre-computed waveform gradient — identical every frame, no need to recreate
+const WAVE_GRAD_STOPS: [number, string][] = [
+  [0, "rgba(255, 75, 216, 0.9)"],
+  [0.5, "rgba(139, 92, 246, 0.8)"],
+  [1, "rgba(27, 188, 178, 0.9)"],
+];
+
 export function PsycommuWaveform() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -28,6 +35,7 @@ export function PsycommuWaveform() {
     let raf = 0;
     let lastNonZero = false;
     let lastFrameTime = 0; // 30fps throttle
+    let cachedGrad: CanvasGradient | null = null;
 
     function draw() {
       raf = requestAnimationFrame(draw);
@@ -88,12 +96,11 @@ export function PsycommuWaveform() {
       }
 
       // Color transitions from magenta (left) → cyan (right)
-      const grad = c.createLinearGradient(0, 0, W, 0);
-      grad.addColorStop(0, "rgba(255, 75, 216, 0.9)");
-      grad.addColorStop(0.5, "rgba(139, 92, 246, 0.8)");
-      grad.addColorStop(1, "rgba(27, 188, 178, 0.9)");
-
-      c.strokeStyle = grad;
+      if (!cachedGrad) {
+        cachedGrad = c.createLinearGradient(0, 0, W, 0);
+        for (const [offset, color] of WAVE_GRAD_STOPS) cachedGrad.addColorStop(offset, color);
+      }
+      c.strokeStyle = cachedGrad;
       c.lineWidth = 1.5;
       c.stroke();
 
