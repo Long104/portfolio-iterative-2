@@ -387,8 +387,9 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
   useHorizontalScroll(containerRef, trackRef, started, horizontalTween);
 
   // ── Per-card clip-path reveal ──
-  // Desktop (≥769px): wipes as card scrolls horizontally via containerAnimation.
-  // Mobile (≤768px): wipes as card scrolls vertically via standard ScrollTrigger.
+  // Desktop (≥769px): wipes via gsap.ticker reading track translateX and
+  //   calculating clip progress from each card's viewport position.
+  // Mobile (≤768px): wipes via standard ScrollTrigger on vertical scroll.
   // Same visual (right→left clip-path wipe), different trigger mechanism.
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const revealTriggers = useRef<ScrollTrigger[]>([]);
@@ -406,46 +407,77 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
     });
 
     if (horizontalTween.current) {
-      // ── Desktop: horizontal scroll wipe ──
-      const containerAnim = horizontalTween.current;
-      imageRefs.current.forEach((imgEl) => {
-        if (!imgEl) return;
-        const card = imgEl.closest(".project-card") as HTMLElement;
-        if (!card) return;
+      // ── Desktop: track-position-based clip-path reveal ──
+      // Instead of ScrollTrigger.create with containerAnimation (which fails
+      // for cards whose left edge is already left of the viewport right edge),
+      // read the track's current translateX on every frame and calculate
+      // per-card clip progress based on the card's position in the viewport.
+      const trackEl = trackRef.current;
+      const containerEl = containerRef.current;
+      if (!trackEl || !containerEl) return;
 
-        const st = ScrollTrigger.create({
-          trigger: card,
-          containerAnimation: containerAnim,
-          start: "left right",
-          end: "left 60%",
-          scrub: 0.6,
-          onUpdate: (self) => {
-            imgEl.style.clipPath = `inset(0 ${100 - self.progress * 100}% 0 0)`;
-          },
+      const maxProgress = new Map<Element, number>();
+
+      const updateClipPaths = () => {
+        const trackX = gsap.getProperty(trackEl, "x") as number;
+        const viewportWidth = containerEl.clientWidth;
+
+        imageRefs.current.forEach((imgEl) => {
+          if (!imgEl) return;
+          const card = imgEl.closest(".project-card") as HTMLElement;
+          if (!card) return;
+
+          const cardLeft = card.offsetLeft;
+          const cardViewportLeft = cardLeft + trackX;
+
+          // Reveal from right-to-left as the card enters the viewport.
+          // When the card's left edge is at/beyond the viewport right edge → hidden.
+          // When the card's left edge reaches 15% from viewport left → fully visible.
+          const enterStart = viewportWidth;
+          const enterEnd = viewportWidth * 0.15;
+          const rawProgress = (enterStart - cardViewportLeft) / (enterStart - enterEnd);
+
+          // Clamp & ensure progress only increases (never re-hides)
+          const clamped = gsap.utils.clamp(0, 1, rawProgress);
+          const prev = maxProgress.get(card) ?? 0;
+          const progress = clamped > prev ? clamped : prev;
+          maxProgress.set(card, progress);
+
+          imgEl.style.clipPath = `inset(0 ${100 - progress * 100}% 0 0)`;
         });
+      };
 
-        revealTriggers.current.push(st);
-      });
-    } else {
-      // ── Mobile: vertical scroll wipe ──
-      imageRefs.current.forEach((imgEl) => {
-        if (!imgEl) return;
-        const card = imgEl.closest(".project-card") as HTMLElement;
-        if (!card) return;
+      // Set initial state immediately (before adding ticker)
+      updateClipPaths();
 
-        const st = ScrollTrigger.create({
-          trigger: card,
-          start: "top 85%",
-          end: "top 55%",
-          scrub: 0.6,
-          onUpdate: (self) => {
-            imgEl.style.clipPath = `inset(0 ${100 - self.progress * 100}% 0 0)`;
-          },
-        });
+      // Update on every frame while horizontal scroll is active
+      gsap.ticker.add(updateClipPaths);
 
-        revealTriggers.current.push(st);
-      });
+      return () => {
+        gsap.ticker.remove(updateClipPaths);
+        revealTriggers.current.forEach((st) => st.kill());
+        revealTriggers.current = [];
+      };
     }
+
+    // ── Mobile (≤768px): vertical scroll wipe ──
+    imageRefs.current.forEach((imgEl) => {
+      if (!imgEl) return;
+      const card = imgEl.closest(".project-card") as HTMLElement;
+      if (!card) return;
+
+      const st = ScrollTrigger.create({
+        trigger: card,
+        start: "top 85%",
+        end: "top 55%",
+        scrub: 0.6,
+        onUpdate: (self) => {
+          imgEl.style.clipPath = `inset(0 ${100 - self.progress * 100}% 0 0)`;
+        },
+      });
+
+      revealTriggers.current.push(st);
+    });
 
     return () => {
       revealTriggers.current.forEach((st) => st.kill());
