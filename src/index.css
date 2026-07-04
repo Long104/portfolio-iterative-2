@@ -5,7 +5,6 @@
 }
 
 :root {
-  --hud-opacity: 0.75;
   --glass-bg: rgba(10, 15, 25, 0.35);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(255, 255, 255, 0.25);
