@@ -210,7 +210,7 @@ export const AboutSection = memo(function AboutSection() {
       <div ref={labelRef} className="section-label">about</div>
       <GlassPanel>
         <div className="about__header">
-          <img src="/profile-small.jpg" alt="pantorn chuavallee" className="about__photo" />
+          <img src="/webp/profile-small.webp" alt="pantorn chuavallee" className="about__photo" width="80" height="80" />
           <p ref={textRef} className="about__text">
             it graduate & software engineer from bangkok. <br />
             shipped production code at omise (opn) during a 6-month internship. <br />

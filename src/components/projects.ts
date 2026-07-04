@@ -28,7 +28,7 @@ export const PROJECTS: readonly Project[] = [
     desc: "Full-stack expense tracker with Go (Fiber) backend, React Query for cache invalidation, JWT auth, and Docker + Kubernetes deployment.",
     url: "https://github.com/Long104/CashWise",
     github: "https://github.com/Long104/CashWise",
-    image: "/cashwise.jpg",
+    image: "/webp/cashwise.webp",
     longDescription:
       "A full-stack personal finance app where users log spending and view trends. Built with Next.js, React Query (chosen over manual fetch/useEffect for cache invalidation and fewer redundant API calls) and Zustand for lightweight global state. Backend in Go (Fiber) with GORM over PostgreSQL, OAuth login with JWT session handling. Containerized with Docker and deployed on Vercel with CI/CD.",
     techs: ["go (fiber)", "next.js", "react query", "zustand", "gorm", "postgresql", "docker", "kubernetes"],
@@ -46,7 +46,7 @@ export const PROJECTS: readonly Project[] = [
     desc: "Real-time collaborative editor with AI translation. Clerk auth, Liveblocks for multi-user editing, Blocknote text editor, Cloudflare Workers for AI.",
     url: "https://notion-clone-opal.vercel.app",
     github: "https://github.com/Long104/notion-clone",
-    image: "/notion-clone.jpg",
+    image: "/webp/notion-clone.webp",
     longDescription:
       "A real-time collaborative document editor inspired by Notion, featuring live multi-user editing, AI-powered translation, and a rich block-based text editor. Authentication handled by Clerk, real-time sync powered by Liveblocks, and AI features running on Cloudflare Workers edge.",
     techs: ["react", "liveblocks", "firebase", "clerk", "cloudflare workers", "typescript"],
@@ -64,7 +64,7 @@ export const PROJECTS: readonly Project[] = [
     desc: "Cross-browser AI clipboard extension (Chrome + Firefox from one codebase). Sidebar chat powered by LLaMA 3.3 on Cloudflare Workers edge.",
     url: "https://github.com/Long104/AI-Clipboard-extension",
     github: "https://github.com/Long104/AI-Clipboard-extension",
-    image: "/clipboard-ai.jpg",
+    image: "/webp/clipboard-ai.webp",
     longDescription:
       "A Chrome & Firefox extension built with Plasmo + React for cross-browser compatibility from one codebase. Select text on any webpage and ask LLaMA 3.3 to explain, summarize, translate, or elaborate. Routed clipboard text to Cloudflare AI Workers — chosen over a self-hosted model to avoid GPU costs while keeping inference under ~3s. Backend logic on Cloudflare Workers + Hono.",
     techs: ["plasmo", "react", "cloudflare workers", "hono", "llama 3.3", "typescript"],
@@ -82,7 +82,7 @@ export const PROJECTS: readonly Project[] = [
     desc: "AI product search widget for Shopify & WordPress. OpenSearch full-text + k-NN vector similarity, AWS Bedrock image embeddings, ECS Fargate deployment.",
     url: "https://github.com/Long104/Kalifinder",
     github: "https://github.com/Long104/Kalifinder",
-    image: "/kalifinder.jpg",
+    image: "/webp/kalifinder.webp",
     longDescription:
       "A team project — an AI-powered product search widget for Shopify and WordPress. Built a product sync pipeline with idempotent upserts, safely handling retries without duplicates. Used OpenSearch as the query engine for full-text search, faceted filtering, and k-NN vector similarity in a single round-trip. Integrated AWS Bedrock image embeddings to power 'find similar products' with no self-hosted ML. Deployed on ECS Fargate with auto-scaling; React widget hosted on S3 + CloudFront. All infra managed with Terraform.",
     techs: ["aws ecs", "opensearch", "aws bedrock", "react", "s3", "cloudfront", "terraform", "sqs"],
