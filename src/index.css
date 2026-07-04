@@ -708,6 +708,7 @@ html.cursor-hidden * {
 
 .currently__clock {
   color: rgba(255, 255, 255, 0.85);
+  margin-left: 8px;
 }
 
 .currently {
