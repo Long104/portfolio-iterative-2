@@ -103,29 +103,6 @@ export function PsycommuWaveform() {
       c.strokeStyle = cachedGrad;
       c.lineWidth = 1.5;
       c.stroke();
-
-      // ── Glow dots at frequency peaks ──
-      const peaks = [
-        { idx: 8, color: "rgba(255, 75, 216, 0.6)" },   // bass
-        { idx: 24, color: "rgba(139, 92, 246, 0.5)" },    // mid
-        { idx: 40, color: "rgba(27, 188, 178, 0.6)" },   // treble
-      ];
-
-      for (const p of peaks) {
-        const px = p.idx * stepW;
-        const amp =
-          p.idx === 8
-            ? data.bass * 8
-            : p.idx === 24
-              ? data.mid * 5
-              : data.treble * 4;
-        const py = centerY + (amp + Math.sin(time * 4 + p.idx) * 0.3) * (p.idx % 2 === 0 ? -1 : 1);
-
-        c.beginPath();
-        c.arc(px, py, 2 + amp * 0.5, 0, Math.PI * 2);
-        c.fillStyle = p.color;
-        c.fill();
-      }
     }
 
     raf = requestAnimationFrame(draw);
