@@ -225,8 +225,7 @@ export const AboutSection = memo(function AboutSection() {
           {Object.entries(STACK).map(([category, items], idx) => {
             const ref = idx === 0 ? langRef : idx === 1 ? frameRef : toolsRef;
             return (
-              <div key={category} className="stack-col">
-                <div ref={ref} className="stack-col__label">// {category}</div>
+              <div key={category} ref={ref} className="stack-col">
                 <ul className="stack-col__list">
                   {items.map((item) => (
                     <li key={item} className="stack-col__item">{item}</li>

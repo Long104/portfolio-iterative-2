@@ -20,7 +20,7 @@ export default function Scene() {
         dpr={PERF_TIER === "mobile" ? 1 : [1, MAX_DPR]}
         gl={{
           antialias: false, // additive particles + glow — MSAA is wasted cost
-          powerPreference: "high-performance",
+          powerPreference: "default",
           alpha: false,
           preserveDrawingBuffer: NEEDS_PRESERVE_DRAWING_BUFFER,
         }}

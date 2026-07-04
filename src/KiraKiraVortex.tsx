@@ -158,7 +158,7 @@ export default function KiraKiraVortex() {
 
   // --- Geometry with instanced attributes ---
   const backdropGeo = useMemo(() => new PlaneGeometry(2, 2), []);
-  const glowGeo = useMemo(() => new CircleGeometry(1, 64), []);
+  const glowGeo = useMemo(() => new CircleGeometry(1, 32), []);
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 38.0);

@@ -48,4 +48,4 @@ export const PAINT_COUNT =
         ? 6500
         : 10000;
 export const FLARE_COUNT = 3500;
-export const MAX_DPR = PERF_TIER === "mobile" ? 1 : 1.25;
+export const MAX_DPR = 1;

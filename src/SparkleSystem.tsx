@@ -21,7 +21,7 @@ import { useAudioEngine } from "./useAudioEngine";
 // - Soft bloom glow extending beyond spikes
 // Born from nothing → flash → die. Beat-driven.
 
-const POOL_SIZE = 120;
+const POOL_SIZE = 48;
 
 const SPARKLE_COLORS: [number, number, number][] = [
   [0.938, 0.278, 0.386], [0.947, 0.481, 0.584],
