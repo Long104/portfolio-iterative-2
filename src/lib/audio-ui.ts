@@ -15,12 +15,12 @@
 // so the AudioContext is created in a non-suspended state. Otherwise the
 // browser may reject AudioContext creation/resume from hover/keyboard events.
 
-// ── Gate: respect reduced motion (sensory sensitivity) ──
+// ── Safety gate: reduced motion ──
 const PREFERS_REDUCED_MOTION =
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ── Shared AudioContext singleton ──
+// ── Audio bus singleton ──
 let ctx: AudioContext | null = null;
 let initAttempted = false;
 
@@ -48,7 +48,7 @@ function getCtx(): AudioContext | null {
   return ctx;
 }
 
-// ── Utility: quick tone ──
+// ── Oscillator tone (shared by all UI sounds) ──
 function tone(
   freq: number,
   endFreq: number,
@@ -74,7 +74,7 @@ function tone(
   osc.stop(t + duration + 0.01);
 }
 
-// ── Radar lock-on ping (hover) ──
+// ── Radar lock-on ping ──
 // Short sine blip with subtle vibrato — sounds like distant radar echo.
 export function playHoverSound(): void {
   const c = getCtx();
@@ -104,7 +104,6 @@ export function playHoverSound(): void {
 }
 
 // ── Cockpit switch click ──
-// Short percussive pop — frequency drops quickly, like a mechanical switch.
 export function playClickSound(): void {
   tone(600, 300, 0.06, 0.12, "sine");
 }

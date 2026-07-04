@@ -196,9 +196,9 @@ export default function SparkleSystem() {
 
   const poolRef = useRef<Sparkle[] | null>(null);
   if (poolRef.current === null) {
-    const arr: Sparkle[] = [];
+    const sparkPool: Sparkle[] = [];
     for (let i = 0; i < POOL_SIZE; i++) {
-      arr.push({
+      sparkPool.push({
         x: 0, y: 0, z: -100,
         rot: 0, size: 0,
         cr: 1, cg: 1, cb: 1,
@@ -206,12 +206,12 @@ export default function SparkleSystem() {
         parked: true,
       });
     }
-    poolRef.current = arr;
+    poolRef.current = sparkPool;
   }
   const pool = poolRef.current;
 
-  const dummy = useMemo(() => new Object3D(), []);
-  const tmpColor = useMemo(() => new Color(), []);
+  const scratch = useMemo(() => new Object3D(), []);
+  const workColor = useMemo(() => new Color(), []);
 
   function spawn(count: number, time: number, big: boolean) {
     let spawned = 0;
@@ -320,32 +320,32 @@ export default function SparkleSystem() {
           stretchX = Math.max(1.0, 3.0 - deathT * 4.0);
         }
 
-        dummy.position.set(s.x, s.y, s.z);
-        dummy.rotation.set(0, 0, s.rot);
-        dummy.scale.set(renderScale * stretchX, renderScale, 1);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
+        scratch.position.set(s.x, s.y, s.z);
+        scratch.rotation.set(0, 0, s.rot);
+        scratch.scale.set(renderScale * stretchX, renderScale, 1);
+        scratch.updateMatrix();
+        mesh.setMatrixAt(i, scratch.matrix);
 
         const flashBoost = t < 0.40 ? 1.0 + (1.0 - t / 0.40) * 0.5 : 1.0;
         const audioLevel = s.big ? smoothBass.current : smoothTreble.current;
         const audioBoost = 1.0 + audioLevel * 0.8;
         const totalBrightness = brightness * flashBoost * audioBoost;
-        tmpColor.setRGB(
+        workColor.setRGB(
           s.cr * totalBrightness,
           s.cg * totalBrightness,
           s.cb * totalBrightness,
         );
-        mesh.setColorAt(i, tmpColor);
+        mesh.setColorAt(i, workColor);
         dirty = true;
       } else if (!s.parked) {
         // Park dead sparkle once, then skip on subsequent frames
         s.active = false;
-        dummy.position.set(0, 0, -100);
-        dummy.scale.setScalar(0.0001);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
-        tmpColor.setRGB(0, 0, 0);
-        mesh.setColorAt(i, tmpColor);
+        scratch.position.set(0, 0, -100);
+        scratch.scale.setScalar(0.0001);
+        scratch.updateMatrix();
+        mesh.setMatrixAt(i, scratch.matrix);
+        workColor.setRGB(0, 0, 0);
+        mesh.setColorAt(i, workColor);
         s.parked = true;
         dirty = true;
       }
@@ -361,13 +361,13 @@ export default function SparkleSystem() {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    tmpColor.setRGB(0, 0, 0);
+    workColor.setRGB(0, 0, 0);
     for (let i = 0; i < POOL_SIZE; i++) {
-      dummy.position.set(0, 0, -100);
-      dummy.scale.setScalar(0.0001);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-      mesh.setColorAt(i, tmpColor);
+      scratch.position.set(0, 0, -100);
+      scratch.scale.setScalar(0.0001);
+      scratch.updateMatrix();
+      mesh.setMatrixAt(i, scratch.matrix);
+      mesh.setColorAt(i, workColor);
     }
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -377,7 +377,7 @@ export default function SparkleSystem() {
       material.dispose();
       sparkleTex.dispose();
     };
-  }, [geometry, material, sparkleTex, dummy, tmpColor]);
+  }, [geometry, material, sparkleTex, scratch, workColor]);
 
   return (
     <instancedMesh

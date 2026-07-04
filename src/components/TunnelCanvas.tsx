@@ -140,10 +140,10 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       const cx = w / 2;
       const cy = h / 2;
 
-      // ── Clear ──
+      // Purge canvas
       ctx.clearRect(0, 0, w, h);
 
-      // ── Perspective grid (single path — 1 stroke instead of 16) ──
+      // ── Perspective grid (single path — 1 stroke) ──
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 1;
       ctx.globalAlpha = tunnelAlpha * (0.06 + pulse * 0.04);
@@ -169,8 +169,8 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
         ctx.stroke();
       }
 
-      // ── Update particles & bucket by color ──
-      // Clear buckets
+      // Bucket by color — drain then refill
+      // Drain buckets
       buckets[0].length = 0;
       buckets[1].length = 0;
       buckets[2].length = 0;

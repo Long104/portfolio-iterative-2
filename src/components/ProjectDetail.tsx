@@ -38,7 +38,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     const panel = panelRef.current;
     if (!overlay || !panel) return;
 
-    // Show overlay
+    // Cockpit display ON
     gsap.set(overlay, { display: "flex" });
 
     if (PREFERS_REDUCED_MOTION) {
@@ -57,7 +57,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     const highlights = q(".project-detail__highlight");
     const links = q(".project-detail__links");
 
-    // Set initial states
+    // Zero entry positions
     gsap.set(imageWrap, { x: -36, opacity: 0 });
     gsap.set([header, desc], { y: 18, opacity: 0 });
     gsap.set(techTags, { y: 12, opacity: 0 });
@@ -173,7 +173,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     // Save previously focused element (the project card that was clicked)
     prevFocusRef.current = document.activeElement as HTMLElement;
 
-    // Focus close button after open animation finishes
+    // Focus close button after panel animates in
     const focusTimer = setTimeout(() => {
       const closeBtn = panel.querySelector<HTMLButtonElement>(".project-detail__close");
       closeBtn?.focus();

@@ -38,8 +38,6 @@ export class AudioEngine {
     return this._isPlaying;
   }
 
-  // ── Lifecycle ──────────────────────────────────────────────
-
   async init() {
     if (this.ctx) return;
     this.ctx = new AudioContext();
@@ -145,19 +143,19 @@ export class AudioEngine {
   async start() {
     if (!this.ctx || !this.analyser || !this._audioBuffer) return;
 
-    // Resume context (autoplay policy)
+    // Resume audio pipeline (autoplay policy)
     if (this.ctx.state === "suspended") {
       await this.ctx.resume();
     }
 
-    // Stop existing source before creating a new one (prevents duplicate playback)
+    // Cut previous source — prevent double-feed
     if (this.source) {
       try { this.source.stop(); } catch { /* already stopped */ }
       this.source.disconnect();
       this.source = null;
     }
 
-    // Create source and connect: source → analyser (→ gain → destination already wired)
+    // Feed source through analyser bus
     this.source = this.ctx.createBufferSource();
     this.source.buffer = this._audioBuffer;
     this.source.loop = true;
@@ -228,7 +226,7 @@ export class AudioEngine {
     this._isPlaying = false;
   }
 
-  // ── Per-frame data extraction (frame-cached) ─────────────────
+  // ── Analyser read (frame-cached) ──
   // Multiple rAF consumers (PsycommuWaveform, CursorOverlay, TunnelCanvas,
   // ScrollProgress, KiraKiraVortex) all call getData() at different rates.
   // Without caching, every call hits the AnalyserNode hardware blocking read.
@@ -278,7 +276,7 @@ export class AudioEngine {
     return this._cache;
   }
 
-  // ── Cleanup ────────────────────────────────────────────────
+  // ── Shutdown ──
 
   dispose() {
     if (this.source) {
