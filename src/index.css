@@ -381,20 +381,19 @@ html.cursor-hidden * {
 .stack-pill {
   padding: 8px 18px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
   text-align: center;
   user-select: none;
   will-change: transform, opacity;
-}
-
-/* ── Text contrast over vortex ── */
-.stack-pill {
+  background: var(--glass-bg);
   text-shadow:
     0 0 4px rgba(0,0,0,0.95),
     0 0 12px rgba(0,0,0,0.7),
-    0 0 24px rgba(0,0,0,0.4);
+    0 0 24px rgba(0,0,0,0.4),
+    0 0 48px rgba(0,0,0,0.3);
 }
 
 /* ── Gundam corner brackets ──
@@ -1706,7 +1705,7 @@ html.cursor-hidden * {
 
   .stack-pill {
     padding: 6px 14px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   /* Experience timeline: narrower on mobile */
