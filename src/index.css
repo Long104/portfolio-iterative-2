@@ -428,8 +428,8 @@ html.cursor-hidden * {
 .timeline::before {
   content: "";
   position: absolute;
-  left: 11px;
-  top: 26px;  /* align with first dot center */
+  left: 19px;
+  top: 27px;  /* align with first dot center */
   bottom: 20px;  /* align with last dot center */
   width: 1px;
   background: linear-gradient(

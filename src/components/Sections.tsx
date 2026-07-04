@@ -115,7 +115,7 @@ export function HeroSection({ started }: { started: boolean }) {
 
     function onTick() {
       const { x, y } = getMouseState();
-      el.style.transform = `rotateY(${x * 4}deg) rotateX(${-y * 3}deg)`;
+      el!.style.transform = `rotateY(${x * 4}deg) rotateX(${-y * 3}deg)`;
     }
 
     // Start with no tilt, activate after reveal animation finishes (~1.5s)
@@ -256,69 +256,80 @@ interface ExpItemData {
 }
 
 function ExpItem({ period, role, company, location, description, isCurrent, isEducation }: ExpItemData) {
-  const periodRef = useScrollReveal<HTMLDivElement>({
-    split: "chars",
-    stagger: 0.02,
-    x: "-50%",
-    y: "0%",
-    start: "top 92%",
-    end: "top 78%",
-    duration: 0.35,
-    ease: "power2.out",
-  });
-  const roleRef = useScrollReveal<HTMLDivElement>({
-    split: "lines",
-    stagger: 0.1,
-    y: "120%",
-    start: "top 89%",
-    end: "top 74%",
-    duration: 0.7,
-    ease: "expo.out",
-  });
-  const companyRef = useScrollReveal<HTMLDivElement>({
-    split: "lines",
-    stagger: 0.08,
-    y: "100%",
-    start: "top 85%",
-    end: "top 70%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
-  const descRef = useScrollReveal<HTMLDivElement>({
-    split: "lines",
-    stagger: 0.06,
-    y: "100%",
-    start: "top 82%",
-    end: "top 66%",
-    duration: 0.5,
-    ease: "power2.out",
-  });
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    if (PREFERS_REDUCED_MOTION) {
+      gsap.set(el.children, { opacity: 0 });
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 92%",
+        end: "top 72%",
+        scrub: 1,
+        onUpdate: (self) => {
+          gsap.set(el.children, { opacity: self.progress });
+        },
+      });
+      return;
+    }
+
+    // Single SplitText on the content wrapper — splits all text by lines
+    const split = new SplitText(el, {
+      type: "lines",
+      linesClass: "split-line",
+    });
+
+    if (split.lines.length === 0) return;
+
+    // Hide all lines initially
+    gsap.set(split.lines, { y: "120%", opacity: 0, willChange: "transform, opacity" });
+
+    // One ScrollTrigger per item — all lines scrub in together
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: el,
+        start: "top 92%",
+        end: "top 72%",
+        scrub: 1,
+      },
+      defaults: { ease: "expo.out", duration: 0.7 },
+    });
+
+    tl.to(split.lines, {
+      y: "0%",
+      opacity: 1,
+      stagger: 0.08,
+    });
+
+    return () => {
+      split.revert();
+      tl.scrollTrigger?.kill();
+      tl.kill();
+    };
+  }, { scope: contentRef, revertOnUpdate: true });
 
   return (
     <div className={`tl-item${isCurrent ? " tl-item--current" : ""}${isEducation ? " tl-item--edu" : ""}`}>
       {/* Glowing dot */}
       <div className={`tl-item__dot${isCurrent ? " tl-item__dot--current" : ""}`} />
 
-      <div className="tl-item__content">
-        <div
-          ref={periodRef}
-          className={`tl-item__period${isCurrent ? " tl-item__period--current" : ""}`}
-        >
+      <div className="tl-item__content" ref={contentRef}>
+        <div className={`tl-item__period${isCurrent ? " tl-item__period--current" : ""}`}>
           {period}
         </div>
-        <div
-          ref={roleRef}
-          className={`tl-item__role${isCurrent ? " tl-item__role--current" : ""}`}
-        >
+        <div className={`tl-item__role${isCurrent ? " tl-item__role--current" : ""}`}>
           {role}
         </div>
         {company && (
-          <div ref={companyRef} className="tl-item__company">
+          <div className="tl-item__company">
             {company}{location && <span className="tl-item__location"> · {location}</span>}
           </div>
         )}
         {description && (
-          <div ref={descRef} className="tl-item__desc">{description}</div>
+          <div className="tl-item__desc">{description}</div>
         )}
       </div>
     </div>
