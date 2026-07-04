@@ -94,12 +94,12 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
       );
       tl.to(
         lines[0],
-        { rotate: 45, y: 5, duration: 0.3, ease: "power2.out" },
+        { rotate: 45, y: 10, duration: 0.3, ease: "power2.out" },
         0,
       );
       tl.to(
         lines[2],
-        { rotate: -45, y: -5, duration: 0.3, ease: "power2.out" },
+        { rotate: -45, y: -10, duration: 0.3, ease: "power2.out" },
         0,
       );
     } else {
