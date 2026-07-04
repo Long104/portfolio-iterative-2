@@ -47,12 +47,5 @@ export const PAINT_COUNT =
       : PERF_TIER === "low"
         ? 6500
         : 10000;
-export const FLARE_COUNT =
-  PERF_TIER === "mobile"
-    ? 4000
-    : PERF_TIER === "tablet"
-      ? 5000
-      : PERF_TIER === "low"
-        ? 3500
-        : 3500;
+export const FLARE_COUNT = 3500;
 export const MAX_DPR = PERF_TIER === "mobile" ? 1 : 1.25;
