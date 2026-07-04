@@ -696,7 +696,7 @@ html.cursor-hidden * {
   transform: translate(4px, -4px);
 }
 
-/* ── Currently — terminal readout (no glass panel) ── */
+/* ── Currently — terminal readout (inside glass panel) ── */
 .currently__header {
   font-family: var(--mono);
   font-size: 12px;
@@ -711,7 +711,6 @@ html.cursor-hidden * {
 }
 
 .currently {
-  max-width: 580px;
   display: flex;
   flex-direction: column;
   gap: 20px;

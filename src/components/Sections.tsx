@@ -520,7 +520,6 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
 // ── Currently (section 4) — Live Psycommu status readout ──
 // Terminal typewriter effect: header types out, clock ticks live,
 // each row's value types sequentially. Blinking cursor at the end.
-// No glass panel — bare text on vortex, echoes the hero.
 const CURRENTLY_ITEMS = [
   { key: "learning", value: "WebGPU, system design, distributed systems" },
   { key: "building", value: "this portfolio — 3D vortex with audio reactivity" },
@@ -643,46 +642,48 @@ export const CurrentlySection = memo(function CurrentlySection() {
     <section ref={sectionRef} className="section" data-section-index={4}>
       <div ref={labelRef} className="section-label">currently</div>
 
-      {/* System header with live clock */}
-      <div className="currently__header">
-        <span ref={headerTextRef}></span>
-        <span className="currently__clock">{clock}</span>
-      </div>
+      <GlassPanel>
+        {/* System header with live clock */}
+        <div className="currently__header">
+          <span ref={headerTextRef}></span>
+          <span className="currently__clock">{clock}</span>
+        </div>
 
-      {/* Key → value rows (values type out on scroll enter) */}
-      <div className="currently">
-        {CURRENTLY_ITEMS.map((item, i) => (
-          <div className="currently__row" key={item.key}>
-            <span
-              className="currently__key"
-              ref={(el) => { keyRefs.current[i] = el; }}
-              style={{ opacity: 0 }}
-            >
-              {item.key}
-            </span>
-            <span
-              className="currently__arrow"
-              ref={(el) => { arrowRefs.current[i] = el; }}
-              style={{ opacity: 0 }}
-            >
-              →
-            </span>
-            <span
-              className="currently__value"
-              ref={(el) => { valueRefs.current[i] = el; }}
-            />
-          </div>
-        ))}
-      </div>
+        {/* Key → value rows (values type out on scroll enter) */}
+        <div className="currently">
+          {CURRENTLY_ITEMS.map((item, i) => (
+            <div className="currently__row" key={item.key}>
+              <span
+                className="currently__key"
+                ref={(el) => { keyRefs.current[i] = el; }}
+                style={{ opacity: 0 }}
+              >
+                {item.key}
+              </span>
+              <span
+                className="currently__arrow"
+                ref={(el) => { arrowRefs.current[i] = el; }}
+                style={{ opacity: 0 }}
+              >
+                →
+              </span>
+              <span
+                className="currently__value"
+                ref={(el) => { valueRefs.current[i] = el; }}
+              />
+            </div>
+          ))}
+        </div>
 
-      {/* Blinking cursor */}
-      <span
-        className="currently__cursor"
-        ref={cursorRef}
-        style={{ opacity: 0 }}
-      >
-        _
-      </span>
+        {/* Blinking cursor */}
+        <span
+          className="currently__cursor"
+          ref={cursorRef}
+          style={{ opacity: 0 }}
+        >
+          _
+        </span>
+      </GlassPanel>
     </section>
   );
 });
