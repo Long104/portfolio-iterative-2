@@ -39,7 +39,7 @@ export const glowFragment = /* glsl */ `
     float dist = length(centered);
 
     // Master early-out — dynamic: expands on bass hit
-    if (dist > 0.42 + uSunBass * 0.06) discard;
+    if (dist > 0.35 + uSunBass * 0.06) discard;
 
     float angle = atan(centered.y, centered.x);
     vec3 totalColor = vec3(0.0);
