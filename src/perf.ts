@@ -6,10 +6,10 @@
 // with texture lookups. All tiers get a particle bump since glow is ~10× cheaper.
 //
 // Four tiers:
-//   mobile — phones (30fps, 1.0 DPR, 4000 particles, smooth orientation)
-//   tablet — iPads, Android tablets (30fps, 1.25 DPR, 5500 particles, smooth)
-//   low    — low-end desktops (30fps, 1.25 DPR, 4500 particles, smooth)
-//   high   — high-end desktops (30fps, 1.25 DPR, 7000 particles, smooth)
+//   mobile — phones (30fps, 1.0 DPR, 7000 particles, smooth orientation)
+//   tablet — iPads, Android tablets (30fps, 1.25 DPR, 8000 particles, smooth)
+//   low    — low-end desktops (30fps, 1.25 DPR, 6500 particles, smooth)
+//   high   — high-end desktops (30fps, 1.25 DPR, 10000 particles, smooth)
 export type PerfTier = "mobile" | "tablet" | "low" | "high";
 
 export function detectPerfTier(): PerfTier {
@@ -41,18 +41,18 @@ export function detectPerfTier(): PerfTier {
 export const PERF_TIER = detectPerfTier();
 export const PAINT_COUNT =
   PERF_TIER === "mobile"
-    ? 4000
+    ? 7000
     : PERF_TIER === "tablet"
-      ? 5500
+      ? 8000
       : PERF_TIER === "low"
-        ? 4500
-        : 7000;
+        ? 6500
+        : 10000;
 export const FLARE_COUNT =
   PERF_TIER === "mobile"
-    ? 2000
+    ? 4000
     : PERF_TIER === "tablet"
-      ? 3000
+      ? 5000
       : PERF_TIER === "low"
-        ? 2500
-        : 4000;
+        ? 3500
+        : 5500;
 export const MAX_DPR = PERF_TIER === "mobile" ? 1 : 1.25;
