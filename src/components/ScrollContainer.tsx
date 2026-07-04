@@ -15,11 +15,12 @@ export interface ScrollContainerHandle {
 interface ScrollContainerProps {
   onSectionChange: (index: number) => void;
   paused?: boolean;
+  locked?: boolean;
   children: ReactNode;
 }
 
 export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainerProps>(
-  function ScrollContainer({ onSectionChange, paused, children }, ref) {
+  function ScrollContainer({ onSectionChange, paused, locked, children }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const sectionsRef = useRef<HTMLElement[]>([]);
     const lenisRef = useRef<Lenis | null>(null);
@@ -157,6 +158,18 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
         lenis.start();
       }
     }, [paused]);
+
+    // ── Lock/unlock Lenis when project detail overlay is open ──
+    // Lenis ignores body.style.overflow, so we must stop it directly.
+    useEffect(() => {
+      const lenis = lenisRef.current;
+      if (!lenis) return;
+      if (locked) {
+        lenis.stop();
+      } else {
+        lenis.start();
+      }
+    }, [locked]);
 
     return (
       <div ref={containerRef} className="content-layer">

@@ -228,7 +228,7 @@ function App() {
       {/* ── Layer 1: Scrollable content (pre-mounted during boot) ── */}
       {contentMounted && (
         <Suspense fallback={<div className="content-layer" />}>
-          <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange} paused={!started}>
+          <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange} paused={!started} locked={selectedProject !== null}>
             <HeroSection started={started} />
             <AboutSection />
             <ExperienceSection />
