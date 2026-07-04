@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   AdditiveBlending,
+  CircleGeometry,
   InstancedBufferAttribute,
   PlaneGeometry,
   ShaderMaterial,
@@ -157,6 +158,7 @@ export default function KiraKiraVortex() {
 
   // --- Geometry with instanced attributes ---
   const backdropGeo = useMemo(() => new PlaneGeometry(2, 2), []);
+  const glowGeo = useMemo(() => new CircleGeometry(1, 64), []);
 
   const paintGeo = useMemo(() => {
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 38.0);
@@ -185,7 +187,7 @@ export default function KiraKiraVortex() {
       setTimeout(() => {
         if (mountedRef.current) return; // StrictMode re-mounted
         [starTex, petalTex, blobTex, gradLUT, flareColorLUT, noiseTex].forEach((t) => t.dispose());
-        [backdropGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
+        [backdropGeo, glowGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
         [backdropMat, paintMat, flareMat, glowMat].forEach((m) =>
           m.dispose(),
         );
@@ -325,8 +327,8 @@ export default function KiraKiraVortex() {
       {/* 1. Backdrop (Far distance void) */}
       <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-5} />
 
-      {/* 2. Merged Glow (Sun + Rays + Bridge + Core — single pass) */}
-      <mesh geometry={backdropGeo} material={glowMat} renderOrder={-4} />
+      {/* 2. Merged Glow (Sun + Rays + Bridge + Core — single pass, circular geometry to avoid square ghosting) */}
+      <mesh geometry={glowGeo} material={glowMat} renderOrder={-4} />
 
       {/* 3. Particles (instanced — audio-reactive drift) */}
       <instancedMesh
