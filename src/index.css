@@ -1456,17 +1456,21 @@ html.cursor-hidden * {
   right: 32px;
   z-index: 100;
   display: none; /* shown via @media (max-width: 1023px) */
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 .nav-trigger__btn {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 12px;
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-trigger__icon {
