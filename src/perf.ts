@@ -9,7 +9,7 @@
 //   mobile — phones (30fps, 1.0 DPR, 7000 particles, smooth orientation)
 //   tablet — iPads, Android tablets (30fps, 1.25 DPR, 8000 particles, smooth)
 //   low    — low-end desktops (30fps, 1.25 DPR, 6500 particles, smooth)
-//   high   — high-end desktops (30fps, 1.25 DPR, 10000 paint / 4500 flare, smooth)
+//   high   — high-end desktops (30fps, 1.25 DPR, 10000 paint / 3500 flare, smooth)
 export type PerfTier = "mobile" | "tablet" | "low" | "high";
 
 export function detectPerfTier(): PerfTier {
@@ -54,5 +54,5 @@ export const FLARE_COUNT =
       ? 5000
       : PERF_TIER === "low"
         ? 3500
-        : 4500;
+        : 3500;
 export const MAX_DPR = PERF_TIER === "mobile" ? 1 : 1.25;
