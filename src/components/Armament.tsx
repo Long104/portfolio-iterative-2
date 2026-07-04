@@ -13,10 +13,18 @@ import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 
 const TECH_ITEMS = [
-  "go", "typescript", "python",
-  "react", "three.js", "next.js", "tailwind",
-  "aws", "docker", "kubernetes", "terraform",
-  "postgres", "grpc", "fiber",
+  // Languages
+  "go", "typescript", "javascript", "python", "sql", "java",
+  // Frontend
+  "next.js", "react", "tailwind",
+  // Backend
+  "fiber", "gin", "express", "hono", "rest", "websocket",
+  // Databases
+  "postgres", "mysql", "mongodb",
+  // Cloud & DevOps
+  "aws", "ecs", "s3", "cloudfront", "opensearch", "bedrock", "docker", "kubernetes", "terraform", "vercel", "github actions", "buildkite",
+  // Testing & Tools
+  "jest", "vitest", "playwright", "git", "gorm", "prisma", "mixpanel", "launchdarkly", "sonarqube",
 ] as const;
 
 export const StackSection = memo(function StackSection() {
