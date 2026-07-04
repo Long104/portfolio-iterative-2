@@ -17,7 +17,7 @@ export const EXPERIENCE: readonly ExperienceItem[] = [
     company: "omise (opn)",
     location: "bangkok, thailand",
     description:
-      "shipped production UI fixes on the merchant dashboard (vite + design system), fixed i18n language-switching bugs on the payment page, and upgraded next.js 14→15 + buildkite CI. ran POCs for launchdarkly feature flags, mixpanel analytics, and aws quicksight dashboards.",
+      "six months at omise (opn) — shipped UI fixes on the merchant dashboard (vite + design system), fixed i18n bugs on the payment page, upgraded next.js 14→15 through buildkite CI. also ran POCs for launchdarkly, mixpanel, and aws quicksight to test what might ship next.",
   },
   {
     period: "nov 2022 — dec 2025",
