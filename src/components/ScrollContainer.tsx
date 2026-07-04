@@ -14,11 +14,12 @@ export interface ScrollContainerHandle {
 
 interface ScrollContainerProps {
   onSectionChange: (index: number) => void;
+  paused?: boolean;
   children: ReactNode;
 }
 
 export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainerProps>(
-  function ScrollContainer({ onSectionChange, children }, ref) {
+  function ScrollContainer({ onSectionChange, paused, children }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const sectionsRef = useRef<HTMLElement[]>([]);
     const lenisRef = useRef<Lenis | null>(null);
@@ -86,6 +87,9 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       });
       lenisRef.current = lenis;
 
+      // Stop immediately if boot is still showing — prevents background scroll
+      if (paused) lenis.stop();
+
       // ── Lenis + ScrollTrigger integration ──
       // Lenis 1.x in window mode: native window.scrollY still changes.
       // No scrollerProxy needed — just sync ScrollTrigger on Lenis scroll
@@ -141,6 +145,18 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
         lenisRef.current = null;
       };
     }, [onSectionChange]);
+
+    // ── Pause/resume Lenis when boot state changes ──
+    // During boot (paused=true), wheel events should not scroll content.
+    useEffect(() => {
+      const lenis = lenisRef.current;
+      if (!lenis) return;
+      if (paused) {
+        lenis.stop();
+      } else {
+        lenis.start();
+      }
+    }, [paused]);
 
     return (
       <div ref={containerRef} className="content-layer">
