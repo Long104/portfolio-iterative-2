@@ -285,7 +285,7 @@ export default function KiraKiraVortex() {
     // exponentially decays toward zero — the camera slowly drifts back
     // to center on its own.
     const mouse = getMouseState();
-    const IDLE_TIMEOUT = 2000;    // 2 seconds of no movement → start decaying
+    const IDLE_TIMEOUT = 5000;    // 5 seconds of no movement → start decaying
     const DECAY = 0.97;           // per-frame multiplier (~1.5s to mostly return)
     const now = performance.now();
     if (mouse.lastMoveTime > 0 && now - mouse.lastMoveTime > IDLE_TIMEOUT) {

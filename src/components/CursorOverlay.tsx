@@ -325,6 +325,8 @@ export function CursorOverlay() {
       idleTarget.x = e.clientX;
       idleTarget.y = e.clientY;
       lastMoveTime = performance.now();
+      // Re-hide native cursor when user moves again after idle
+      document.documentElement.classList.add("cursor-hidden");
     };
     const onOver = (e: MouseEvent): void => {
       const el = e.target;
@@ -415,9 +417,11 @@ export function CursorOverlay() {
       // Runs every rAF (before the 30fps throttle) so the decay rate matches
       // the 3D camera's idle decay — both use 0.97 per frame at 60fps.
       // When idle, the offset from center shrinks: newOffset = offset * 0.97
-      if (firstMove && t - lastMoveTime > 2000) {
+      if (firstMove && t - lastMoveTime > 5000) {
         idleTarget.x = w / 2 + (idleTarget.x - w / 2) * 0.97;
         idleTarget.y = h / 2 + (idleTarget.y - h / 2) * 0.97;
+        // Show native cursor while idle (reticle is drifting to center, no longer tracking)
+        document.documentElement.classList.remove("cursor-hidden");
       }
 
       // 30fps throttle (33ms)

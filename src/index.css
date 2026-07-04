@@ -1950,15 +1950,6 @@ html.cursor-hidden * {
   padding: 48px;
 }
 
-.project-detail__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  cursor: pointer;
-}
-
 .project-detail__panel {
   position: relative;
   display: flex;
@@ -1966,12 +1957,8 @@ html.cursor-hidden * {
   max-width: 900px;
   width: 100%;
   max-height: 80vh;
-  background: rgba(10, 15, 25, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.08),
-    0 32px 64px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: var(--glass-bg);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
@@ -2046,6 +2033,7 @@ html.cursor-hidden * {
   letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
 .project-detail__title {
@@ -2055,6 +2043,7 @@ html.cursor-hidden * {
   color: rgba(255, 255, 255, 0.95);
   letter-spacing: -0.02em;
   line-height: 1.1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
 .project-detail__desc {
@@ -2077,6 +2066,7 @@ html.cursor-hidden * {
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
 .project-detail__techs-list {
@@ -2116,6 +2106,7 @@ html.cursor-hidden * {
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
 .project-detail__highlights-list {

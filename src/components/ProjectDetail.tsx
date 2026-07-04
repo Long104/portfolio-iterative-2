@@ -1,14 +1,17 @@
 // ── Project Detail Overlay ──
 // Full-screen case study overlay triggered by clicking a project card.
-// GSAP animation: staggered entrance (image → header → desc → tags → highlights → links)
-// on open; fast reverse on close.
+// The panel is a large refractive glass element — the 3D vortex is visible
+// through it. No dark backdrop; the glass IS the backdrop.
+// GSAP animation: glass entrance → content stagger on open; fast reverse on close.
 // Close on: Escape key, click outside, close button.
 // Lenis scroll lock when open.
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import type { Project } from "./projects";
 import { playCloseSound } from "../lib/audio-ui";
+import { RefractiveDiv, buildDetailConfig } from "./glass-configs";
+import { useDeviceOrientation } from "../useDeviceOrientation";
 
 interface ProjectDetailProps {
   project: Project | null;
@@ -17,21 +20,23 @@ interface ProjectDetailProps {
 
 export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const wasBodyOverflow = useRef<string>("");
   const prevFocusRef = useRef<HTMLElement | null>(null);
 
+  // ── Liquid glass config ──
+  const specularAngle = useDeviceOrientation();
+  const detailConfig = useMemo(() => buildDetailConfig(specularAngle), [specularAngle]);
+
   // ── Open animation: staggered entrance ──
-  // Sequence: backdrop → panel → image → header → desc → techs stagger → highlights stagger → links
+  // Sequence: glass panel → image → header → desc → techs → highlights → links
   useEffect(() => {
     if (!project) return;
 
     const overlay = overlayRef.current;
-    const backdrop = backdropRef.current;
     const panel = panelRef.current;
-    if (!overlay || !backdrop || !panel) return;
+    if (!overlay || !panel) return;
 
     // Show overlay
     gsap.set(overlay, { display: "flex" });
@@ -62,33 +67,29 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     const tl = gsap.timeline();
     tlRef.current = tl;
 
-    // 1. Backdrop fades in
-    tl.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" });
-
-    // 2. Panel scales up
+    // 1. Glass panel scales up + fades in
     tl.fromTo(
       panel,
       { opacity: 0, scale: 0.92, y: 24 },
-      { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power3.out" },
-      "-=0.1",
+      { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" },
     );
 
-    // 3. Image slides in from left
-    tl.to(imageWrap, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, "-=0.2");
+    // 2. Image slides in from left
+    tl.to(imageWrap, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, "-=0.25");
 
-    // 4. Header fades up
+    // 3. Header fades up
     tl.to(header, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, "-=0.25");
 
-    // 5. Description fades up
+    // 4. Description fades up
     tl.to(desc, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, "-=0.2");
 
-    // 6. Tech tags stagger in with a bounce
+    // 5. Tech tags stagger in with a bounce
     tl.to(techTags, { y: 0, opacity: 1, stagger: 0.04, duration: 0.3, ease: "back.out(1.3)" }, "-=0.15");
 
-    // 7. Highlights stagger in
+    // 6. Highlights stagger in
     tl.to(highlights, { y: 0, opacity: 1, stagger: 0.05, duration: 0.3, ease: "power2.out" }, "-=0.1");
 
-    // 8. Links fade up
+    // 7. Links fade up
     tl.to(links, { y: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, "-=0.08");
 
     return () => {
@@ -101,9 +102,8 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   const animateClose = useCallback(() => {
     playCloseSound();
     const overlay = overlayRef.current;
-    const backdrop = backdropRef.current;
     const panel = panelRef.current;
-    if (!overlay || !backdrop || !panel) return;
+    if (!overlay || !panel) return;
 
     if (PREFERS_REDUCED_MOTION) {
       gsap.set(overlay, { display: "none", opacity: 0 });
@@ -135,9 +135,8 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     tl.to(techs, { y: 8, opacity: 0, duration: 0.1, ease: "power2.in" }, 0);
     tl.to([header, desc, imageWrap], { y: 10, opacity: 0, duration: 0.12, ease: "power2.in" }, 0);
 
-    // Panel + backdrop out
-    tl.to(panel, { opacity: 0, scale: 0.95, duration: 0.2, ease: "power2.in" }, "-=0.05");
-    tl.to(backdrop, { opacity: 0, duration: 0.15, ease: "power2.in" }, "-=0.1");
+    // Glass panel scales down + fades out
+    tl.to(panel, { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" }, "-=0.05");
   }, [onClose]);
 
   // ── Scroll lock when open ──
@@ -214,8 +213,8 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   }, [project]);
 
   // ── Click outside panel ──
-  function onBackdropClick(e: React.MouseEvent) {
-    if (e.target === backdropRef.current) {
+  function onOverlayClick(e: React.MouseEvent) {
+    if (e.target === overlayRef.current) {
       animateClose();
     }
   }
@@ -224,16 +223,18 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   if (!project) return null;
 
   return (
-    <div ref={overlayRef} className="project-detail" style={{ display: "none" }}>
-      {/* ── Backdrop ── */}
-      <div
-        ref={backdropRef}
-        className="project-detail__backdrop"
-        onClick={onBackdropClick}
-      />
-
-      {/* ── Content panel ── */}
-      <div ref={panelRef} className="project-detail__panel">
+    <div
+      ref={overlayRef}
+      className="project-detail"
+      style={{ display: "none" }}
+      onClick={onOverlayClick}
+    >
+      {/* ── Liquid glass panel ── */}
+      <RefractiveDiv
+        ref={panelRef}
+        refraction={detailConfig}
+        className="project-detail__panel"
+      >
         {/* Close button */}
         <button
           className="project-detail__close"
@@ -312,7 +313,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
             </a>
           </div>
         </div>
-      </div>
+      </RefractiveDiv>
     </div>
   );
 }

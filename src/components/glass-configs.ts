@@ -38,6 +38,16 @@ export function buildNavConfig(specularAngle: number) {
   };
 }
 
+/** Project detail overlay — deeper blur for readability over vortex, thicker glass for presence */
+export function buildDetailConfig(specularAngle: number) {
+  return {
+    radius: 28, blur: 6, glassThickness: 140, bezelWidth: 30,
+    refractiveIndex: 1.5, specularOpacity: 0.85, specularAngle,
+    bezelHeightFn: convex,
+    ...SIMPLE_FALLBACK,
+  };
+}
+
 /** Small control (Audio bar) */
 export function buildSmallConfig(specularAngle: number) {
   return {
