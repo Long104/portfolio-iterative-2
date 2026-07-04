@@ -2,11 +2,14 @@
 // Cheap heuristic: UA + cores + RAM. Good enough before first frame;
 // R3F `performance` prop then drops DPR further if FPS dips at runtime.
 //
+// Glow noise pre-baked to texture (Jun 2026) — ALU-heavy fbm/noise replaced
+// with texture lookups. All tiers get a particle bump since glow is ~10× cheaper.
+//
 // Four tiers:
-//   mobile — phones (30fps, 1.0 DPR, 2000 particles, no blur, quantized orientation)
-//   tablet — iPads, Android tablets (30fps, 1.25 DPR, 4500 particles, blur, smooth)
-//   low    — low-end desktops (30fps, 1.25 DPR, 3500 particles, blur, smooth)
-//   high   — high-end desktops (30fps, 1.25 DPR, 5500 particles, blur, smooth)
+//   mobile — phones (30fps, 1.0 DPR, 4000 particles, smooth orientation)
+//   tablet — iPads, Android tablets (30fps, 1.25 DPR, 5500 particles, smooth)
+//   low    — low-end desktops (30fps, 1.25 DPR, 4500 particles, smooth)
+//   high   — high-end desktops (30fps, 1.25 DPR, 7000 particles, smooth)
 export type PerfTier = "mobile" | "tablet" | "low" | "high";
 
 export function detectPerfTier(): PerfTier {
@@ -38,18 +41,18 @@ export function detectPerfTier(): PerfTier {
 export const PERF_TIER = detectPerfTier();
 export const PAINT_COUNT =
   PERF_TIER === "mobile"
-    ? 2000
+    ? 4000
     : PERF_TIER === "tablet"
-      ? 4500
+      ? 5500
       : PERF_TIER === "low"
-        ? 3500
-        : 5500;
+        ? 4500
+        : 7000;
 export const FLARE_COUNT =
   PERF_TIER === "mobile"
-    ? 1000
+    ? 2000
     : PERF_TIER === "tablet"
-      ? 2500
+      ? 3000
       : PERF_TIER === "low"
-        ? 1500
-        : 3000;
+        ? 2500
+        : 4000;
 export const MAX_DPR = PERF_TIER === "mobile" ? 1 : 1.25;

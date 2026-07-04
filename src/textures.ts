@@ -1,9 +1,14 @@
 import {
   CanvasTexture,
+  DataTexture,
   LinearFilter,
+  LinearMipmapLinearFilter,
   NearestFilter,
+  RepeatWrapping,
+  RGBAFormat,
   SRGBColorSpace,
   Texture,
+  UnsignedByteType,
 } from "three";
 
 
@@ -165,6 +170,82 @@ export function createFlareColorLUT(): Texture {
   tex.minFilter = NearestFilter;
   tex.magFilter = NearestFilter;
   tex.colorSpace = SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ── Pre-baked noise+FBM texture ──
+// Replaces per-pixel noise()/fbm() ALU in the glow shader with a single
+// texture lookup. Exact GLSL hash/ noise/ fbm ported to JS and baked at init.
+// R channel = value noise, G channel = 2-octave fbm.
+// 512×512 with 8×8 cells = 64px/cell → no visible tiling at screen coords.
+
+/** GLSL hash(vec2) → JS */
+function hash(x: number, y: number): number {
+  const val = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return val - Math.floor(val);
+}
+
+/** GLSL noise(vec2) — value noise with smoothstep interpolation → JS */
+function noise(x: number, y: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const ux = fx * fx * (3.0 - 2.0 * fx);
+  const uy = fy * fy * (3.0 - 2.0 * fy);
+  const a = hash(ix, iy);
+  const b = hash(ix + 1, iy);
+  const c = hash(ix, iy + 1);
+  const d = hash(ix + 1, iy + 1);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+
+/** GLSL 2-octave fbm → JS */
+function fbm(x: number, y: number): number {
+  let v = 0;
+  let a = 0.5;
+  let px = x;
+  let py = y;
+  for (let i = 0; i < 2; i++) {
+    v += a * noise(px, py);
+    const rpx = px * 0.8776 - py * 0.4794;
+    const rpy = px * 0.4794 + py * 0.8776;
+    px = rpx * 2.5 + 100.0;
+    py = rpy * 2.5 + 100.0;
+    a *= 0.5;
+  }
+  return v;
+}
+
+export function createNoiseTexture(): Texture {
+  const size = 512;
+  const cells = 8;
+  const cellPx = size / cells; // 64px per noise cell
+
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const nx = x / cellPx;
+      const ny = y / cellPx;
+      const n = noise(nx, ny);
+      const f = fbm(nx, ny);
+      const idx = (y * size + x) * 4;
+      data[idx] = Math.round(n * 255);     // R: noise
+      data[idx + 1] = Math.round(f * 255); // G: fbm
+      data[idx + 2] = 0;
+      data[idx + 3] = 255;
+    }
+  }
+
+  const tex = new DataTexture(data, size, size);
+  tex.format = RGBAFormat;
+  tex.type = UnsignedByteType;
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
   tex.needsUpdate = true;
   return tex;
 }
