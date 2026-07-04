@@ -407,19 +407,17 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
     });
 
     if (horizontalTween.current) {
-      // ── Desktop: track-position-based clip-path reveal ──
+      // ── Desktop: viewport-position-based clip-path reveal ──
       // Instead of ScrollTrigger.create with containerAnimation (which fails
       // for cards whose left edge is already left of the viewport right edge),
-      // read the track's current translateX on every frame and calculate
-      // per-card clip progress based on the card's position in the viewport.
-      const trackEl = trackRef.current;
+      // read each card's viewport position via getBoundingClientRect and
+      // calculate clip progress relative to the container viewport.
       const containerEl = containerRef.current;
-      if (!trackEl || !containerEl) return;
+      if (!containerEl) return;
 
       const maxProgress = new Map<Element, number>();
 
       const updateClipPaths = () => {
-        const trackX = gsap.getProperty(trackEl, "x") as number;
         const viewportWidth = containerEl.clientWidth;
 
         imageRefs.current.forEach((imgEl) => {
@@ -427,14 +425,16 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
           const card = imgEl.closest(".project-card") as HTMLElement;
           if (!card) return;
 
-          const cardLeft = card.offsetLeft;
-          const cardViewportLeft = cardLeft + trackX;
+          // Use getBoundingClientRect for accurate viewport-relative position
+          // (offsetLeft is unreliable when offsetParent changes due to pin).
+          const cardRect = card.getBoundingClientRect();
+          const cardViewportLeft = cardRect.left;
 
-          // Reveal from right-to-left as the card enters the viewport.
-          // When the card's left edge is at/beyond the viewport right edge → hidden.
-          // When the card's left edge reaches 15% from viewport left → fully visible.
+          // Match original ScrollTrigger behavior:
+          //   start: "left right"  → card left edge at viewport right edge → hidden
+          //   end:   "left 60%"    → card left edge at 60% from viewport left → fully visible
           const enterStart = viewportWidth;
-          const enterEnd = viewportWidth * 0.15;
+          const enterEnd = viewportWidth * 0.6;
           const rawProgress = (enterStart - cardViewportLeft) / (enterStart - enterEnd);
 
           // Clamp & ensure progress only increases (never re-hides)
