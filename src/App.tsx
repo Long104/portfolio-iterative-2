@@ -98,6 +98,19 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // ── Lock body scroll during boot — only unlock after LAUNCH ──
+  // Content is pre-mounted 800ms after page load (behind the boot overlay).
+  // Without this, users can scroll the hidden content during the boot sequence,
+  // leaving it in a random position when LAUNCH fires.
+  useEffect(() => {
+    if (started) {
+      document.body.style.overflow = "";
+      return;
+    }
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [started]);
+
   // ── Scroll progress tracking (rAF-throttled — prevents 120 re-renders/sec) ──
   // Also writes to global scrollStore for R3F to read in useFrame (no React re-render).
   useEffect(() => {
@@ -150,14 +163,16 @@ function App() {
   const handleSelectTrack = useCallback(async (url: string) => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
     initAudioUI(); // create AudioContext inside trusted click
-    setBootPhase("exit");
-    setStarted(true);
-    if (isPreloaded && url === currentTrack) {
+    // NOTE: no setBootPhase/setStarted here — AudioBar is only visible
+    // after launch, so this is always a post-launch track switch.
+    // Calling setBootPhase("exit") when boot is already "gone" remounts
+    // PsycommuBoot and causes a StrictMode deadlock (exit animation killed).
+    if (url === currentTrack) {
       if (!isPlaying) await engage();
-    } else {
-      await loadTrack(url);
+      return;
     }
-  }, [isPreloaded, engage, loadTrack, currentTrack, isPlaying]);
+    await loadTrack(url);
+  }, [currentTrack, isPlaying, engage, loadTrack]);
 
   const handleExitComplete = useCallback(() => {
     setBootPhase("gone");

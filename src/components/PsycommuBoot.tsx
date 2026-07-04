@@ -55,7 +55,6 @@ export function PsycommuBoot({
   const skipRef = useRef(false);
   const startedRef = useRef(false);
   const bootRef = useRef<HTMLDivElement>(null);
-  const exitRan = useRef(false);
 
   // ── Boot sequence state machine (single state object = 1 render per tick) ──
   useEffect(() => {
@@ -103,8 +102,7 @@ export function PsycommuBoot({
 
   // ── Cinematic exit animation (runs once when phase → "exit") ──
   useEffect(() => {
-    if (phase !== "exit" || exitRan.current) return;
-    exitRan.current = true;
+    if (phase !== "exit") return;
     const el = bootRef.current;
     if (!el) { onExitComplete(); return; }
 
