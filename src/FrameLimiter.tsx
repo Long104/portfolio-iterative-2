@@ -1,64 +1,30 @@
 import { useEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
-import { getScrollState } from "./scrollStore";
 
 // ==========================================
-// FRAME LIMITER — adaptive fps with idle throttling
+// FRAME LIMITER — flat 30fps
 // ==========================================
 //
-// Two-tier frame rate:
-//   ACTIVE (scrolling, any section)  → 30fps
-//   IDLE (2s no scroll)              → 15fps  — subtle tunnel animation, saves GPU
-//
-// Any scroll input immediately restores 30fps.
+// Single tier: 30fps always.
+// Pauses rendering when tab is hidden (visibilitychange).
 // In frameloop="demand" mode, R3F only renders when invalidate() is called.
 
-const ACTIVE_FPS = 30;
-const IDLE_FPS = 15;
-const IDLE_TIMEOUT_MS = 2000;  // 2 seconds of no scroll → idle
+const FPS = 30;
+const INTERVAL = 1000 / FPS;
 
 export default function FrameLimiter() {
   const invalidate = useThree((state) => state.invalidate);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
-  const fpsRef = useRef<number>(ACTIVE_FPS);
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Watch scroll velocity — if near-zero for IDLE_TIMEOUT_MS, switch to idle fps
-  useEffect(() => {
-    function checkIdle() {
-      const { velocity } = getScrollState();
-      if (velocity < 0.5) {
-        // User has stopped scrolling — start idle timer
-        if (!idleTimerRef.current) {
-          idleTimerRef.current = setTimeout(() => {
-            idleTimerRef.current = null;
-            fpsRef.current = IDLE_FPS;
-          }, IDLE_TIMEOUT_MS);
-        }
-      } else {
-        // User is scrolling — cancel idle timer, restore active fps
-        if (idleTimerRef.current) {
-          clearTimeout(idleTimerRef.current);
-          idleTimerRef.current = null;
-        }
-        fpsRef.current = ACTIVE_FPS;
-      }
-    }
-
-    const interval = setInterval(checkIdle, 200); // check every 200ms
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     function loop(now: number) {
       rafRef.current = requestAnimationFrame(loop);
 
       const elapsed = now - lastTimeRef.current;
-      const interval = 1000 / fpsRef.current;
 
-      if (elapsed >= interval) {
-        lastTimeRef.current = now - (elapsed % interval);
+      if (elapsed >= INTERVAL) {
+        lastTimeRef.current = now - (elapsed % INTERVAL);
         invalidate();
       }
     }
