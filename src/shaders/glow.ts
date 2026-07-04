@@ -1,9 +1,14 @@
-// Four stacked glow meshes: near-dark at rest, explodes on beat.
+// Layer D: Four stacked fullscreen meshes with additive blending.
+// AUDIO STRATEGY: near-dark at rest, EXPLODES bright on beat.
+// Maximum perceptual contrast — punchy visual response.
 //
-// PERF: noise + fbm baked to pre-computed texture at init.
+// OPTIMIZATION: noise + fbm baked into a pre-computed texture at init.
 // Per-pixel ALU replaced with texture2D lookup — ~10× cheaper on mobile GPU.
-// Texture R channel = value noise, G channel = 2-octave fbm.
-// Coordinate mapping: UV = inputCoord / 8.0 (texture is 512×512, 64px/cell).
+//
+// OPTIMIZATION v2: 4 sub-layers each have their radial color+intensity profile
+// baked into a 256×4 LUT (createGlowLUT in textures.ts). The smoothstep/mix
+// chains for color mixing and the exp/smoothstep intensity curves are replaced
+// by texture lookups — ~25 fewer ALU ops per pixel, 4 extra coherent lookups.
 
 export const glowVertex = /* glsl */ `
   varying vec2 vUv;
@@ -21,10 +26,10 @@ export const glowFragment = /* glsl */ `
   uniform float uRaysTreble;
   uniform float uBridgeMid;
   uniform sampler2D uNoiseTex;
+  uniform sampler2D uGlowLUT;
   varying vec2 vUv;
 
   // Pre-baked noise lookup (R) and fbm lookup (G)
-  // Texture coord = inputCoord / 8.0 (matching the 512×64px/cell bake)
   float n(vec2 p) { return texture2D(uNoiseTex, p / 8.0).r; }
   float f(vec2 p) { return texture2D(uNoiseTex, p / 8.0).g; }
 
@@ -33,32 +38,22 @@ export const glowFragment = /* glsl */ `
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Master early-out — tighter threshold, glow is near-invisible past 0.25
-    if (dist > 0.35 + uSunBass * 0.06) discard;
+    // Master early-out — dynamic: expands on bass hit
+    if (dist > 0.42 + uSunBass * 0.06) discard;
 
     float angle = atan(centered.y, centered.x);
     vec3 totalColor = vec3(0.0);
+    const float invMaxDist = 1.0 / 0.45;
 
     // ══════ D4: SUN ══════
     {
       float gasNoise = f(centered * 4.0 - vec2(uTime * 0.3, uTime * 0.3));
       float ripple = f(vec2(angle * 3.0, uTime * 0.6)) * 0.02;
-      float d = dist + ripple;
+      float d = dist + ripple + gasNoise * 0.015;
 
-      vec3 whiteCore = vec3(1.0, 0.95, 0.0);
-      vec3 yellow    = vec3(1.0, 0.85, 0.0);
-      vec3 midPink   = vec3(1.0, 0.08, 0.58);
-      vec3 outerEdge = vec3(1.0, 0.0, 0.2);
-
-      vec3 color = outerEdge;
-      color = mix(color, midPink,   smoothstep(0.15, 0.025, d + gasNoise * 0.015));
-      color = mix(color, yellow,    smoothstep(0.09, 0.03, d + gasNoise * 0.015));
-      color = mix(color, whiteCore, smoothstep(0.02, 0.0, d + gasNoise * 0.015));
-
-      float glow = min(exp(-d * 8.0) + 0.4, 0.85) * (0.15 + uSunBass * 0.85);
-      float alpha = smoothstep(0.42, 0.06, d) * (0.1 + gasNoise * 0.1) * (0.2 + uSunBass * 0.8);
-
-      totalColor += color * glow * alpha;
+      vec4 sun = texture2D(uGlowLUT, vec2(d * invMaxDist, 0.125));
+      float gasFactor = (0.1 + gasNoise * 0.1);
+      totalColor += sun.rgb * sun.a * gasFactor * (0.15 + uSunBass * 0.85) * (0.2 + uSunBass * 0.8);
     }
 
     // ══════ D3: RAYS ══════
@@ -70,17 +65,9 @@ export const glowFragment = /* glsl */ `
       float noiseVal = n(vec2(angle * 5.0, uTime * 0.2));
       rays *= 0.6 + noiseVal * 0.8;
 
-      float distFade = smoothstep(0.42, 0.06, dist) * smoothstep(0.0, 0.02, dist);
-
-      vec3 rayColor = mix(
-        vec3(1.0, 0.88, 0.3),
-        vec3(1.0, 0.4, 0.6),
-        smoothstep(0.05, 0.3, dist)
-      );
-
-      float alpha = rays * distFade * 0.2 * (0.15 + uRaysTreble * 1.5);
-
-      totalColor += rayColor * alpha * alpha;
+      vec4 rayLUT = texture2D(uGlowLUT, vec2(dist * invMaxDist, 0.375));
+      float alpha = rays * rayLUT.a * (0.15 + uRaysTreble * 1.5);
+      totalColor += rayLUT.rgb * alpha * alpha;
     }
 
     // ══════ D2: BRIDGE ══════
@@ -88,18 +75,8 @@ export const glowFragment = /* glsl */ `
       float gasNoise = n(centered * 4.0 - vec2(uTime * 3.0));
       float d = dist + gasNoise * 0.012;
 
-      vec3 whiteCore = vec3(1.0, 0.90, 0.0);
-      vec3 gold      = vec3(1.0, 0.70, 0.0);
-      vec3 softPink  = vec3(0.992, 0.682, 0.761);
-
-      vec3 color = softPink;
-      color = mix(color, gold,      smoothstep(0.15, 0.06, d));
-      color = mix(color, whiteCore, smoothstep(0.04, 0.0, d));
-
-      float glow = exp(-d * 6.0) * (0.2 + uBridgeMid * 0.8);
-      float alpha = smoothstep(0.25, 0.05, d);
-
-      totalColor += color * glow * 0.8 * alpha * 0.5;
+      vec4 bridge = texture2D(uGlowLUT, vec2(d * invMaxDist, 0.625));
+      totalColor += bridge.rgb * bridge.a * (0.2 + uBridgeMid * 0.8);
     }
 
     // ══════ D1: CORE ══════
@@ -107,19 +84,8 @@ export const glowFragment = /* glsl */ `
       float gasNoise = n(centered * 6.0 - vec2(uTime * 0.5, uTime * 0.5));
       float d = dist + gasNoise * 0.01;
 
-      vec3 softPink  = vec3(1.0, 0.92, 0.0);
-      vec3 whiteCore = vec3(1.0, 1.0, 0.9);
-      vec3 sunYellow = vec3(1.0, 0.85, 0.15);
-
-      vec3 color = softPink;
-      color = mix(color, sunYellow, smoothstep(0.10, 0.03, d));
-      color = mix(color, whiteCore, smoothstep(0.01, 0.00, d));
-
-      float alpha = smoothstep(0.13, 0.01, d);
-
-      float coreBoost = 0.2 + uCoreBass * 2.5;
-
-      totalColor += color * coreBoost * alpha;
+      vec4 core = texture2D(uGlowLUT, vec2(d * invMaxDist, 0.875));
+      totalColor += core.rgb * core.a * (0.2 + uCoreBass * 2.5);
     }
 
     if (dot(totalColor, totalColor) < 0.000001) discard;

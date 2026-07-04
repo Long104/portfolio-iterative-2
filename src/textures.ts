@@ -249,3 +249,117 @@ export function createNoiseTexture(): Texture {
   tex.needsUpdate = true;
   return tex;
 }
+
+// ── Glow Radial LUT ──
+// Bakes the 4 glow sub-layers (Sun, Rays, Bridge, Core) into a 256×4 texture.
+// Each row encodes one layer's color (RGB) and static intensity (A) as a
+// function of radial distance. Replaces ~25 ALU ops/pixel with 4 texture
+// lookups — same visual output, cheaper on tile-based GPUs.
+// Audio modulation and noise perturbation are still applied in the shader.
+export function createGlowLUT(): Texture {
+  const w = 256;
+  const h = 4;
+  const maxDist = 0.45;
+  const data = new Uint8Array(w * h * 4);
+
+  function smoothstep(edge0: number, edge1: number, x: number): number {
+    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+  }
+
+  function lerp3(a: number[], b: number[], t: number): number[] {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  }
+
+  for (let i = 0; i < w; i++) {
+    const d = (i / w) * maxDist;
+
+    // ── Row 0: SUN ──
+    {
+      const outerEdge = [1.0, 0.0, 0.2];
+      const midPink   = [1.0, 0.08, 0.58];
+      const yellow    = [1.0, 0.85, 0.0];
+      const whiteCore = [1.0, 0.95, 0.0];
+
+      let color = [...outerEdge];
+      color = lerp3(color, midPink,   smoothstep(0.15, 0.025, d));
+      color = lerp3(color, yellow,    smoothstep(0.09, 0.03, d));
+      color = lerp3(color, whiteCore, smoothstep(0.02, 0.0, d));
+
+      const glow = Math.min(Math.exp(-d * 8) + 0.4, 0.85);
+      const baseAlpha = smoothstep(0.42, 0.06, d);
+      const intensity = glow * baseAlpha;
+
+      const idx = (0 * w + i) * 4;
+      data[idx]     = Math.round(color[0] * 255);
+      data[idx + 1] = Math.round(color[1] * 255);
+      data[idx + 2] = Math.round(color[2] * 255);
+      data[idx + 3] = Math.round(intensity * 255);
+    }
+
+    // ── Row 1: RAYS ──
+    {
+      const c1 = [1.0, 0.88, 0.3];
+      const c2 = [1.0, 0.4, 0.6];
+      const color = lerp3(c1, c2, smoothstep(0.05, 0.3, d));
+
+      const distFade = smoothstep(0.42, 0.06, d) * smoothstep(0.0, 0.02, d);
+      const intensity = distFade * 0.2;
+
+      const idx = (1 * w + i) * 4;
+      data[idx]     = Math.round(color[0] * 255);
+      data[idx + 1] = Math.round(color[1] * 255);
+      data[idx + 2] = Math.round(color[2] * 255);
+      data[idx + 3] = Math.round(intensity * 255);
+    }
+
+    // ── Row 2: BRIDGE ──
+    {
+      const softPink  = [0.992, 0.682, 0.761];
+      const gold      = [1.0, 0.70, 0.0];
+      const whiteCore = [1.0, 0.90, 0.0];
+
+      let color = [...softPink];
+      color = lerp3(color, gold,      smoothstep(0.15, 0.06, d));
+      color = lerp3(color, whiteCore, smoothstep(0.04, 0.0, d));
+
+      const glow = Math.exp(-d * 6);
+      const baseAlpha = smoothstep(0.25, 0.05, d);
+      const intensity = glow * baseAlpha * 0.8 * 0.5;
+
+      const idx = (2 * w + i) * 4;
+      data[idx]     = Math.round(color[0] * 255);
+      data[idx + 1] = Math.round(color[1] * 255);
+      data[idx + 2] = Math.round(color[2] * 255);
+      data[idx + 3] = Math.round(intensity * 255);
+    }
+
+    // ── Row 3: CORE ──
+    {
+      const softPink  = [1.0, 0.92, 0.0];
+      const sunYellow = [1.0, 0.85, 0.15];
+      const whiteCore = [1.0, 1.0, 0.9];
+
+      let color = [...softPink];
+      color = lerp3(color, sunYellow, smoothstep(0.10, 0.03, d));
+      color = lerp3(color, whiteCore, smoothstep(0.01, 0.0, d));
+
+      const intensity = smoothstep(0.13, 0.01, d);
+
+      const idx = (3 * w + i) * 4;
+      data[idx]     = Math.round(color[0] * 255);
+      data[idx + 1] = Math.round(color[1] * 255);
+      data[idx + 2] = Math.round(color[2] * 255);
+      data[idx + 3] = Math.round(intensity * 255);
+    }
+  }
+
+  const tex = new DataTexture(data, w, h);
+  tex.format = RGBAFormat;
+  tex.type = UnsignedByteType;
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
