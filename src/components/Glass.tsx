@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, forwardRef } from "react";
 import { gsap } from "../lib/gsap";
 import { PROJECTS } from "./projects";
 import { useDeviceOrientation } from "../useDeviceOrientation";
-import { RefractiveDiv, buildPanelConfig, buildNavConfig } from "./glass-configs";
+import { RefractiveDiv, buildPanelConfig, buildNavConfig, buildSmallConfig } from "./glass-configs";
 import { playHoverSound, playOpenSound } from "../lib/audio-ui";
 
 // ── Glass panel (large sections) ──
@@ -16,6 +16,24 @@ export function GlassPanel({ children }: { children: ReactNode }) {
     </RefractiveDiv>
   );
 }
+
+// ── Small glass panel (software engineer) ──
+export const GlassSmall = forwardRef<HTMLDivElement, { children: ReactNode; className?: string }>(
+  ({ children, className = "" }, ref) => {
+    const specularAngle = useDeviceOrientation();
+    const refraction = useMemo(() => buildSmallConfig(specularAngle), [specularAngle]);
+    return (
+      <RefractiveDiv
+        ref={ref as any}
+        refraction={refraction}
+        className={`glass-small ${className}`}
+      >
+        {children}
+      </RefractiveDiv>
+    );
+  }
+);
+GlassSmall.displayName = "GlassSmall";
 
 // ── Project card ──
 // Full-refractive card with image area + text info.

@@ -4,7 +4,7 @@
 // All text uses useScrollReveal for SplitText-driven scroll animations.
 // Pattern: play-once-on-enter (the SOTD portfolio standard).
 
-import { GlassPanel, ProjectCard } from "./Glass";
+import { GlassPanel, ProjectCard, GlassSmall } from "./Glass";
 import { PROJECTS } from "./projects";
 import { EXPERIENCE, CURRENT_STATUS } from "./experience";
 import { useScrollReveal } from "../hooks/useScrollReveal";
@@ -17,9 +17,7 @@ import { getMouseState } from "../mouseStore";
 
 // ── Hero — cinematic name reveal ──
 // Three-tier typography hierarchy:
-//   1. PANTORN CHUAVALLEE — massive, SplitText line reveal (the hero moment)
 //   2. software engineer — small mono subtitle
-//   3. "ready for deployment" — secondary display tagline
 //
 // Two-phase approach (no revert/re-run):
 //   Phase 1 (useGSAP, runs once on mount): SplitText + hide lines
@@ -135,10 +133,10 @@ export function HeroSection({ started }: { started: boolean }) {
         <h1 ref={nameRef} className="hero__name">
           pantorn <span>chuavallee</span>
         </h1>
-        <div ref={roleRef} className="hero__role">software engineer</div>
-        <div ref={taglineRef} className="hero__tagline">
-          ready for deployment.
-        </div>
+        <GlassSmall ref={roleRef} className="hero__role">
+          software engineer
+        </GlassSmall>
+        <div ref={taglineRef} className="hero__tagline"></div>
       </div>
       <div className="hero__scroll-hint">↓ scroll</div>
     </section>
