@@ -113,13 +113,11 @@ export function HeroSection({ started }: { started: boolean }) {
     const el = nameRef.current;
     if (!el) return;
 
-    const setRotateY = gsap.quickTo(el, "rotateY", { duration: 0.8, ease: "power2.out" });
-    const setRotateX = gsap.quickTo(el, "rotateX", { duration: 0.8, ease: "power2.out" });
+    const setTilt = gsap.quickSetter(el, "css", "transform");
 
     function onTick() {
       const { x, y } = getMouseState();
-      setRotateY(x * 4);   // ±4deg horizontal
-      setRotateX(-y * 3);  // ±3deg vertical (inverted)
+      setTilt(`rotateY(${x * 4}deg) rotateX(${-y * 3}deg)`);
     }
 
     // Start with no tilt, activate after reveal animation finishes (~1.5s)
