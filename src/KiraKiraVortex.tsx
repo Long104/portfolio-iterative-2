@@ -18,6 +18,11 @@ import { useAudioEngine } from "./useAudioEngine";
 import { getScrollState } from "./scrollStore";
 import { getMouseState } from "./mouseStore";
 
+// Asymmetric envelope — smooth attack, gentle decay.
+// Pure function kept at module scope to avoid per-frame allocation.
+function env(cur: number, target: number, atk: number, dec: number): number {
+  return cur + (target - cur) * (target > cur ? atk : dec);
+}
 
 function generateInstanceData(count: number, maxRadius: number) {
   const pos = new Float32Array(count * 3);
@@ -221,11 +226,9 @@ export default function KiraKiraVortex() {
     // others swell slowly. Like different stars twinkling at different speeds
     // in a real galaxy.
     //
-    // envelope(current, target, attack, decay)
+    // env(current, target, attack, decay) — module-scope pure function
     // attack = how fast it builds when audio hits (higher = snappier)
     // decay  = how slow it fades after audio passes (lower = longer tail)
-    const env = (cur: number, target: number, atk: number, dec: number) =>
-      cur + (target - cur) * (target > cur ? atk : dec);
 
     s.coreBass     = env(s.coreBass,     raw.bass,   0.40, 0.08); // clear pulse, medium fade
     s.sunBass      = env(s.sunBass,      raw.bass,   0.20, 0.04); // slow swell, long tail

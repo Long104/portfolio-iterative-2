@@ -10,11 +10,13 @@ import { MAX_DPR } from "../perf";
 import { PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
 // ── Palette (discrete, matches shaders) ──────────────────
-const PALETTE = [
-  { hex: "#FFFFFF", weight: 0.35 }, // core white
-  { hex: "#FF4FD8", weight: 0.30 }, // SEED magenta
-  { hex: "#1BBCB2", weight: 0.20 }, // cyan (matches particles.ts)
-  { hex: "#8B5CF6", weight: 0.15 }, // galaxy violet
+// RGB pre-parsed at module load — avoids parseInt/slice per hexA() call.
+interface PaletteEntry { hex: string; r: number; g: number; b: number; weight: number; }
+const PALETTE: PaletteEntry[] = [
+  { hex: "#FFFFFF", r: 255, g: 255, b: 255, weight: 0.35 },
+  { hex: "#FF4FD8", r: 255, g: 79,  b: 216, weight: 0.30 },
+  { hex: "#1BBCB2", r: 27,  g: 188, b: 178, weight: 0.20 },
+  { hex: "#8B5CF6", r: 139, g: 92,  b: 246, weight: 0.15 },
 ];
 
 const MAX_SPARKLES = 120;
@@ -40,12 +42,13 @@ interface Sparkle {
 }
 
 // ── Hex → rgba ───────────────────────────────────────────
+// Pre-parsed RGB lookup — avoids parseInt/slice per call.
+const RGB_MAP: Record<string, [number, number, number]> = {};
+for (const p of PALETTE) RGB_MAP[p.hex] = [p.r, p.g, p.b];
+
 function hexA(hex: string, a: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${a})`;
+  const rgb = RGB_MAP[hex] ?? [255, 255, 255];
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
 }
 
 function pickColor(): string {

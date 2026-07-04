@@ -75,7 +75,7 @@ export class AudioEngine {
 
   /** Fetch + decode audio into memory without starting playback.
    *  Safe to call early — on mount, before user interaction.
-   *  Call start() later for instant playback.
+   *  Does NOT stop current playback — call start() or crossfadeTo() separately.
    *  Decoded buffers are cached by URL — switching back to a cached track is instant.
    *
    *  Checks window.__AUDIO_PRELOAD__ first — if the inline script in
@@ -84,7 +84,7 @@ export class AudioEngine {
     if (!this.ctx) await this.init();
     if (!this.ctx) throw new Error("AudioContext not available");
 
-    // Already cached — instant swap, no network
+    // Already cached — mark as current buffer, no network
     const cached = this._bufferCache.get(url);
     if (cached) {
       this._audioBuffer = cached;
@@ -92,20 +92,14 @@ export class AudioEngine {
       return;
     }
 
-    // Same track already loaded — skip
+    // Already this buffer loaded but not yet cached (first-time load)
     if (this._audioBuffer && this._currentTrackUrl === url) {
       this._bufferCache.set(url, this._audioBuffer);
       return;
     }
 
-    // Different track — stop current source
-    if (this.source) {
-      try { this.source.stop(); } catch { /* already stopped */ }
-      this.source.disconnect();
-      this.source = null;
-    }
-    this._isPlaying = false;
-    this._audioBuffer = null;
+    // Different track — fetch + decode + cache, but DON'T stop the source.
+    // Caller (start / crossfadeTo) is responsible for source lifecycle.
     this._currentTrackUrl = url;
     this._offset = 0;
 

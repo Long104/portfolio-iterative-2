@@ -69,6 +69,8 @@ function App() {
     preload,
     engage,
     loadTrack,
+    crossfadeTo,
+    warmPreload,
   } = useAudioEngine();
 
   // ── Preload default audio track on mount — happens during Psycommu boot ──
@@ -158,21 +160,26 @@ function App() {
     } else {
       await loadTrack(currentTrack);
     }
-  }, [isPreloaded, engage, loadTrack, currentTrack]);
+    // ── Background-preload the OTHER track so first switch is instant ──
+    // Runs silently after LAUNCH — by the time user touches AudioBar (10-30s
+    // later), the buffer is decoded and cached. Switch becomes a crossfade.
+    const otherTrack = TRACKS.find((t) => t.url !== currentTrack);
+    if (otherTrack) warmPreload(otherTrack.url);
+  }, [isPreloaded, engage, loadTrack, currentTrack, warmPreload]);
 
   const handleSelectTrack = useCallback(async (url: string) => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
     initAudioUI(); // create AudioContext inside trusted click
-    // NOTE: no setBootPhase/setStarted here — AudioBar is only visible
-    // after launch, so this is always a post-launch track switch.
-    // Calling setBootPhase("exit") when boot is already "gone" remounts
-    // PsycommuBoot and causes a StrictMode deadlock (exit animation killed).
     if (url === currentTrack) {
       if (!isPlaying) await engage();
       return;
     }
-    await loadTrack(url);
-  }, [currentTrack, isPlaying, engage, loadTrack]);
+    // Crossfade: 1.5s fade-out current → 1.5s fade-in new track
+    // Uses cached buffer if preloaded — no network wait.
+    await crossfadeTo(url);
+    // Background-preload the track we just left (keep cache warm)
+    warmPreload(currentTrack);
+  }, [currentTrack, isPlaying, engage, crossfadeTo, warmPreload]);
 
   const handleExitComplete = useCallback(() => {
     setBootPhase("gone");
