@@ -142,7 +142,7 @@ function App() {
       requestAnimationFrame(() => {
         const x = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) to 1 (right)
         const y = -(e.clientY / window.innerHeight) * 2 + 1;  // 1 (top) to -1 (bottom)
-        setMouseState({ x, y });
+        setMouseState({ x, y, lastMoveTime: performance.now() });
         ticking = false;
       });
     }

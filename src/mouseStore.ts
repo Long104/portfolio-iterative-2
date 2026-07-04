@@ -5,11 +5,13 @@
 interface MouseState {
   x: number;  // -1 (left) to 1 (right)
   y: number;  // -1 (bottom) to 1 (top)
+  lastMoveTime: number; // performance.now() timestamp of last pointermove — used for idle decay
 }
 
 const state: MouseState = {
   x: 0,
   y: 0,
+  lastMoveTime: 0,
 };
 
 export function setMouseState(s: Partial<MouseState>) {

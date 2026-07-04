@@ -211,6 +211,11 @@ export default function KiraKiraVortex() {
     { pos: [0,    0,    4.5], look: [0, 0, 0] },  // 4: contact — centered, slightly zoomed
   ], []);
 
+  // ── Idle-decayed mouse offset ──
+  // When the user hasn't moved the mouse for 2s, this value exponentially
+  // decays toward (0, 0), smoothly returning the camera to center.
+  const idleMouse = useRef({ x: 0, y: 0 });
+
   // --- Animation loop ---
   // Accumulate time manually — avoids state.clock.getElapsedTime() which
   // triggers the THREE.Clock deprecation warning (r183+).
@@ -275,19 +280,32 @@ export default function KiraKiraVortex() {
     const cur = SECTION_CAMERAS[segIdx];
     const nxt = SECTION_CAMERAS[segIdx + 1] ?? cur;
 
-    // Mouse parallax — vortex shifts toward cursor, feels alive
+    // ── Idle-decayed mouse parallax ──
+    // When the cursor hasn't moved for 2 seconds, the parallax offset
+    // exponentially decays toward zero — the camera slowly drifts back
+    // to center on its own.
     const mouse = getMouseState();
+    const IDLE_TIMEOUT = 2000;    // 2 seconds of no movement → start decaying
+    const DECAY = 0.97;           // per-frame multiplier (~1.5s to mostly return)
+    const now = performance.now();
+    if (mouse.lastMoveTime > 0 && now - mouse.lastMoveTime > IDLE_TIMEOUT) {
+      idleMouse.current.x *= DECAY;
+      idleMouse.current.y *= DECAY;
+    } else {
+      idleMouse.current.x = mouse.x;
+      idleMouse.current.y = mouse.y;
+    }
 
     // Interpolate camera position + mouse offset
     camTarget.current.set(
-      cur.pos[0] + (nxt.pos[0] - cur.pos[0]) * segT + mouse.x * 0.3,
-      cur.pos[1] + (nxt.pos[1] - cur.pos[1]) * segT + mouse.y * 0.2,
+      cur.pos[0] + (nxt.pos[0] - cur.pos[0]) * segT + idleMouse.current.x * 0.3,
+      cur.pos[1] + (nxt.pos[1] - cur.pos[1]) * segT + idleMouse.current.y * 0.2,
       cur.pos[2] + (nxt.pos[2] - cur.pos[2]) * segT,
     );
     camera.position.lerp(camTarget.current, 0.05);
 
     // Look-at shifts subtly with mouse — sun drifts, not locked to center
-    camLookAt.current.set(mouse.x * 0.1, mouse.y * 0.08, 0);
+    camLookAt.current.set(idleMouse.current.x * 0.1, idleMouse.current.y * 0.08, 0);
     currentLookAt.current.lerp(camLookAt.current, 0.05);
     camera.lookAt(currentLookAt.current);
 

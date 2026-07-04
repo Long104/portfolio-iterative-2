@@ -296,6 +296,7 @@ export function CursorOverlay() {
 
     // ── Pointer state — dual element ──
     const target = { x: w / 2, y: h / 2 };
+    const idleTarget = { x: w / 2, y: h / 2 }; // decays toward center when idle
     const dot = { x: w / 2, y: h / 2 };
     const ring = { x: w / 2, y: h / 2 };
     let prevX = dot.x;
@@ -312,8 +313,8 @@ export function CursorOverlay() {
 
     const onMove = (e: PointerEvent): void => {
       if (!firstMove) {
-        dot.x = ring.x = target.x = e.clientX;
-        dot.y = ring.y = target.y = e.clientY;
+        dot.x = ring.x = target.x = idleTarget.x = e.clientX;
+        dot.y = ring.y = target.y = idleTarget.y = e.clientY;
         prevX = dot.x;
         prevY = dot.y;
         firstMove = true;
@@ -321,6 +322,8 @@ export function CursorOverlay() {
       }
       target.x = e.clientX;
       target.y = e.clientY;
+      idleTarget.x = e.clientX;
+      idleTarget.y = e.clientY;
       lastMoveTime = performance.now();
     };
     const onOver = (e: MouseEvent): void => {
@@ -408,6 +411,15 @@ export function CursorOverlay() {
       const dt = Math.min((t - lastT) / 1000, 0.05);
       lastT = t;
 
+      // ── Idle decay: reticle drifts back to screen center ──
+      // Runs every rAF (before the 30fps throttle) so the decay rate matches
+      // the 3D camera's idle decay — both use 0.97 per frame at 60fps.
+      // When idle, the offset from center shrinks: newOffset = offset * 0.97
+      if (firstMove && t - lastMoveTime > 2000) {
+        idleTarget.x = w / 2 + (idleTarget.x - w / 2) * 0.97;
+        idleTarget.y = h / 2 + (idleTarget.y - h / 2) * 0.97;
+      }
+
       // 30fps throttle (33ms)
       if (t - lastFrameTime < 33) {
         // Keep rotation smooth during skipped frames — prevents snap on resume
@@ -420,11 +432,11 @@ export function CursorOverlay() {
 
       const audio = getAudioData();
 
-      // ── Dual-element lerp ──
-      dot.x += (target.x - dot.x) * DOT_LERP;
-      dot.y += (target.y - dot.y) * DOT_LERP;
-      ring.x += (target.x - ring.x) * RING_LERP;
-      ring.y += (target.y - ring.y) * RING_LERP;
+      // ── Dual-element lerp (toward idleTarget — decays to center when idle) ──
+      dot.x += (idleTarget.x - dot.x) * DOT_LERP;
+      dot.y += (idleTarget.y - dot.y) * DOT_LERP;
+      ring.x += (idleTarget.x - ring.x) * RING_LERP;
+      ring.y += (idleTarget.y - ring.y) * RING_LERP;
       const speed = Math.hypot(dot.x - prevX, dot.y - prevY);
       prevX = dot.x;
       prevY = dot.y;
