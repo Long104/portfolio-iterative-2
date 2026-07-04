@@ -176,9 +176,10 @@ function App() {
     }
     // Crossfade: 1.5s fade-out current → 1.5s fade-in new track
     // Uses cached buffer if preloaded — no network wait.
+    const previousTrack = currentTrack; // capture before state updates
     await crossfadeTo(url);
-    // Background-preload the track we just left (keep cache warm)
-    warmPreload(currentTrack);
+    // Keep the track we just left in cache — user might switch back
+    warmPreload(previousTrack);
   }, [currentTrack, isPlaying, engage, crossfadeTo, warmPreload]);
 
   const handleExitComplete = useCallback(() => {

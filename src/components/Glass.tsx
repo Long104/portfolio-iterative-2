@@ -122,7 +122,7 @@ export function ProjectCard({
         <div className="project-card__desc">{project.desc}</div>
         <div className="project-card__stack">{project.stack}</div>
       </div>
-      <div ref={arrowRef} className="project-card__arrow">{"→"}</div>
+      <div ref={arrowRef} className="project-card__arrow">{"view →"}</div>
     </RefractiveDiv>
   );
 }

@@ -683,15 +683,17 @@ html.cursor-hidden * {
   position: absolute;
   bottom: 28px;
   right: 24px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
   transition: color 0.2s ease, transform 0.2s ease;
   z-index: 3;
 }
 
 .project-card:hover .project-card__arrow {
   color: rgba(255, 255, 255, 0.8);
-  transform: translate(2px, -2px);
+  transform: translate(4px, -4px);
 }
 
 /* ── Currently — terminal readout (no glass panel) ── */
