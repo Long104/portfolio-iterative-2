@@ -232,7 +232,7 @@ function App() {
             <HeroSection started={started} />
             <AboutSection />
             <ExperienceSection />
-            <WorkSection started={started} onOpenProject={handleOpenProject} />
+            <WorkSection started={started} onOpenProject={handleOpenProject} hidden={selectedProject !== null} />
             <CurrentlySection />
             <ContactSection />
           </ScrollContainer>

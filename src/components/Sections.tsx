@@ -368,7 +368,7 @@ export const ExperienceSection = memo(function ExperienceSection() {
 // ── Work (section 3) — Pinned horizontal scroll ──
 // When you scroll into this section, it pins and cards scroll
 // horizontally. Each card has an image with clip-path reveal.
-export function WorkSection({ started, onOpenProject }: { started: boolean; onOpenProject?: (project: (typeof PROJECTS)[number]) => void }) {
+export function WorkSection({ started, onOpenProject, hidden }: { started: boolean; onOpenProject?: (project: (typeof PROJECTS)[number]) => void; hidden?: boolean }) {
   const containerRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const labelRef = useScrollReveal<HTMLDivElement>({
@@ -486,7 +486,7 @@ export function WorkSection({ started, onOpenProject }: { started: boolean; onOp
   }, [started]);
 
   return (
-    <section ref={containerRef} className="section section--work-horizontal" data-section-index={3}>
+    <section ref={containerRef} className="section section--work-horizontal" data-section-index={3} style={{ visibility: hidden ? "hidden" : "visible" }}>
       <div ref={labelRef} className="section-label work-label">selected work</div>
       <div ref={trackRef} className="work-track">
         {PROJECTS.map((project, i) => (
