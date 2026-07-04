@@ -140,7 +140,7 @@ html.cursor-hidden * {
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: lowercase;
-  color: rgba(255, 255, 255, var(--hud-opacity));
+  color: rgba(255, 255, 255, 0.75);
   pointer-events: none;
   user-select: none;
   text-shadow:
@@ -196,6 +196,16 @@ html.cursor-hidden * {
     0 0 4px rgba(0,0,0,0.95),
     0 0 12px rgba(0,0,0,0.7),
     0 0 24px rgba(0,0,0,0.4);
+}
+
+.hud__track {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.6;
+  text-align: right;
+  text-shadow:
+    0 0 4px rgba(0,0,0,0.95),
+    0 0 12px rgba(0,0,0,0.7);
 }
 
 /* ── Section label (// about, // work) ── */

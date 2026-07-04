@@ -4,7 +4,6 @@
 import { useRef, useEffect, useMemo } from "react";
 import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
-import { PsycommuWaveform } from "./PsycommuWaveform";
 import { TRACKS } from "../useAudioEngine";
 import { gsap } from "../lib/gsap";
 
@@ -116,8 +115,6 @@ export function AudioBar({
       >
         {isPlaying ? "\u23F8" : "\u25B6"}
       </button>
-
-      <PsycommuWaveform />
 
       <div className="audio-bar__divider" />
 

@@ -20,6 +20,7 @@ import { NavOverlay } from "./components/NavOverlay";
 import { AudioBar } from "./components/AudioBar";
 import { CursorOverlay } from "./components/CursorOverlay";
 import { ProjectDetail } from "./components/ProjectDetail";
+import { HUD } from "./components/HUD";
 import type { Project } from "./components/projects";
 import { initAudioUI } from "./lib/audio-ui";
 
@@ -32,6 +33,8 @@ import {
   ContactSection,
 } from "./components/Sections";
 import { StackSection } from "./components/Armament";
+
+const TOTAL_SECTIONS = 7;
 
 type Theme = "gquuuuuux" | "gfreed";
 
@@ -202,6 +205,7 @@ function App() {
     setSelectedProject(null);
   }, []);
 
+  const activeTrackName = TRACKS.find((t) => t.url === currentTrack)?.name ?? "";
   const bootPhaseNarrowed: "enter" | "exit" = bootPhase === "gone" ? "exit" : bootPhase;
 
   // Parallax: glass panels float on scroll
@@ -237,7 +241,7 @@ function App() {
         </Suspense>
       )}
 
-      {/* ── Layer 2: Nav (always visible after start) ── */}
+      {/* ── Layer 2: Nav + HUD (always visible after start) ── */}
       {started && (
         <>
           <NavPill
@@ -247,6 +251,13 @@ function App() {
           <NavOverlay
             activeIndex={activeSection}
             onNavigate={(i) => scrollRef.current?.scrollToSection(i)}
+          />
+          <HUD
+            sectionIndex={activeSection}
+            totalSections={TOTAL_SECTIONS}
+            audioStatus={isPlaying ? "psycommu: online" : "psycommu: standby"}
+            trackName={`BGM: ${activeTrackName}`}
+            isPlaying={isPlaying}
           />
         </>
       )}
