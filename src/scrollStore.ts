@@ -7,14 +7,12 @@
 interface ScrollState {
   progress: number;   // 0–1, entire page
   sectionIndex: number; // current section 0–4
-  sectionProgress: number; // 0–1 within current section
   velocity: number;   // smoothed scroll velocity (px/frame, 0 when idle)
 }
 
 const state: ScrollState = {
   progress: 0,
   sectionIndex: 0,
-  sectionProgress: 0,
   velocity: 0,
 };
 

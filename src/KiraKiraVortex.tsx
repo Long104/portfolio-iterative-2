@@ -18,9 +18,6 @@ import { useAudioEngine } from "./useAudioEngine";
 import { getScrollState } from "./scrollStore";
 import { getMouseState } from "./mouseStore";
 
-// ==========================================
-// 3. SCENE COMPONENT
-// ==========================================
 
 function generateInstanceData(count: number, maxRadius: number) {
   const pos = new Float32Array(count * 3);
@@ -155,7 +152,6 @@ export default function KiraKiraVortex() {
   const backdropGeo = useMemo(() => new PlaneGeometry(2, 2), []);
 
   const paintGeo = useMemo(() => {
-    // here make the hole bigger
     const { pos, rand } = generateInstanceData(PAINT_COUNT, 38.0);
     const geo = new PlaneGeometry(0.4, 0.4);
     geo.setAttribute("aInitialPos", new InstancedBufferAttribute(pos, 3));
@@ -241,12 +237,10 @@ export default function KiraKiraVortex() {
 
     const aspect = state.size.width / state.size.height;
 
-    // Time
     paintMat.uniforms.uTime.value = t;
     flareMat.uniforms.uTime.value = t;
     glowMat.uniforms.uTime.value = t;
 
-    // Aspect
     glowMat.uniforms.uAspect.value = aspect;
     backdropMat.uniforms.uAspect.value = aspect;
 
@@ -311,7 +305,7 @@ export default function KiraKiraVortex() {
       {/* 2. Merged Glow (Sun + Rays + Bridge + Core — single pass) */}
       <mesh geometry={backdropGeo} material={glowMat} renderOrder={-4} />
 
-      {/* 3. Fluid Particles & Water Bubbles (Now clipping on top of the clouds seamlessly) */}
+      {/* 3. Particles (instanced — audio-reactive drift) */}
       <instancedMesh
         args={[paintGeo, paintMat, PAINT_COUNT]}
         frustumCulled={false}

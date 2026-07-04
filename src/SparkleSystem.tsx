@@ -13,7 +13,6 @@ import {
 } from "three";
 import { useAudioEngine } from "./useAudioEngine";
 
-// ==========================================
 // SPARKLE SYSTEM — Chromatic Lens Flare Kira-Kira
 // Each sparkle is a tiny anamorphic lens flare:
 // - Overexposed white core
@@ -21,7 +20,6 @@ import { useAudioEngine } from "./useAudioEngine";
 // - Teal (#6AABAD) vertical fringe
 // - Soft bloom glow extending beyond spikes
 // Born from nothing → flash → die. Beat-driven.
-// ==========================================
 
 const POOL_SIZE = 120;
 

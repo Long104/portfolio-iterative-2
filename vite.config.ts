@@ -11,12 +11,6 @@ export default defineConfig({
     ...(process.env.ANALYZE ? [visualizer({ open: true, gzipSize: true, brotliSize: true })] : []),
   ],
 
-  resolve: {
-    alias: {
-      '@': '/src',
-    },
-  },
-
   build: {
     target: 'esnext',
     sourcemap: false,

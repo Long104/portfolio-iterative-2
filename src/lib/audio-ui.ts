@@ -125,9 +125,3 @@ export function playOpenSound(): void {
 export function playCloseSound(): void {
   tone(800, 200, 0.15, 0.08, "sine");
 }
-
-// ── Radar sweep (nav section change) ──
-// Soft triangle whoosh — low volume, warm character.
-export function playNavSound(): void {
-  tone(500, 700, 0.1, 0.05, "triangle");
-}

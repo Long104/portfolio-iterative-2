@@ -17,9 +17,9 @@ import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 const SECTIONS = ["pilot", "about", "experience", "work", "now", "contact"] as const;
 
 const SOCIAL_LINKS: { label: string; href: string }[] = [
-  { label: "github", href: "https://github.com" },
-  { label: "linkedin", href: "https://linkedin.com" },
-  { label: "email", href: "mailto:hello@pantorn.dev" },
+  { label: "github", href: "https://github.com/Long104" },
+  { label: "linkedin", href: "https://www.linkedin.com/in/pantorn-chuavallee/" },
+  { label: "email", href: "mailto:longpantorn@gmail.com" },
 ];
 
 interface NavOverlayProps {

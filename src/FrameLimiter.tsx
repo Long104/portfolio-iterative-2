@@ -1,10 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 
-// ==========================================
 // FRAME LIMITER — flat 30fps
-// ==========================================
-//
 // Single tier: 30fps always.
 // Pauses rendering when tab is hidden (visibilitychange).
 // In frameloop="demand" mode, R3F only renders when invalidate() is called.

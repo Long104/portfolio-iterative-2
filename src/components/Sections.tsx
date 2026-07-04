@@ -369,7 +369,6 @@ export const ExperienceSection = memo(function ExperienceSection() {
   );
 });
 
-// ── Work (section 3) ──
 // ── Work (section 3) — Pinned horizontal scroll ──
 // When you scroll into this section, it pins and cards scroll
 // horizontally. Each card has an image with clip-path reveal.

@@ -1,75 +1,37 @@
-# React + TypeScript + Vite
+# kira-gem-3d-tunnel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Portfolio of Pantorn Chuavallee — software engineer.
 
-Currently, two official plugins are available:
+Audio-reactive 3D vortex built with React 19, Three.js (R3F), GSAP, and custom GLSL shaders. Designed as a Gundam cockpit aesthetic: refractive glass panels, procedural lens flares, and scroll-linked camera choreography.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- React 19 + TypeScript + Vite
+- Three.js via @react-three/fiber
+- GSAP (ScrollTrigger, timelines)
+- Refractive glass (refractive library)
+- Web Audio API (procedural UI sounds + audio-reactive shaders)
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Develop
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # localhost:3000
+npm run build    # production build
+npm run preview  # preview production build
+npm run deploy   # build + deploy to Cloudflare Pages
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── KiraKiraVortex.tsx    # Main 3D scene — shaders, camera, audio reactivity
+├── SparkleSystem.tsx     # Chromatic lens flare particle system
+├── useAudioEngine.ts     # Web Audio frequency analysis
+├── perf.ts               # Device detection + adaptive particle counts
+├── shaders/              # GLSL vertex + fragment shaders
+├── components/           # UI overlay (glass panels, nav, cursor, sections)
+├── hooks/                # Scroll, parallax, orientation hooks
+└── lib/                  # GSAP config, audio-ui sound effects
 ```

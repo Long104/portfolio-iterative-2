@@ -31,7 +31,6 @@ export default defineConfig([
       'src/components/NavPill.tsx',
       'src/components/AudioBar.tsx',
       'src/components/PsycommuBoot.tsx',
-      'src/components/ScrollProgress.tsx',
     ],
     rules: {
       'react-hooks/immutability': 'off',

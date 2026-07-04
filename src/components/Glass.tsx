@@ -23,12 +23,10 @@ export function GlassPanel({ children }: { children: ReactNode }) {
 // GSAP micro-interaction: scale bump + arrow nudge + bracket fade on hover.
 export function ProjectCard({
   project,
-  cardRef,          // forwarded ref for the parent track
   imageRef,         // forwarded ref for clip-path reveal on the image
   onOpen,           // callback to open project detail overlay
 }: {
   project: (typeof PROJECTS)[number];
-  cardRef?: React.Ref<HTMLDivElement>;
   imageRef?: React.Ref<HTMLDivElement>;
   onOpen?: (project: (typeof PROJECTS)[number]) => void;
 }) {
@@ -38,7 +36,7 @@ export function ProjectCard({
   const bracketRef = useRef<HTMLDivElement>(null);
   const lockOnRef = useRef<HTMLDivElement>(null);
   const tweenRef = useRef<gsap.core.Timeline | null>(null);
-  const mergedCardRef = cardRef || localCardRef;
+  const mergedCardRef = localCardRef;
   const refraction = useMemo(() => buildNavConfig(specularAngle), [specularAngle]);
 
   useEffect(() => {
