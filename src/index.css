@@ -51,9 +51,9 @@ html {
    Body already has transition: background 0.5s ease. */
 :root[data-active-section="0"] { --theme-bg: #01314a; }  /* Hero — base blue */
 :root[data-active-section="1"] { --theme-bg: #0d1a3e; }  /* About — purple shift */
-:root[data-active-section="2"] { --theme-bg: #081828; }  /* Armament — deep steel */
-:root[data-active-section="3"] { --theme-bg: #0a1e2e; }  /* Experience — deep navy */
-:root[data-active-section="4"] { --theme-bg: #01314a; }  /* Work — base blue */
+:root[data-active-section="2"] { --theme-bg: #0a1e2e; }  /* Experience — deep navy */
+:root[data-active-section="3"] { --theme-bg: #01314a; }  /* Work — base blue */
+:root[data-active-section="4"] { --theme-bg: #081828; }  /* Stack — deep steel */
 :root[data-active-section="5"] { --theme-bg: #0a1a2e; }  /* Currently — dark indigo */
 :root[data-active-section="6"] { --theme-bg: #012a3a; }  /* Contact — teal shift */
 
@@ -356,137 +356,45 @@ html.cursor-hidden * {
 .project-card__num,
 .project-card__title,
 .project-card__desc,
-.project-card__stack,
-.armament__label,
-.armament__value,
-.armament__header,
-.armament__status-label,
-.armament__status-text {
+.project-card__stack {
   text-shadow:
     0 0 4px rgba(0,0,0,0.95),
     0 0 12px rgba(0,0,0,0.7),
     0 0 24px rgba(0,0,0,0.4);
 }
 
-/* ── Armament / Spec Sheet ── */
-/* Mobile Suit diagnostic readout. No refractive glass — bordered panel with
-   mono text + continuous CRT scanline. Visually distinct from all other
-   sections (fixes SOTD audit C4). */
+/* ── Stack / Glass Pill Row ── */
+/* Each tech name is a small refractive glass element.
+   The liquid specular highlight shifts across pills on mouse move.
+   Two clean flex rows. The glass effect IS the visual — no gimmicks. */
 
-.armament__frame {
-  position: relative;
-  max-width: 640px;
-  background: rgba(1, 20, 40, 0.5);
-  border: 1px solid rgba(100, 210, 255, 0.12);
-  padding: 36px 40px;
-  overflow: hidden;
-}
-
-/* ── Scanline animation (always running) ── */
-.armament__scanline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(100, 210, 255, 0.25) 20%,
-    rgba(100, 210, 255, 0.5) 50%,
-    rgba(100, 210, 255, 0.25) 80%,
-    transparent 100%
-  );
-  box-shadow: 0 0 6px rgba(100, 210, 255, 0.2);
-  pointer-events: none;
-  z-index: 1;
-  animation: armament-scan 4s ease-in-out infinite;
-}
-
-@keyframes armament-scan {
-  0%   { top: -1px; opacity: 0; }
-  12%  { opacity: 0.7; }
-  45%  { opacity: 0.7; }
-  55%  { opacity: 0; }
-  100% { top: 100%; opacity: 0; }
-}
-
-.armament__header {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  color: rgba(100, 210, 255, 0.5);
-  margin-bottom: 28px;
-  text-transform: uppercase;
-}
-
-.armament__grid {
+.stack-pills {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-.armament__row {
-  display: grid;
-  grid-template-columns: 150px 1fr;
-  gap: 16px;
-  align-items: baseline;
-}
-
-.armament__label {
+.stack-pill {
+  padding: 8px 18px;
   font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.35);
-  text-transform: uppercase;
-}
-
-.armament__value {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
   letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  user-select: none;
+  will-change: transform, opacity;
 }
 
-.armament__status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(100, 210, 255, 0.08);
-}
-
-.armament__status-label {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.armament__bar-track {
-  flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.armament__bar-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--theme-accent2), var(--theme-accent));
-  border-radius: 2px;
-}
-
-.armament__status-text {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--theme-accent2);
-  min-width: 6ch;
-  text-align: right;
+/* ── Text contrast over vortex ── */
+.stack-pill {
+  text-shadow:
+    0 0 4px rgba(0,0,0,0.95),
+    0 0 12px rgba(0,0,0,0.7),
+    0 0 24px rgba(0,0,0,0.4);
 }
 
 /* ── Gundam corner brackets ──
@@ -1791,23 +1699,14 @@ html.cursor-hidden * {
     padding: 28px;
   }
 
-  .armament__frame {
-    padding: 24px 20px;
+  .stack-pills {
+    gap: 8px;
+    padding: 12px;
   }
 
-  .armament__row {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-
-  .armament__header {
-    font-size: 10px;
-    margin-bottom: 20px;
-  }
-
-  .armament__status {
-    margin-top: 20px;
-    padding-top: 16px;
+  .stack-pill {
+    padding: 6px 14px;
+    font-size: 11px;
   }
 
   /* Experience timeline: narrower on mobile */

@@ -1,28 +1,28 @@
-// ── Armament / Spec Sheet ──
-// Mobile Suit diagnostic readout.
-// Not a glass panel — a bordered technical spec display with scanline effect.
-// Each row is a label/value pair (POWER SOURCE → go · typescript · python).
-// Scroll-triggered reveal: rows stagger in from left, status bar fills, text resolves.
-// Continuous scanline animation gives cockpit CRT feel.
-// Fixes SOTD audit C4: visually distinct from all other sections.
+// ── Stack Section ──
+// Glass pill row layout — each tech name is its own small refractive element.
+// Liquid glass specular highlight moves independently across pills on mouse move.
+// Normal developer text. No Gundam labels, no scanlines, no gimmicks.
+// The glass effect IS the visual — that's the artistic statement.
+// Two clean flex rows (or wraps to fit). Staggered reveal on scroll enter.
 
-import { memo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import { useScrollReveal } from "../hooks/useScrollReveal";
+import { useDeviceOrientation } from "../useDeviceOrientation";
+import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 
-const TECH_SPECS = [
-  { label: "POWER SOURCE", items: ["go", "typescript", "python"] },
-  { label: "ARMAMENT", items: ["react", "three.js", "next.js", "tailwind"] },
-  { label: "DEFENSE GRID", items: ["aws", "docker", "kubernetes", "terraform"] },
-  { label: "SENSOR SUITE", items: ["postgres", "grpc", "fiber"] },
+const TECH_ITEMS = [
+  "go", "typescript", "python",
+  "react", "three.js", "next.js", "tailwind",
+  "aws", "docker", "kubernetes", "terraform",
+  "postgres", "grpc", "fiber",
 ] as const;
 
-export const ArmamentSection = memo(function ArmamentSection() {
+export const StackSection = memo(function StackSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const barRef = useRef<HTMLDivElement>(null);
-  const statusRef = useRef<HTMLSpanElement>(null);
+  const specularAngle = useDeviceOrientation();
+  const refraction = useMemo(() => buildSmallConfig(specularAngle), [specularAngle]);
 
   // Section label: same split-chars scroll reveal as other sections
   const labelRef = useScrollReveal<HTMLDivElement>({
@@ -36,53 +36,30 @@ export const ArmamentSection = memo(function ArmamentSection() {
     ease: "power2.out",
   });
 
+  // GSAP stagger reveal for the glass pills
   useGSAP(() => {
-    const rows = rowRefs.current.filter(Boolean) as HTMLDivElement[];
-    const bar = barRef.current;
-    const status = statusRef.current;
-    if (!bar || !status) return;
-
     if (PREFERS_REDUCED_MOTION) {
-      gsap.set(rows, { opacity: 1, x: 0 });
-      gsap.set(bar, { width: "100%" });
-      status.textContent = "ONLINE";
+      gsap.set(".stack-pill", { opacity: 1, y: 0 });
       return;
     }
 
-    // Initial: hidden behind left offset
-    gsap.set(rows, { opacity: 0, x: -24 });
-    gsap.set(bar, { width: "0%" });
-    status.textContent = "---";
+    gsap.set(".stack-pill", { opacity: 0, y: 16 });
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top 85%",
-        end: "top 55%",
         toggleActions: "play none none none",
         once: true,
       },
-      defaults: { ease: "power3.out" },
+      defaults: { ease: "power2.out" },
     });
 
-    // 1. Rows stagger in from left
-    tl.to(rows, {
+    tl.to(".stack-pill", {
       opacity: 1,
-      x: 0,
-      stagger: 0.18,
-      duration: 0.6,
-    });
-
-    // 2. Status bar fills (slightly overlaps last row)
-    tl.to(bar, {
-      width: "100%",
-      duration: 0.6,
-      ease: "power2.inOut",
-    }, "-=0.1");
-
-    // 3. Resolve status text
-    tl.call(() => {
-      status.textContent = "ONLINE";
+      y: 0,
+      stagger: 0.03,
+      duration: 0.35,
     });
 
     return () => {
@@ -92,38 +69,19 @@ export const ArmamentSection = memo(function ArmamentSection() {
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="section armament" data-section-index={2}>
-      <div ref={labelRef} className="section-label">armament</div>
+    <section ref={sectionRef} className="section" data-section-index={4}>
+      <div ref={labelRef} className="section-label">stack</div>
 
-      <div className="armament__frame">
-        {/* Continuous CRT scanline */}
-        <div className="armament__scanline" aria-hidden="true" />
-
-        {/* Header */}
-        <div className="armament__header">SYSTEM: KIRA-GEM — PILOT: PANTORN</div>
-
-        {/* Spec rows */}
-        <div className="armament__grid">
-          {TECH_SPECS.map((spec, i) => (
-            <div
-              key={spec.label}
-              ref={(el) => { rowRefs.current[i] = el; }}
-              className="armament__row"
-            >
-              <span className="armament__label">{spec.label}</span>
-              <span className="armament__value">{spec.items.join(" · ")}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Status line */}
-        <div className="armament__status">
-          <span className="armament__status-label">STATUS</span>
-          <div className="armament__bar-track">
-            <div ref={barRef} className="armament__bar-fill" />
-          </div>
-          <span ref={statusRef} className="armament__status-text">---</span>
-        </div>
+      <div className="stack-pills">
+        {TECH_ITEMS.map((item) => (
+          <RefractiveDiv
+            key={item}
+            refraction={refraction}
+            className="stack-pill"
+          >
+            {item}
+          </RefractiveDiv>
+        ))}
       </div>
     </section>
   );

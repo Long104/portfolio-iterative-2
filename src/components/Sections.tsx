@@ -295,7 +295,7 @@ export const ExperienceSection = memo(function ExperienceSection() {
   });
 
   return (
-    <section className="section" data-section-index={3}>
+    <section className="section" data-section-index={2}>
       <div ref={labelRef} className="section-label">experience</div>
       <GlassPanel>
         <div className="timeline">
@@ -442,7 +442,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
   }, [started]);
 
   return (
-    <section ref={containerRef} className="section section--work-horizontal" data-section-index={4} style={{ visibility: hidden ? "hidden" : "visible" }}>
+    <section ref={containerRef} className="section section--work-horizontal" data-section-index={3} style={{ visibility: hidden ? "hidden" : "visible" }}>
       <div ref={labelRef} className="section-label work-label">selected work</div>
       <div ref={trackRef} className="work-track">
         {PROJECTS.map((project, i) => (

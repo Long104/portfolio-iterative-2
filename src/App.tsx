@@ -32,7 +32,7 @@ import {
   CurrentlySection,
   ContactSection,
 } from "./components/Sections";
-import { ArmamentSection } from "./components/Armament";
+import { StackSection } from "./components/Armament";
 
 const TOTAL_SECTIONS = 7;
 
@@ -232,9 +232,9 @@ function App() {
           <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange} paused={!started} locked={selectedProject !== null}>
             <HeroSection started={started} />
             <AboutSection />
-            <ArmamentSection />
             <ExperienceSection />
             <WorkSection started={started} onOpenProject={handleOpenProject} hidden={selectedProject !== null} />
+            <StackSection />
             <CurrentlySection />
             <ContactSection />
           </ScrollContainer>
