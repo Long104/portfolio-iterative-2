@@ -1,4 +1,4 @@
-// ── Portfolio Sections ──
+// ── Page sections ──
 // Hero, About, Experience, Work, Contact
 // Each is a <section> with data-section-index for scroll tracking.
 // All text uses useScrollReveal for SplitText-driven scroll animations.
@@ -15,7 +15,7 @@ import { gsap, SplitText, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../lib/g
 import { playHoverSound } from "../lib/audio-ui";
 import { getMouseState } from "../mouseStore";
 
-// ── Hero (section 0) — Cinematic name reveal ──
+// ── Hero — cinematic name reveal ──
 // Three-tier typography hierarchy:
 //   1. PANTORN CHUAVALLEE — massive, SplitText line reveal (the hero moment)
 //   2. software engineer — small mono subtitle
@@ -51,7 +51,7 @@ export function HeroSection({ started }: { started: boolean }) {
 
       if (split.lines.length === 0) return;
 
-      // Hide name lines + role + tagline
+      // Stealth: lines hidden until LAUNCH
       gsap.set(split.lines, { yPercent: 140, opacity: 0 });
       gsap.set([roleRef.current, taglineRef.current], { opacity: 0, y: 20 });
       splitRef.current = split;
@@ -83,7 +83,7 @@ export function HeroSection({ started }: { started: boolean }) {
 
     const tl = gsap.timeline({ delay: 0.35 });
 
-    // 1. Name lines — dramatic stagger reveal
+    // 1. Name lines stagger up
     tl.to(split.lines, {
       yPercent: 0,
       opacity: 1,
@@ -92,7 +92,7 @@ export function HeroSection({ started }: { started: boolean }) {
       ease: "expo.out",
     });
 
-    // 2. Role subtitle fades up
+    // 2. Role fades in
     tl.to(roleRef.current, {
       opacity: 1, y: 0, duration: 0.5, ease: "power2.out",
     }, "-=0.4");
@@ -241,7 +241,7 @@ export const AboutSection = memo(function AboutSection() {
   );
 });
 
-// ── Experience Item (Timeline) ──
+// ── Timeline item ──
 // Vertical wire with glowing dot nodes. No glass panel — just the wire.
 // Each text element gets its own useScrollReveal ref for staggered entry.
 
@@ -284,7 +284,7 @@ function ExpItem({ period, role, company, location, description, isCurrent, isEd
 
     if (split.lines.length === 0) return;
 
-    // Hide all lines initially
+    // All lines start hidden
     gsap.set(split.lines, { y: "120%", opacity: 0, willChange: "transform, opacity" });
 
     // One ScrollTrigger per item — all lines scrub in together
@@ -336,7 +336,7 @@ function ExpItem({ period, role, company, location, description, isCurrent, isEd
   );
 }
 
-// ── Experience (section 2) — Timeline ──
+// ── Experience section ──
 export const ExperienceSection = memo(function ExperienceSection() {
   const labelRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
@@ -376,7 +376,7 @@ export const ExperienceSection = memo(function ExperienceSection() {
   );
 });
 
-// ── Work (section 3) — Pinned horizontal scroll ──
+// ── Work section — horizontal scroll ──
 // When you scroll into this section, it pins and cards scroll
 // horizontally. Each card has an image with clip-path reveal.
 export function WorkSection({ started, onOpenProject, hidden }: { started: boolean; onOpenProject?: (project: (typeof PROJECTS)[number]) => void; hidden?: boolean }) {
@@ -393,11 +393,11 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
     ease: "power2.out",
   });
 
-  // ── Pinned horizontal scroll hook ──
+      // ── Horizontal scroll drive ──
   const horizontalTween = useRef<gsap.core.Tween>(null);
   useHorizontalScroll(containerRef, trackRef, started, horizontalTween);
 
-  // ── Per-card clip-path reveal ──
+  // ── Per-card clip reveal ──
   // Desktop (≥769px): wipes via gsap.ticker reading track translateX and
   //   calculating clip progress from each card's viewport position.
   // Mobile (≤768px): wipes via standard ScrollTrigger on vertical scroll.
@@ -412,13 +412,13 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
     revealTriggers.current.forEach((st) => st.kill());
     revealTriggers.current = [];
 
-    // Set all images to hidden initially
+    // Mask all card images
     imageRefs.current.forEach((img) => {
       if (img) gsap.set(img, { clipPath: "inset(0 100% 0 0)" });
     });
 
     if (horizontalTween.current) {
-      // ── Desktop: viewport-position-based clip-path reveal ──
+      // Desktop: viewport-based clip reveal
       // Instead of ScrollTrigger.create with containerAnimation (which fails
       // for cards whose left edge is already left of the viewport right edge),
       // read each card's viewport position via getBoundingClientRect and
@@ -458,10 +458,10 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
         });
       };
 
-      // Set initial state immediately (before adding ticker)
+      // Snap initial clip state
       updateClipPaths();
 
-      // Update on every frame while horizontal scroll is active
+      // Tick per frame during horizontal scroll
       gsap.ticker.add(updateClipPaths);
 
       return () => {
@@ -471,7 +471,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
       };
     }
 
-    // ── Mobile (≤768px): vertical scroll wipe ──
+    // Mobile: vertical scroll wipe
     imageRefs.current.forEach((imgEl) => {
       if (!imgEl) return;
       const card = imgEl.closest(".project-card") as HTMLElement;
@@ -517,7 +517,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
   );
 }
 
-// ── Currently (section 4) — Live Psycommu status readout ──
+// ── Currently section — live readout ──
 // Terminal typewriter effect: header types out, clock ticks live,
 // each row's value types sequentially. Blinking cursor at the end.
 const CURRENTLY_ITEMS = [
@@ -566,7 +566,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
   const valueRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const typedRef = useRef(false);
 
-  // ── Live Bangkok clock (UTC+7) ──
+  // ── Bangkok live clock ──
   const [clock, setClock] = useState("--:--:--");
   useEffect(() => {
     function tick() {
@@ -583,7 +583,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Typewriter sequence on scroll enter ──
+  // ── Typewriter on scroll enter ──
   useEffect(() => {
     if (typedRef.current) return;
     const section = sectionRef.current;
@@ -596,7 +596,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
       onEnter: () => {
         typedRef.current = true;
 
-        // Reduced motion: show everything instantly
+        // Reduced motion: reveal all at once
         if (PREFERS_REDUCED_MOTION) {
           if (headerTextRef.current) headerTextRef.current.textContent = "> LOCATION: bangkok —";
           CURRENTLY_ITEMS.forEach((item, i) => {
@@ -688,7 +688,7 @@ export const CurrentlySection = memo(function CurrentlySection() {
   );
 });
 
-// ── Contact (section 5) — Grand Finale ──
+// ── Contact section ──
 export const ContactSection = memo(function ContactSection() {
   const headlineRef = useScrollReveal<HTMLDivElement>({
     split: "lines",
@@ -721,7 +721,7 @@ export const ContactSection = memo(function ContactSection() {
     ease: "power2.out",
   });
 
-  // ── Magnetic hover on email + social links ──
+  // ── Magnetic hover on links ──
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return;
     if (window.matchMedia("(hover: none)").matches) return;

@@ -195,7 +195,7 @@ export default function KiraKiraVortex() {
     };
   }, []);
 
-  // ── Scroll-linked camera + particle speed ──
+  // Scroll-driven camera + particle speed
   // Camera orbits + pulls back based on scroll progress (0–1).
   // Particle speed scales with scroll — vortex intensifies as user descends.
   const { camera } = useThree();
@@ -213,7 +213,7 @@ export default function KiraKiraVortex() {
     { pos: [0,    0,    4.5], look: [0, 0, 0] },  // 4: contact — centered, slightly zoomed
   ], []);
 
-  // ── Idle-decayed mouse offset ──
+  // Idle-decayed mouse offset
   // When the user hasn't moved the mouse for 2s, this value exponentially
   // decays toward (0, 0), smoothly returning the camera to center.
   const idleMouse = useRef({ x: 0, y: 0 });
@@ -282,7 +282,7 @@ export default function KiraKiraVortex() {
     const cur = SECTION_CAMERAS[segIdx];
     const nxt = SECTION_CAMERAS[segIdx + 1] ?? cur;
 
-    // ── Idle-decayed mouse parallax ──
+    // Idle-decayed mouse parallax
     // When the cursor hasn't moved for 2 seconds, the parallax offset
     // exponentially decays toward zero — the camera slowly drifts back
     // to center on its own.
@@ -311,7 +311,7 @@ export default function KiraKiraVortex() {
     currentLookAt.current.lerp(camLookAt.current, 0.05);
     camera.lookAt(currentLookAt.current);
 
-    // ── Scroll-reactive particle speed ──
+    // Particle speed follows scroll velocity
     // Smooth uSpeed toward target — prevents position jumps when speed changes.
     // (Shader computes pos = uTime * uSpeed, so sudden speed changes teleport
     // all particles. Lerp the uniform at 5%/frame for gradual acceleration.)

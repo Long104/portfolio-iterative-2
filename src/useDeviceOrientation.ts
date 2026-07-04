@@ -1,4 +1,4 @@
-// ── useDeviceOrientation ──
+// ── Device orientation → specular angle ──
 // Apple Liquid Glass-style specular tilt.
 // Light is world-fixed at 115° (upper-left). Device tilt shifts the
 // highlight ±20° with lerp smoothing — like tilting a real glass pane
@@ -116,7 +116,7 @@ export function useDeviceOrientation(): number {
       }
     }
 
-    // ── Attach listener based on permission state ──
+    // Attach orientation listener
     if (permState === "granted" || permState === "not-needed") {
       window.addEventListener("deviceorientation", handleOrientation);
     } else if (permState === "unknown" && !isIOSPermissionRequired()) {

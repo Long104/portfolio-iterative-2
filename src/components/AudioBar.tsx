@@ -1,4 +1,4 @@
-// ── AudioBar — Psycommu Control Panel ──
+// ── AudioBar — Psycommu control panel ──
 // Sliding active indicator + play/pause/track switch micro-interactions.
 
 import { useRef, useEffect, useMemo } from "react";
@@ -32,7 +32,7 @@ export function AudioBar({
   const initialised = useRef(false);
   const playBtnRef = useRef<HTMLButtonElement>(null);
 
-  // ── Play button: press micro-interaction + magnetic hover ──
+  // ── Play button micro-interaction ──
   useEffect(() => {
     const btn = playBtnRef.current;
     if (!btn) return;
@@ -70,7 +70,7 @@ export function AudioBar({
     };
   }, []);
 
-  // ── Slide indicator to active track ──
+  // ── Slide indicator ──
   useEffect(() => {
     const indicator = indicatorRef.current;
     const activeIdx = TRACKS.findIndex((t) => t.url === currentTrack);

@@ -1,4 +1,4 @@
-// ── Global Mouse Store ──
+// ── Mouse store (mutable, zero-render) ──
 // Same pattern as scrollStore — mutable ref, zero React re-renders.
 // App writes normalized cursor position here; R3F reads it in useFrame.
 

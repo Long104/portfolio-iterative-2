@@ -1,6 +1,4 @@
-// Layer C: Radiant star flares (additive blending)
-// AUDIO STRATEGY: near-dark at rest (×0.12). ~65% flash bright on treble.
-// Punchy starburst effect — flares explode on hi-hats and synths.
+// Star flares: near-dark at rest, flash on treble.
 export const flareVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;

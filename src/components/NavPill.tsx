@@ -22,7 +22,7 @@ export function NavPill({ activeIndex, onNavigate }: NavPillProps) {
   const initialised = useRef(false);
   const hoverTweens = useRef<Map<number, gsap.core.Tween>>(new Map());
 
-  // ── Hover spring on nav buttons (pointer-capable devices only) ──
+  // ── Hover spring (pointer devices only) ──
   useEffect(() => {
     // mouseenter/mouseleave fire unreliably on iOS touch — buttons get stuck
     // at scale 1.08. Only attach on devices that actually support hover.
@@ -59,7 +59,7 @@ export function NavPill({ activeIndex, onNavigate }: NavPillProps) {
     };
   }, []);
 
-  // ── Slide indicator to active item ──
+  // ── Slide indicator to active section ──
   useEffect(() => {
     const indicator = indicatorRef.current;
     const target = itemsRef.current[activeIndex];

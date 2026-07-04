@@ -1,4 +1,4 @@
-// ── HUD Layer ──
+// ── HUD — Corner status readout ──
 // Corner labels with GSAP-driven micro-interactions:
 // - Entrance stagger (per-corner slide-in on boot)
 // - Audio status pulse (gently pulses when playing)
@@ -26,7 +26,7 @@ export function HUD({
 
   const counterRef = useRef<HTMLDivElement>(null);
 
-  // ── Section counter crossfade ──
+  // ── Counter crossfade ──
   useEffect(() => {
     const el = counterRef.current;
     if (!el) return;

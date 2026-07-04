@@ -1,4 +1,4 @@
-// --- Adaptive perf tier (replaces hardcoded counts) ---
+// ── Adaptive perf tier ──
 // Cheap heuristic: UA + cores + RAM. Good enough before first frame;
 // R3F `performance` prop then drops DPR further if FPS dips at runtime.
 //

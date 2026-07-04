@@ -48,7 +48,7 @@ function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const scrollRef = useRef<ScrollContainerHandle>(null);
 
-  // ── Apply theme to root element ──
+  // Apply theme to root
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "gfreed") {
@@ -73,12 +73,12 @@ function App() {
     warmPreload,
   } = useAudioEngine();
 
-  // ── Preload default audio track on mount — happens during Psycommu boot ──
+  // Preload default track (during boot)
   useEffect(() => {
     if (!isPreloaded) preload(currentTrack);
   }, []); // mount only
 
-  // ── Pre-mount heavy content during boot (behind overlay) ──
+  // Pre-mount content during boot (behind overlay)
   // Mounts ScrollContainer + Sections 800ms after page load so SplitText,
   // Lenis, and ScrollTrigger are warm before the user clicks LAUNCH.
   // Prevents the 100-300ms frame freeze that was eating the GSAP exit animation.
@@ -87,7 +87,7 @@ function App() {
     return () => clearTimeout(t);
   }, []); // mount only
 
-  // ── Refresh ScrollTrigger after webfonts load ──
+  // Refresh triggers after fonts land
   // Font loading causes text reflow → trigger positions shift.
   // This fires once when all fonts are ready (before or after boot exit).
   useEffect(() => {
@@ -100,7 +100,7 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Lock body scroll during boot — only unlock after LAUNCH ──
+  // Lock body scroll during boot
   // Content is pre-mounted 800ms after page load (behind the boot overlay).
   // Without this, users can scroll the hidden content during the boot sequence,
   // leaving it in a random position when LAUNCH fires.
@@ -113,7 +113,7 @@ function App() {
     return () => { document.body.style.overflow = ""; };
   }, [started]);
 
-  // ── Scroll progress tracking (rAF-throttled — prevents 120 re-renders/sec) ──
+  // Scroll progress (rAF-throttled, writes to scrollStore for R3F)
   // Also writes to global scrollStore for R3F to read in useFrame (no React re-render).
   useEffect(() => {
     if (!started) return;
@@ -132,7 +132,7 @@ function App() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [started]);
 
-  // ── Mouse parallax tracking (rAF-throttled — writes to mouseStore for R3F) ──
+  // Mouse parallax (rAF-throttled, writes to mouseStore for R3F)
   useEffect(() => {
     if (!started) return;
     let ticking = false;
@@ -160,7 +160,7 @@ function App() {
     } else {
       await loadTrack(currentTrack);
     }
-    // ── Background-preload the OTHER track so first switch is instant ──
+    // Preload the other track in background (instant switch later)
     // Runs silently after LAUNCH — by the time user touches AudioBar (10-30s
     // later), the buffer is decoded and cached. Switch becomes a crossfade.
     const otherTrack = TRACKS.find((t) => t.url !== currentTrack);
@@ -207,7 +207,7 @@ function App() {
   const activeTrackName = TRACKS.find((t) => t.url === currentTrack)?.name ?? "";
   const bootPhaseNarrowed: "enter" | "exit" = bootPhase === "gone" ? "exit" : bootPhase;
 
-  // ── Parallax: glass panels float as you scroll ──
+  // Parallax: glass panels float on scroll
   // Activates after LAUNCH when content is visible.
   useParallax(
     ".glass-panel",

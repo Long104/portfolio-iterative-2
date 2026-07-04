@@ -1,4 +1,4 @@
-// Layer A: Static fullscreen backdrop (prevents black hole)
+// Fullscreen backdrop — prevents black void
 export const backdropVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {

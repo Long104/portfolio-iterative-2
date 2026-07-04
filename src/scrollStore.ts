@@ -1,4 +1,4 @@
-// ── Global Scroll Store ──
+// ── Scroll store (mutable, zero-render) ──
 // Lightweight, framework-agnostic scroll state.
 // App writes scroll progress (0–1) here; R3F reads it in useFrame.
 // Avoids prop-drilling through Suspense/Lazy boundaries.

@@ -1,8 +1,6 @@
-// Layer D: Four stacked fullscreen meshes with additive blending.
-// AUDIO STRATEGY: near-dark at rest, EXPLODES bright on beat.
-// Maximum perceptual contrast — punchy visual response.
+// Four stacked glow meshes: near-dark at rest, explodes on beat.
 //
-// OPTIMIZATION: noise + fbm baked into a pre-computed texture at init.
+// PERF: noise + fbm baked to pre-computed texture at init.
 // Per-pixel ALU replaced with texture2D lookup — ~10× cheaper on mobile GPU.
 // Texture R channel = value noise, G channel = 2-octave fbm.
 // Coordinate mapping: UV = inputCoord / 8.0 (texture is 512×512, 64px/cell).

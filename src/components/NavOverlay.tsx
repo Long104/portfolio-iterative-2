@@ -1,4 +1,4 @@
-// ── NavOverlay — Fullscreen hamburger menu ──
+// ── NavOverlay — Hamburger menu ──
 // SOTD-standard mobile/tablet navigation:
 //   - Hamburger trigger button (fixed top-right)
 //   - Fullscreen glass overlay with staggered link reveal
@@ -38,7 +38,7 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
   const footerRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
-  // ── Toggle open/close with GSAP timeline ──
+  // ── Toggle open/close ──
   function toggle() {
     if (tlRef.current) {
       tlRef.current.kill();
@@ -151,7 +151,7 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
     gsap.set(lines, { rotate: 0, y: 0, opacity: 1, clearProps: "all" });
   }
 
-  // ── Navigate: close overlay first, then scroll ──
+  // ── Navigate: close then scroll ──
   function handleNavigate(index: number) {
     if (!open) return;
     if (PREFERS_REDUCED_MOTION) {
@@ -164,7 +164,7 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
     setTimeout(() => onNavigate(index), 400);
   }
 
-  // ── Body scroll lock when overlay is open ──
+  // ── Lock body scroll ──
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -176,7 +176,7 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
     };
   }, [open]);
 
-  // ── Cleanup on unmount ──
+  // ── Cleanup ──
   useEffect(() => {
     return () => {
       tlRef.current?.kill();

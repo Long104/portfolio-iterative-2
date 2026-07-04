@@ -1,4 +1,4 @@
-// ── Kira-Kira Gundam Reticle Cursor ──────────────────────
+// ── Gundam targeting reticle ──
 // Targeting reticle inspired by Gundam cockpit HUDs.
 // Rotating ring + tick marks, corner brackets, crosshair, SEED sparkle trail.
 // Audio-reactive: bass punch, beat bursts, lock-on state on hover.
@@ -9,7 +9,7 @@ import { getAudioData } from "../useAudioEngine";
 import { MAX_DPR } from "../perf";
 import { PREFERS_REDUCED_MOTION } from "../lib/gsap";
 
-// ── Palette (discrete, matches shaders) ──────────────────
+// ── Palette (matches shader colors) ──
 // RGB pre-parsed at module load — avoids parseInt/slice per hexA() call.
 interface PaletteEntry { hex: string; r: number; g: number; b: number; weight: number; }
 const PALETTE: PaletteEntry[] = [
@@ -41,7 +41,7 @@ interface Sparkle {
   color: string;
 }
 
-// ── Hex → rgba ───────────────────────────────────────────
+// ── Hex → RGBA ──
 // Pre-parsed RGB lookup — avoids parseInt/slice per call.
 const RGB_MAP: Record<string, [number, number, number]> = {};
 for (const p of PALETTE) RGB_MAP[p.hex] = [p.r, p.g, p.b];
@@ -61,7 +61,7 @@ function pickColor(): string {
   return PALETTE[0].hex;
 }
 
-// ── Pre-render SEED sparkle sprite (cached per color) ────
+// ── Pre-rendered sparkle sprites ──
 function makeSparkleSprite(color: string): HTMLCanvasElement {
   const c = document.createElement("canvas");
   c.width = c.height = SPRITE_SIZE;
@@ -104,7 +104,7 @@ function makeSparkleSprite(color: string): HTMLCanvasElement {
   return c;
 }
 
-// ── Tick mark on ring perimeter ──────────────────────────
+// ── Tick marks ──
 function drawTick(
   ctx: CanvasRenderingContext2D,
   angle: number,
@@ -119,7 +119,7 @@ function drawTick(
   ctx.stroke();
 }
 
-// ── L-shaped corner bracket ──────────────────────────────
+// ── Corner bracket ──
 function drawBracket(
   ctx: CanvasRenderingContext2D,
   bx: number, by: number,
@@ -133,7 +133,7 @@ function drawBracket(
   ctx.stroke();
 }
 
-// ── Gundam targeting reticle ────────────────────────────
+// ── Reticle render ──
 // Draws: rotating ring + ticks (scanning), fixed brackets + crosshair (frame),
 // center dot (precise click point). Lock-on state on hover.
 function drawReticle(
@@ -237,7 +237,7 @@ export function CursorOverlay() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // ── DPR-aware sizing (matches R3F's cap for consistent sharpness) ──
+    // DPR-aware sizing
     let dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     let w = window.innerWidth;
     let h = window.innerHeight;
@@ -255,7 +255,7 @@ export function CursorOverlay() {
     resize();
     window.addEventListener("resize", resize);
 
-    // ── Reduced motion: static dot cursor, no animation loop ──
+    // Reduced motion: static dot
     if (PREFERS_REDUCED_MOTION) {
       // Narrow ctx for closure-safe access
       const c = ctx;
@@ -345,7 +345,7 @@ export function CursorOverlay() {
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
 
-    // ── Sparkle object pool ──
+    // Sparkle pool
     const pool: Sparkle[] = [];
     for (let i = 0; i < MAX_SPARKLES; i++) {
       pool.push({
@@ -420,7 +420,7 @@ export function CursorOverlay() {
 
       const audio = getAudioData();
 
-      // ── Dual-element lerp ──
+      // Dual-element lerp
       dot.x += (target.x - dot.x) * DOT_LERP;
       dot.y += (target.y - dot.y) * DOT_LERP;
       ring.x += (target.x - ring.x) * RING_LERP;
@@ -429,12 +429,12 @@ export function CursorOverlay() {
       prevX = dot.x;
       prevY = dot.y;
 
-      // ── Reticle rotation: spins while scanning, stops on lock-on ──
+      // Reticle rotation
       const targetRotSpeed = hover ? 0 : 0.3; // rad/s
       rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
       rotation += dt * rotSpeed;
 
-      // ── Lock-on alpha easing ──
+      // Lock-on alpha
       lockAlpha += ((hover ? 1 : 0) - lockAlpha) * 0.15;
 
       // Pre-first-move
@@ -444,7 +444,7 @@ export function CursorOverlay() {
         return;
       }
 
-      // ── Spawn sparkles ──
+      // Spawn sparkles
       if (speed > 2) {
         const n = Math.min(4, Math.ceil(speed / 40 + audio.level * 2));
         for (let i = 0; i < n; i++) spawn(dot.x, dot.y);
@@ -454,7 +454,7 @@ export function CursorOverlay() {
         spawn(dot.x, dot.y, { size: 4 + Math.random() * 4 });
       }
 
-      // ── Beat detection ──
+    // Beat detection
       bassHistory[bhIdx] = audio.bass;
       bhIdx = (bhIdx + 1) % BEAT_HISTORY;
       if (bhFilled < BEAT_HISTORY) bhFilled++;
@@ -477,7 +477,7 @@ export function CursorOverlay() {
         burst(10, 18, 1.5);
       }
 
-      // ── Update pool ──
+      // Update pool
       for (let i = 0; i < MAX_SPARKLES; i++) {
         const s = pool[i];
         if (s.life <= 0) continue;
@@ -490,7 +490,7 @@ export function CursorOverlay() {
         s.rot += s.rotSpeed;
       }
 
-      // ── Render ──
+      // Render
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = "lighter";
 
@@ -512,7 +512,7 @@ export function CursorOverlay() {
         ctx.restore();
       }
 
-      // ── Gundam targeting reticle ──
+      // Reticle
       drawReticle(
         ctx,
         ring.x, ring.y,

@@ -174,7 +174,7 @@ export function createFlareColorLUT(): Texture {
   return tex;
 }
 
-// ── Pre-baked noise+FBM texture ──
+// ── Baked noise+FBM texture ──
 // Replaces per-pixel noise()/fbm() ALU in the glow shader with a single
 // texture lookup. Exact GLSL hash/ noise/ fbm ported to JS and baked at init.
 // R channel = value noise, G channel = 2-octave fbm.

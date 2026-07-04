@@ -17,7 +17,6 @@ import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, PREFERS_REDUCED_MOTION } from "../lib/gsap";
 import { PERF_TIER } from "../perf";
 
-// ── Options ──
 export interface ScrollRevealOptions {
   /** Split type — default 'words' */
   split?: "words" | "lines" | "chars";
@@ -66,7 +65,6 @@ const DEFAULTS: Required<Pick<
   delay: 0,
 } as const;
 
-// ── Hook ──
 export function useScrollReveal<T extends HTMLElement>(
   options: ScrollRevealOptions = {}
 ): RefObject<T | null> {
@@ -77,7 +75,7 @@ export function useScrollReveal<T extends HTMLElement>(
       const el = ref.current;
       if (!el) return;
 
-      // ── Reduced motion: opacity-only scroll reveal ──
+      // Reduced motion: opacity-only path
       // Same ScrollTrigger, same stagger rhythm — just no physical motion.
       // Uses toggleActions reverse (bi-directional) instead of scrub,
       // because scrubbed opacity can feel disorienting for sensitive users.
@@ -126,7 +124,7 @@ export function useScrollReveal<T extends HTMLElement>(
         };
       }
 
-      // ── Mobile tuning ──
+      // Mobile: 30fps needs gentler timing
       // Mobile runs at 30fps (FrameLimiter) — fewer frames per second means
       // animations need slightly MORE time to look smooth, not less.
       // ×0.7 duration was too aggressive (0.4s → 0.28s = 8 frames at 30fps = pop-in).
@@ -140,7 +138,7 @@ export function useScrollReveal<T extends HTMLElement>(
       const duration = isMobile ? (opts.duration as number) * 0.85 : (opts.duration as number);
       const delay = opts.delay;
 
-      // ── SplitText: mask wraps lines in overflow:hidden ──
+      // SplitText: mask wrap lines in overflow:hidden
       const split = new SplitText(el, {
         type: opts.split,
         mask: "lines",
@@ -158,7 +156,7 @@ export function useScrollReveal<T extends HTMLElement>(
 
       if (targets.length === 0) return;
 
-      // ── Set initial state immediately (prevents flash of visible text) ──
+      // Snap to start — prevent flash of visible text
       gsap.set(targets, {
         y: xVal !== "0%" ? "0%" : yVal,
         x: xVal !== "0%" ? xVal : "0%",
@@ -171,7 +169,7 @@ export function useScrollReveal<T extends HTMLElement>(
         gsap.set(el, { clipPath: "inset(0 100% 0 0)" });
       }
 
-      // ── Build timeline ──
+      // Assemble timeline
       // SCRUB: animation progress is tied to scroll position between
       // start and end. Scroll down = progress forward. Scroll up = reverse.
       // The scrub value (default: true = 1s smoothing) adds inertia.
@@ -222,7 +220,7 @@ export function useScrollReveal<T extends HTMLElement>(
         );
       }
 
-      // ── Cleanup: revert split + kill timeline ──
+      // Tear down
       return () => {
         split.revert();
         tl.scrollTrigger?.kill();

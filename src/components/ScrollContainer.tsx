@@ -1,4 +1,4 @@
-// ── Scroll Container ──
+// ── Section scroll wrapper ──
 // Wraps all sections. Uses Lenis for smooth scroll, synced to GSAP ticker.
 // Tracks active section by finding which section's midpoint
 // is closest to the viewport center.
@@ -38,7 +38,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       const container = containerRef.current;
       if (!container) return;
 
-      // ── Section tracking setup ──
+      // Section proximity tracker
       // Finds which section's midpoint is closest to the viewport center.
       const sections = Array.from(
         container.querySelectorAll<HTMLElement>("[data-section-index]"),
@@ -80,7 +80,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
         updateActiveSection();
       }
 
-      // ── Lenis smooth scroll ──
+      // Lenis smooth engine
       const lenis = new Lenis({
         duration: 0.6,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -88,10 +88,10 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       });
       lenisRef.current = lenis;
 
-      // Stop immediately if boot is still showing — prevents background scroll
+      // Halt if boot overlay is still showing
       if (paused) lenis.stop();
 
-      // ── Lenis + ScrollTrigger integration ──
+      // Sync Lenis → ScrollTrigger
       // Lenis 1.x in window mode: native window.scrollY still changes.
       // No scrollerProxy needed — just sync ScrollTrigger on Lenis scroll
       // and drive Lenis from GSAP's ticker (single rAF source).
@@ -126,7 +126,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       }
       window.addEventListener("resize", onResize);
 
-      // ── Keyboard navigation (arrow up/down to jump between sections) ──
+      // Keyboard: arrow up/down → section jump
       function onKeyDown(e: KeyboardEvent) {
         if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
         e.preventDefault();
@@ -147,7 +147,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       };
     }, [onSectionChange]);
 
-    // ── Pause/resume Lenis when boot state changes ──
+    // Pause/resume Lenis on boot state
     // During boot (paused=true), wheel events should not scroll content.
     useEffect(() => {
       const lenis = lenisRef.current;
@@ -159,7 +159,7 @@ export const ScrollContainer = forwardRef<ScrollContainerHandle, ScrollContainer
       }
     }, [paused]);
 
-    // ── Lock/unlock Lenis when project detail overlay is open ──
+    // Lock Lenis when overlay is open
     // Lenis ignores body.style.overflow, so we must stop it directly.
     useEffect(() => {
       const lenis = lenisRef.current;

@@ -56,7 +56,7 @@ export function PsycommuBoot({
   const startedRef = useRef(false);
   const bootRef = useRef<HTMLDivElement>(null);
 
-  // ── Boot sequence state machine (single state object = 1 render per tick) ──
+  // ── Boot state machine ──
   useEffect(() => {
     if (boot.phase === "complete" || boot.phase === "skip") return;
 
@@ -100,24 +100,24 @@ export function PsycommuBoot({
     return () => clearTimeout(t);
   }, [boot.line, boot.char, boot.phase]);
 
-  // ── Cinematic exit animation (runs once when phase → "exit") ──
+  // ── Cinematic exit (phase → "exit") ──
   useEffect(() => {
     if (phase !== "exit") return;
     const el = bootRef.current;
     if (!el) { onExitComplete(); return; }
 
-    // Build a GSAP timeline for the cinematic exit
+    // Assemble exit sequence
     const tl = gsap.timeline({
       onComplete: onExitComplete,
     });
 
-    // 1. Progress bar fills to 100% via GSAP (avoids setState in effect)
+    // 1. Fill progress bar via GSAP (avoids setState in effect)
     const progressEl = el.querySelector(".psycommu-boot__progress-fill");
     if (progressEl) {
       gsap.to(progressEl, { width: "100%", duration: 0.3, ease: "power2.out" });
     }
 
-    // 2. Brief white flash overlay (opacity 0 → 0.35 → 0)
+    // 2. White flash burst
     const flash = document.createElement("div");
     flash.className = "psycommu-flash";
     Object.assign(flash.style, {
@@ -130,7 +130,7 @@ export function PsycommuBoot({
     tl.to(flash, { opacity: 0.35, duration: 0.12, ease: "power2.out" }, 0)
       .to(flash, { opacity: 0, duration: 0.35, ease: "power2.in" }, 0.12);
 
-    // 3. Boot content scales up + fades
+    // 3. Boot content fades + scales out
     tl.to(el, {
       scale: 1.08,
       opacity: 0,
@@ -138,7 +138,7 @@ export function PsycommuBoot({
       ease: "power3.in",
     }, 0.15);
 
-    // 4. Glitch: scramble text with rapid random chars (CSS handles the visual)
+    // 4. CSS glitch scramble
     el.classList.add("psycommu-boot--exiting");
 
     // Cleanup: remove flash after animation
@@ -150,7 +150,7 @@ export function PsycommuBoot({
     };
   }, [phase, onExitComplete]);
 
-  // ── Click anywhere during boot → skip to end + warm up AudioContext ──
+  // ── Skip boot on click ──
   const handleOverlayClick = useCallback(() => {
     onWarmUp?.();
     if (boot.phase === "complete" || phase === "exit") return;
@@ -163,7 +163,7 @@ export function PsycommuBoot({
     });
   }, [boot.phase, phase, onWarmUp]);
 
-  // ── Escape key → skip boot (judge/keyboard-friendly) ──
+  // ── Escape → skip boot ──
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") handleOverlayClick();
@@ -172,7 +172,7 @@ export function PsycommuBoot({
     return () => window.removeEventListener("keydown", onKey);
   }, [handleOverlayClick]);
 
-  // ── Engage (after boot complete) ──
+  // ── Engage button handler ──
   const handleEngage = useCallback(() => {
     if (isLoading || startedRef.current) return;
     onWarmUp?.();
@@ -183,7 +183,7 @@ export function PsycommuBoot({
   const isComplete = boot.phase === "complete" || boot.phase === "skip";
   const isExiting = phase === "exit";
 
-  // Tunnel keeps running until exit animation, then fades away
+  // Tunnel runs until exit, then fades
   const tunnelPhase: TunnelPhase = isExiting ? "done" : "running";
 
   return (
@@ -312,7 +312,7 @@ export function PsycommuBoot({
   );
 }
 
-// ── Scramble: replace most chars with random garbage ──
+// ── Text scramble effect ──
 const GLITCH_CHARS = "!@#$%^&*()_+-=[]{}|;':\",./<>?~`0123456789";
 
 function scrambleText(text: string): string {

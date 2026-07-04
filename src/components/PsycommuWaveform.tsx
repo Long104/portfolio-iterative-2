@@ -1,4 +1,4 @@
-// ── Psycommu Waveform Monitor ──
+// ── Psycommu waveform monitor ──
 // Real-time audio waveform drawn on a tiny canvas.
 // Sits inside the audio bar — pulses with bass, shimmers with treble.
 // Color gradient: bass (magenta) → mid (violet) → treble (cyan).
@@ -60,11 +60,11 @@ export function PsycommuWaveform() {
 
       c.clearRect(0, 0, W, H);
 
-      // ── Background bar (subtle track) ──
+      // ── Baseline track ──
       c.fillStyle = "rgba(255, 255, 255, 0.03)";
       c.fillRect(0, H / 2 - 0.5, W, 1);
 
-      // ── Waveform ──
+      // Draw waveform
       const time = performance.now() / 1000;
       const steps = 48;
       const stepW = W / steps;
@@ -88,7 +88,7 @@ export function PsycommuWaveform() {
           data.mid * midWeight * 5 +
           data.treble * trebleWeight * 4;
 
-        // Add subtle phase shift for organic movement
+        // Phase shift for organic wobble
         const phase = Math.sin(time * 3 + i * 0.4) * 0.3;
         const y = centerY + (amplitude + phase) * (i % 2 === 0 ? -1 : 1);
 

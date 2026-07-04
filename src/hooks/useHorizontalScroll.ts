@@ -33,13 +33,13 @@ export function useHorizontalScroll(
     const t = track.current;
     if (!c || !t) return;
 
-    // ── Media query matching the CSS breakpoint ──
+    // Match CSS breakpoint — destroy below 768px
     // When this matches (≤768px), horizontal scroll is destroyed.
     const mq = window.matchMedia("(max-width: 768px)");
 
     let tween: gsap.core.Tween | null = null;
 
-    // ── Create the pinned horizontal scroll tween ──
+    // Pin container + scroll track horizontally
     function createTween() {
       if (!c || !t) return;
       // Already exists? Kill first so we can re-create fresh.
@@ -71,7 +71,7 @@ export function useHorizontalScroll(
       ScrollTrigger.refresh();
     }
 
-    // ── Destroy the tween and reset ──
+    // Destroy tween + reset track position
     function destroyTween() {
       if (!t) return;
       if (tween) {
@@ -84,7 +84,7 @@ export function useHorizontalScroll(
       }
     }
 
-    // ── React to viewport crossing the breakpoint ──
+    // React to viewport crossing 768px
     // Uses two mechanisms:
     //   1. matchMedia "change" event — fires in real browsers on resize/orientation
     //   2. window "resize" event — fallback for headless/test environments where
@@ -108,12 +108,12 @@ export function useHorizontalScroll(
       }
     }
 
-    // ── Initial setup ──
+    // Bootstrap
     if (!mq.matches) {
       createTween();
     }
 
-    // ── Listen for dynamic resize / orientation changes ──
+    // Watch resize + orientation
     mq.addEventListener("change", handleChange);
     window.addEventListener("resize", handleResize);
 

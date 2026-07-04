@@ -1,6 +1,6 @@
 import { refractive, convex } from "refractive";
 
-// ── Browser detection ──
+// ── UA sniff for refractive fallback ──
 // html2canvas (refractive's snapshot fallback) CANNOT read WebGL canvas
 // pixels, so Firefox/Safari show solid #01314A instead of the vortex.
 // Fix: use "simple" mode which applies CSS backdrop-filter:blur() directly —
@@ -14,7 +14,7 @@ const SIMPLE_FALLBACK = IS_CHROME ? {} : { fallbackMode: "simple" as const };
 
 export const RefractiveDiv = refractive.div;
 
-// ── Per-tier glass configs ──
+// ── Glass config builders ──
 // Different element sizes need different optical properties.
 // All use bezelHeightFn: convex (squircle) — Apple's signature curve.
 

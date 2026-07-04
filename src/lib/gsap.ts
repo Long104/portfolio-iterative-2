@@ -1,4 +1,4 @@
-// ── GSAP Foundation ──
+// ── GSAP plugin registration ──
 // Central registration + reduced-motion detection.
 // Import once in main.tsx to ensure plugins are available globally.
 
@@ -14,7 +14,7 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 // for wrapper-mode Lenis (custom scroll div), which we don't use.
 // Setting it here (before Lenis exists) breaks all triggers.
 
-// ── Reduced motion ──
+// ── Reduced motion gate ──
 // Checked by hooks — if true, all SplitText reverts immediately.
 export const PREFERS_REDUCED_MOTION =
   typeof window !== "undefined" &&

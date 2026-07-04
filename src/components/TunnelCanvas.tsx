@@ -63,10 +63,10 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // ── Glow sprites (created once) ──
+    // ── Glow sprites (one-time render) ──
     const glowSprites = COLORS.map(makeGlowSprite);
 
-    // ── Sizing + cached maxRadius ──
+    // ── Canvas sizing ──
     let dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     let w = window.innerWidth;
     let h = window.innerHeight;
@@ -102,7 +102,7 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       [], [], [],
     ];
 
-    // ── State ──
+    // ── Frame state ──
     let tunnelAlpha = 1;
     let elapsed = 0;
     let lastT = performance.now();
@@ -121,7 +121,7 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       lastT = t;
       elapsed += dt;
 
-      // ── Done: fade out ──
+      // Done: fade out
       if (phaseRef.current === "done") {
         tunnelAlpha = Math.max(tunnelAlpha - dt * 2, 0);
         if (tunnelAlpha <= 0.005) {
@@ -131,7 +131,7 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
         }
       }
 
-      // ── Pulse ──
+      // Pulse from audio or sine
       const audio = getAudioData();
       const pulse = audio.bass > 0.01
         ? audio.bass
@@ -155,7 +155,7 @@ const TunnelCanvas = memo(function TunnelCanvas({ phase }: Props) {
       }
       ctx.stroke();
 
-      // ── Depth rings ──
+      // Depth rings
       ctx.strokeStyle = "#fff";
       const ringOffset = (elapsed * TUNNEL_SPEED * 0.5) % 1;
       for (let i = 0; i < 8; i++) {

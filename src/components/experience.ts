@@ -1,4 +1,4 @@
-// ── Experience data (from resume) ──
+// ── Experience data ──
 
 export interface ExperienceItem {
   readonly period: string;

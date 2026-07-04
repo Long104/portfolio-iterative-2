@@ -6,7 +6,7 @@ import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildPanelConfig, buildNavConfig } from "./glass-configs";
 import { playHoverSound, playOpenSound } from "../lib/audio-ui";
 
-// ── Glass Panel (large — About/Experience sections) ──
+// ── Glass panel (large sections) ──
 export function GlassPanel({ children }: { children: ReactNode }) {
   const specularAngle = useDeviceOrientation();
   const refraction = useMemo(() => buildPanelConfig(specularAngle), [specularAngle]);
@@ -17,7 +17,7 @@ export function GlassPanel({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Project Card (large — Work horizontal scroll) ──
+// ── Project card ──
 // Full-refractive card with image area + text info.
 // Image uses a gradient placeholder with clip-path reveal on scroll enter.
 // GSAP micro-interaction: scale bump + arrow nudge + bracket fade on hover.
@@ -76,7 +76,7 @@ export function ProjectCard({
       }
     }
 
-    // ── Click: open project detail overlay ──
+    // Click → open detail overlay
     function onClick(e: Event) {
       e.preventDefault();
       e.stopPropagation();
@@ -101,21 +101,21 @@ export function ProjectCard({
       refraction={refraction}
       className="project-card"
     >
-      {/* ── Project screenshot ── */}
+      {/* Screenshot */}
       <div ref={imageRef} className="project-card__image">
         <img src={project.image} alt={project.title} loading="lazy" />
       </div>
 
-      {/* ── Corner brackets (animated by GSAP on hover) ── */}
+      {/* Corner brackets (GSAP hover) */}
       <div ref={bracketRef} className="project-card__brackets" />
 
-      {/* ── Target lock-on indicator (shows "LOCK ON" on hover) ── */}
+      {/* Lock-on indicator */}
       <div ref={lockOnRef} className="project-card__lock-on">
         <span className="project-card__lock-dot" />
         <span className="project-card__lock-text">lock on</span>
       </div>
 
-      {/* ── Text overlay ── */}
+      {/* Info overlay */}
       <div className="project-card__info">
         <div className="project-card__num">{project.num}</div>
         <div className="project-card__title">{project.title}</div>

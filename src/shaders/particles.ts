@@ -1,6 +1,4 @@
-// Layer B: Fluid particles (petals + blobs, normal alpha blending)
-// AUDIO STRATEGY: near-invisible at rest. ~60% flash bright on mid.
-// Punchy firefly effect — petals explode into visibility on beats.
+// Fluid particles: near-invisible at rest, flash on mid.
 export const particleVertex = /* glsl */ `
   uniform float uTime;
   uniform float uSpeed;

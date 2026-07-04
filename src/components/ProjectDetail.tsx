@@ -1,4 +1,4 @@
-// ── Project Detail Overlay ──
+// ── Project detail overlay ──
 // Full-screen case study overlay triggered by clicking a project card.
 // The panel is a large refractive glass element — the 3D vortex is visible
 // through it. No dark backdrop; the glass IS the backdrop.
@@ -25,11 +25,11 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   const wasBodyOverflow = useRef<string>("");
   const prevFocusRef = useRef<HTMLElement | null>(null);
 
-  // ── Liquid glass config ──
+  // ── Refractive glass config ──
   const specularAngle = useDeviceOrientation();
   const detailConfig = useMemo(() => buildDetailConfig(specularAngle), [specularAngle]);
 
-  // ── Open animation: staggered entrance ──
+  // ── Open: staggered entrance ──
   // Sequence: glass panel → image → header → desc → techs → highlights → links
   useEffect(() => {
     if (!project) return;
@@ -98,7 +98,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     };
   }, [project]);
 
-  // ── Close animation: fast reverse ──
+  // ── Close: fast reverse ──
   const animateClose = useCallback(() => {
     playCloseSound();
     const overlay = overlayRef.current;
@@ -139,7 +139,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     tl.to(panel, { opacity: 0, scale: 0.95, duration: 0.25, ease: "power2.in" }, "-=0.05");
   }, [onClose]);
 
-  // ── Scroll lock when open ──
+  // ── Lock body scroll when open ──
   useEffect(() => {
     if (!project) return;
 
@@ -151,7 +151,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     };
   }, [project]);
 
-  // ── Escape key ──
+  // ── Escape to close ──
   useEffect(() => {
     if (!project) return;
 
@@ -162,7 +162,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [project, animateClose]);
 
-  // ── Focus trap: Tab cycles inside overlay, restore focus on close ──
+  // ── Focus trap + restore ──
   useEffect(() => {
     if (!project) return;
 
@@ -170,7 +170,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     if (!panel) return;
     const panelEl: HTMLDivElement = panel;
 
-    // Save previously focused element (the project card that was clicked)
+    // Stow focus for restore on close
     prevFocusRef.current = document.activeElement as HTMLElement;
 
     // Focus close button after panel animates in
@@ -212,14 +212,14 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
     };
   }, [project]);
 
-  // ── Click outside panel ──
+  // ── Click outside to close ──
   function onOverlayClick(e: React.MouseEvent) {
     if (e.target === overlayRef.current) {
       animateClose();
     }
   }
 
-  // ── No project = hidden (but keep mounted to preserve state) ──
+  // ── No project = hidden ──
   if (!project) return null;
 
   return (

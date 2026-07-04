@@ -1,4 +1,4 @@
-// ── Project data ──
+// ── Portfolio projects ──
 // Real projects from pantorn's portfolio
 
 export interface Project {

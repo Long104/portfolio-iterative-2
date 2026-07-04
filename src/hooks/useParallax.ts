@@ -1,4 +1,4 @@
-// ── useParallax ──
+// ── Glass float parallax ──
 // Subtle parallax float for glass panels and HUD elements.
 // As the element scrolls through the viewport, it shifts y from
 // +range to -range, creating a "floating HUD glass" depth illusion.
