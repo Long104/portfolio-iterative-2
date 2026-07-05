@@ -454,35 +454,6 @@ html.cursor-hidden * {
     0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* ── Gundam corner brackets ──
-   Each corner has two 1px-thick lines forming an L-shape with a small gap.
-   Uses 8 layered linear-gradients with opacity transition for hover. */
-.glass-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.3s ease, background 0.4s ease;
-  --al: 16px; /* arm length */
-  --ag: 5px;  /* corner gap */
-  background:
-    linear-gradient(to right, var(--bracket-color) var(--al), transparent 0) var(--ag) 0 / var(--al) 1px no-repeat,
-    linear-gradient(to bottom, var(--bracket-color) var(--al), transparent 0) 0 var(--ag) / 1px var(--al) no-repeat,
-    linear-gradient(to left, var(--bracket-color) var(--al), transparent 0) calc(100% - var(--ag)) 0 / var(--al) 1px no-repeat,
-    linear-gradient(to bottom, var(--bracket-color) var(--al), transparent 0) calc(100% - 0px) var(--ag) / 1px var(--al) no-repeat,
-    linear-gradient(to right, var(--bracket-color) var(--al), transparent 0) var(--ag) calc(100% - 0px) / var(--al) 1px no-repeat,
-    linear-gradient(to top, var(--bracket-color) var(--al), transparent 0) 0 calc(100% - var(--ag)) / 1px var(--al) no-repeat,
-    linear-gradient(to left, var(--bracket-color) var(--al), transparent 0) calc(100% - var(--ag)) calc(100% - 0px) / var(--al) 1px no-repeat,
-    linear-gradient(to top, var(--bracket-color) var(--al), transparent 0) calc(100% - 0px) calc(100% - var(--ag)) / 1px var(--al) no-repeat;
-}
-
-.glass-panel:hover::before {
-  opacity: 1;
-  --bracket-color: var(--bracket-color-hover);
-}
-
 /* ── CRT scanline overlay on glass panels ── */
 .glass-panel::after {
   content: "";
