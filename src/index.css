@@ -246,20 +246,7 @@ html.cursor-hidden * {
   padding: 80px 48px 100px;
 }
 
-/* Radial scrim — darkens the vortex behind hero text */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 70% 50% at 20% 80%,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.25) 40%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
+/* Radial scrim removed — vortex shows through cleanly, text relies on text-shadow for contrast */
 
 .hero__inner {
   display: flex;
