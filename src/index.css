@@ -369,6 +369,7 @@ html.cursor-hidden * {
 }
 
 /* ── Text contrast inside glass panels — dark halo for readability over 3D vortex ── */
+/* Combo: -webkit-text-stroke (sharp dark edge) + tight text-shadow (smooth halo) */
 .about__text,
 .about__text span,
 .exp-item__period,
@@ -383,16 +384,22 @@ html.cursor-hidden * {
 .project-card__title,
 .project-card__desc,
 .project-card__stack {
+  -webkit-text-stroke: 2px rgba(0,0,0,0.8);
+  paint-order: stroke fill;
   text-shadow:
-    0 0 2px rgba(0,0,0,1),
-    0 0 4px rgba(0,0,0,0.95),
-    0 0 8px rgba(0,0,0,0.9),
-    0 0 16px rgba(0,0,0,0.8),
-    0 0 32px rgba(0,0,0,0.5);
+    0 0 1px #000,
+    0 0 2px #000,
+    0 0 3px #000,
+    0 0 4px #000,
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 10px rgba(0,0,0,0.7);
 }
 
 /* ── Stack / Glass Pill Row ── */
-/* ── Stack pills (refractive liquid glass) ── */
+/* Hybrid approach:
+   • 8 core pills use refractive liquid glass (premium specular highlight)
+   • Remaining pills use CSS backdrop-filter glass (lightweight)
+   Both share the same shape, size, and typography. */
 
 .stack-pills {
   display: flex;
@@ -416,7 +423,7 @@ html.cursor-hidden * {
   z-index: 0;
 }
 
-/* Pill base — dark backing behind liquid glass */
+/* Base pill — shared between refractive and CSS pills */
 .stack-pill {
   padding: 8px 18px;
   font-family: var(--mono);
@@ -427,13 +434,32 @@ html.cursor-hidden * {
   text-align: center;
   user-select: none;
   will-change: transform, opacity;
-  background: var(--glass-bg);
+  -webkit-text-stroke: 2px rgba(0,0,0,0.8);
+  paint-order: stroke fill;
   text-shadow:
-    0 0 2px rgba(0,0,0,1),
-    0 0 4px rgba(0,0,0,0.95),
-    0 0 8px rgba(0,0,0,0.9),
-    0 0 16px rgba(0,0,0,0.8),
-    0 0 32px rgba(0,0,0,0.5);
+    0 0 1px #000,
+    0 0 2px #000,
+    0 0 3px #000,
+    0 0 4px #000,
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 10px rgba(0,0,0,0.7);
+}
+
+/* Refractive pills — dark base behind the liquid glass effect */
+.stack-pill--refractive {
+  background: var(--glass-bg);
+}
+
+/* CSS glass pills — backdrop-filter blur, no canvas cost */
+.stack-pill--css {
+  background: rgba(10, 15, 25, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ── CRT scanline overlay on glass panels ── */
@@ -569,12 +595,15 @@ html.cursor-hidden * {
   font-size: 14px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
+  -webkit-text-stroke: 2px rgba(0,0,0,0.8);
+  paint-order: stroke fill;
   text-shadow:
-    0 0 2px rgba(0,0,0,1),
-    0 0 4px rgba(0,0,0,0.95),
-    0 0 8px rgba(0,0,0,0.9),
-    0 0 16px rgba(0,0,0,0.8),
-    0 0 32px rgba(0,0,0,0.5);
+    0 0 1px #000,
+    0 0 2px #000,
+    0 0 3px #000,
+    0 0 4px #000,
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 10px rgba(0,0,0,0.7);
 }
 
 /* Education items — teal accent for visual differentiation */
