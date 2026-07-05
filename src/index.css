@@ -384,16 +384,15 @@ html.cursor-hidden * {
 .project-card__desc,
 .project-card__stack {
   text-shadow:
+    0 0 2px rgba(0,0,0,1),
     0 0 4px rgba(0,0,0,0.95),
-    0 0 12px rgba(0,0,0,0.7),
-    0 0 24px rgba(0,0,0,0.4);
+    0 0 8px rgba(0,0,0,0.9),
+    0 0 16px rgba(0,0,0,0.8),
+    0 0 32px rgba(0,0,0,0.5);
 }
 
 /* ── Stack / Glass Pill Row ── */
-/* Hybrid approach:
-   • 8 core pills use refractive liquid glass (premium specular highlight)
-   • Remaining pills use CSS backdrop-filter glass (lightweight)
-   Both share the same shape, size, and typography. */
+/* ── Stack pills (refractive liquid glass) ── */
 
 .stack-pills {
   display: flex;
@@ -417,7 +416,7 @@ html.cursor-hidden * {
   z-index: 0;
 }
 
-/* Base pill — shared between refractive and CSS pills */
+/* Pill base — dark backing behind liquid glass */
 .stack-pill {
   padding: 8px 18px;
   font-family: var(--mono);
@@ -428,29 +427,13 @@ html.cursor-hidden * {
   text-align: center;
   user-select: none;
   will-change: transform, opacity;
+  background: var(--glass-bg);
   text-shadow:
     0 0 2px rgba(0,0,0,1),
     0 0 4px rgba(0,0,0,0.95),
     0 0 8px rgba(0,0,0,0.9),
     0 0 16px rgba(0,0,0,0.8),
     0 0 32px rgba(0,0,0,0.5);
-}
-
-/* Refractive pills — dark base behind the liquid glass effect */
-.stack-pill--refractive {
-  background: var(--glass-bg);
-}
-
-/* CSS glass pills — backdrop-filter blur, no canvas cost */
-.stack-pill--css {
-  background: rgba(10, 15, 25, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ── CRT scanline overlay on glass panels ── */
@@ -587,9 +570,11 @@ html.cursor-hidden * {
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
   text-shadow:
+    0 0 2px rgba(0,0,0,1),
     0 0 4px rgba(0,0,0,0.95),
-    0 0 12px rgba(0,0,0,0.7),
-    0 0 24px rgba(0,0,0,0.4);
+    0 0 8px rgba(0,0,0,0.9),
+    0 0 16px rgba(0,0,0,0.8),
+    0 0 32px rgba(0,0,0,0.5);
 }
 
 /* Education items — teal accent for visual differentiation */
