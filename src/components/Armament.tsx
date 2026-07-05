@@ -13,24 +13,24 @@ import { useScrollReveal } from "../hooks/useScrollReveal";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 
-// Core identity tech — gets the premium refractive liquid glass treatment
+// Core + key tech — gets the premium refractive liquid glass treatment
 const REFRACTIVE_TECH = [
+  // Core identity
   "go", "typescript", "react", "next.js",
   "aws", "docker", "postgres", "kubernetes",
+  // Key secondary
+  "python", "tailwind", "fiber", "gin",
+  "express", "mongodb", "mysql", "terraform",
 ] as const;
 
-// Everything else — CSS backdrop-filter glass pills (no canvas cost)
+// Remaining tech — CSS backdrop-filter glass pills (no canvas cost)
 const CSS_TECH = [
   // Languages
-  "javascript", "python", "sql", "java",
-  // Frontend
-  "tailwind",
+  "javascript", "sql", "java",
   // Backend
-  "fiber", "gin", "express", "hono", "rest", "websocket",
-  // Databases
-  "mysql", "mongodb",
+  "hono", "rest", "websocket",
   // Cloud & DevOps
-  "ecs", "s3", "cloudfront", "opensearch", "bedrock", "terraform", "vercel", "github actions", "buildkite",
+  "ecs", "s3", "cloudfront", "opensearch", "bedrock", "vercel", "github actions", "buildkite",
   // Testing & Tools
   "jest", "vitest", "playwright", "git", "gorm", "prisma", "mixpanel", "launchdarkly", "sonarqube",
 ] as const;
