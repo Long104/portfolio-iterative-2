@@ -5,7 +5,7 @@
 }
 
 :root {
-  --glass-bg: rgba(10, 15, 25, 0.35);
+  --glass-bg: rgba(10, 15, 25, 0.72);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(255, 255, 255, 0.25);
   --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;

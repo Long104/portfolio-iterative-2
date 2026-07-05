@@ -3,7 +3,7 @@ import "./fonts.css";
 import type { ScrollContainerHandle } from "./components/ScrollContainer";
 import { setScrollState } from "./scrollStore";
 import { setMouseState } from "./mouseStore";
-import { ScrollTrigger } from "./lib/gsap";
+import { gsap, ScrollTrigger } from "./lib/gsap";
 import { useParallax } from "./hooks/useParallax";
 import { requestOrientationPermission } from "./useDeviceOrientation";
 
@@ -46,6 +46,7 @@ function App() {
   );
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const scrollRef = useRef<ScrollContainerHandle>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Apply theme to root
   useEffect(() => {
@@ -149,6 +150,29 @@ function App() {
     return () => window.removeEventListener("mousemove", onMouseMove);
   }, [started]);
 
+  // Dim the 3D canvas when scrolling into content sections
+  // Hero: full brightness. Content: dimmed for text readability.
+  useEffect(() => {
+    if (!started) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const st = ScrollTrigger.create({
+      start: "top top",
+      end: "15% top",
+      scrub: 0.5,
+      onUpdate: (self) => {
+        gsap.to(canvas, {
+          opacity: 1 - self.progress * 0.65,
+          duration: 0.1,
+          overwrite: "auto",
+        });
+      },
+    });
+
+    return () => st.kill();
+  }, [started]);
+
   const handleStart = useCallback(async () => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
     initAudioUI(); // create AudioContext inside trusted click
@@ -217,7 +241,7 @@ function App() {
   return (
     <>
       {/* ── Layer 0: Fixed 3D canvas (vortex) ── */}
-      <div className="canvas-layer">
+      <div ref={canvasRef} className="canvas-layer">
         <Suspense fallback={null}>
           <Scene />
         </Suspense>
