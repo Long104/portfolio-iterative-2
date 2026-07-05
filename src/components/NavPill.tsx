@@ -7,7 +7,7 @@ import { useDeviceOrientation } from "../useDeviceOrientation";
 import { gsap } from "../lib/gsap";
 import { playHoverSound, playClickSound } from "../lib/audio-ui";
 
-const SECTIONS = ["pilot", "about", "experience", "work", "now", "contact"] as const;
+const SECTIONS = ["pilot", "about", "experience", "work", "stack", "now", "contact"] as const;
 
 interface NavPillProps {
   activeIndex: number;

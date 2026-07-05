@@ -1789,7 +1789,7 @@ html.cursor-hidden * {
   .hud__counter { font-size: 12px; }
   .hud__hint { font-size: 10px; }
 
-  /* Nav pill: smaller padding on all sides to fit 5 items */
+  /* Nav pill: smaller padding to fit 7 items */
   .nav-pill {
     top: 12px;
     gap: 2px;
