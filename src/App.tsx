@@ -228,7 +228,7 @@ function App() {
       trigger: "[data-section-index='0']",
       start: "bottom 80%",
       end: "bottom 20%",
-      onEnter: () => gsap.to(overlay, { opacity: 0.35, duration: 1, ease: "power2.out" }),
+      onEnter: () => gsap.to(overlay, { opacity: 0.55, duration: 1, ease: "power2.out" }),
       onLeaveBack: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
     });
 
@@ -238,7 +238,7 @@ function App() {
       start: "top 80%",
       end: "top 30%",
       onEnter: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
-      onLeaveBack: () => gsap.to(overlay, { opacity: 0.35, duration: 1, ease: "power2.out" }),
+      onLeaveBack: () => gsap.to(overlay, { opacity: 0.55, duration: 1, ease: "power2.out" }),
     });
 
     return () => {
