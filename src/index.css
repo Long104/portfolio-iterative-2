@@ -272,7 +272,7 @@ html.cursor-hidden * {
 }
 
 .hero__name span {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Tier 2: ROLE — small mono subtitle */
@@ -349,11 +349,11 @@ html.cursor-hidden * {
   font-size: clamp(18px, 2.5vw, 28px);
   line-height: 1.5;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .about__text span {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* ── Glass panel (refractive wrapper) ── */
@@ -554,7 +554,7 @@ html.cursor-hidden * {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.65);
   margin-bottom: 4px;
   text-shadow:
     0 0 4px rgba(0,0,0,0.95),
@@ -570,7 +570,7 @@ html.cursor-hidden * {
   font-family: var(--display);
   font-size: clamp(16px, 2vw, 20px);
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 4px;
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -598,14 +598,14 @@ html.cursor-hidden * {
 }
 
 .tl-item__location {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .tl-item__desc {
   font-size: 14px;
   line-height: 1.6;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Education items — teal accent for visual differentiation */
@@ -739,14 +739,14 @@ html.cursor-hidden * {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 16px;
 }
 
 .project-card__title {
   font-size: 18px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 1);
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 8px;
 }
 
@@ -754,7 +754,7 @@ html.cursor-hidden * {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 12px;
 }
 
@@ -762,7 +762,7 @@ html.cursor-hidden * {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
 }
 
@@ -843,7 +843,7 @@ html.cursor-hidden * {
   font-family: var(--display);
   font-size: clamp(15px, 1.8vw, 19px);
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.4;
   text-shadow:
     0 0 4px rgba(0,0,0,0.95),
@@ -911,7 +911,7 @@ html.cursor-hidden * {
 }
 
 .contact__headline span {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .contact {
@@ -972,7 +972,7 @@ html.cursor-hidden * {
 .contact__footer {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.55);
   margin-top: 48px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
