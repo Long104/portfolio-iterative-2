@@ -1,17 +1,9 @@
 // ── HUD — Cockpit status overlay ──
-// Top-left: pilot ident. Top-right: audio waveform monitor.
+// Top-left: pilot ident. Top-right: circular audio scanner.
 
-import { PsycommuWaveform } from "./PsycommuWaveform";
+import { CircularVisualizer } from "./CircularVisualizer";
 
-interface HUDProps {
-  sectionIndex: number;
-  totalSections: number;
-  audioStatus: string;
-  trackName: string;
-  isPlaying: boolean;
-}
-
-export function HUD({ trackName }: HUDProps) {
+export function HUD() {
   return (
     <>
       {/* Top-left: pilot ident */}
@@ -20,10 +12,9 @@ export function HUD({ trackName }: HUDProps) {
         <div className="hud__role">pilot</div>
       </div>
 
-      {/* Top-right: audio waveform */}
+      {/* Top-right: circular audio scanner */}
       <div className="hud hud--tr">
-        <PsycommuWaveform />
-        <div className="hud__track">{trackName}</div>
+        <CircularVisualizer />
       </div>
     </>
   );

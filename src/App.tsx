@@ -34,8 +34,6 @@ import {
 } from "./components/Sections";
 import { StackSection } from "./components/Armament";
 
-const TOTAL_SECTIONS = 7;
-
 type Theme = "gquuuuuux" | "gfreed";
 
 function App() {
@@ -205,7 +203,6 @@ function App() {
     setSelectedProject(null);
   }, []);
 
-  const activeTrackName = TRACKS.find((t) => t.url === currentTrack)?.name ?? "";
   const bootPhaseNarrowed: "enter" | "exit" = bootPhase === "gone" ? "exit" : bootPhase;
 
   // Parallax: glass panels float on scroll
@@ -252,13 +249,7 @@ function App() {
             activeIndex={activeSection}
             onNavigate={(i) => scrollRef.current?.scrollToSection(i)}
           />
-          <HUD
-            sectionIndex={activeSection}
-            totalSections={TOTAL_SECTIONS}
-            audioStatus={isPlaying ? "psycommu: online" : "psycommu: standby"}
-            trackName={`BGM: ${activeTrackName}`}
-            isPlaying={isPlaying}
-          />
+          <HUD />
         </>
       )}
 
