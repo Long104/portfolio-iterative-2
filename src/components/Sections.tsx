@@ -654,6 +654,16 @@ export const ContactSection = memo(function ContactSection() {
     ease: "expo.out",
   });
 
+  const footerRef = useScrollReveal<HTMLDivElement>({
+    split: "lines",
+    stagger: 0.08,
+    y: "80%",
+    start: "top 50%",
+    end: "top 20%",
+    duration: 0.6,
+    ease: "power2.out",
+  });
+
   // ── Magnetic hover on links ──
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return;
@@ -717,6 +727,7 @@ export const ContactSection = memo(function ContactSection() {
           </div>
         </div>
       </GlassPanel>
+      <div ref={footerRef} className="contact__footer">© 2026 pantorn chuavallee</div>
     </section>
   );
 });
