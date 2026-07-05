@@ -1,5 +1,10 @@
 // ── Stack Section ──
-// 8 core technologies as refractive liquid glass pills.
+// Hybrid glass pill layout:
+//   • 8 core technologies get full refractive liquid glass (premium feel)
+//   • Remaining technologies use CSS backdrop-filter glass (lightweight)
+// Both look like glass pills from a distance. Only the top row has the
+// liquid specular shimmer on mouse move.
+// Performance: 8 refractive snapshots instead of 35+ — smooth on any device.
 
 import { memo, useMemo, useRef } from "react";
 import { useGSAP } from "@gsap/react";
@@ -8,9 +13,26 @@ import { useScrollReveal } from "../hooks/useScrollReveal";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 
-const STACK = [
+// Core + key tech — gets the premium refractive liquid glass treatment
+const REFRACTIVE_TECH = [
+  // Core identity
   "go", "typescript", "react", "next.js",
-  "aws", "docker", "postgres", "three.js",
+  "aws", "docker", "postgres", "kubernetes",
+  // Key secondary
+  "python", "tailwind", "fiber", "gin",
+  "express", "mongodb", "mysql", "terraform",
+] as const;
+
+// Remaining tech — CSS backdrop-filter glass pills (no canvas cost)
+const CSS_TECH = [
+  // Languages
+  "javascript", "sql", "java",
+  // Backend
+  "hono", "rest", "websocket",
+  // Cloud & DevOps
+  "ecs", "s3", "cloudfront", "opensearch", "bedrock", "vercel", "github actions", "buildkite",
+  // Testing & Tools
+  "jest", "vitest", "playwright", "git", "gorm", "prisma", "mixpanel", "launchdarkly", "sonarqube",
 ] as const;
 
 export const StackSection = memo(function StackSection() {
@@ -18,6 +40,7 @@ export const StackSection = memo(function StackSection() {
   const specularAngle = useDeviceOrientation();
   const refraction = useMemo(() => buildSmallConfig(specularAngle), [specularAngle]);
 
+  // Section label: same split-chars scroll reveal as other sections
   const labelRef = useScrollReveal<HTMLDivElement>({
     split: "chars",
     stagger: 0.02,
@@ -29,6 +52,7 @@ export const StackSection = memo(function StackSection() {
     ease: "power2.out",
   });
 
+  // GSAP stagger reveal — both refractive and CSS pills animate together
   useGSAP(() => {
     if (PREFERS_REDUCED_MOTION) {
       gsap.set(".stack-pill", { opacity: 1, y: 0 });
@@ -47,12 +71,21 @@ export const StackSection = memo(function StackSection() {
       defaults: { ease: "power2.out" },
     });
 
-    tl.to(".stack-pill", {
+    // Refractive pills first (slightly slower stagger — they're the heroes)
+    tl.to(".stack-pill--refractive", {
       opacity: 1,
       y: 0,
-      stagger: 0.06,
+      stagger: 0.05,
       duration: 0.4,
     });
+
+    // CSS pills follow immediately (faster stagger — supporting cast)
+    tl.to(".stack-pill--css", {
+      opacity: 1,
+      y: 0,
+      stagger: 0.02,
+      duration: 0.3,
+    }, "-=0.2");
 
     return () => {
       tl.scrollTrigger?.kill();
@@ -65,14 +98,22 @@ export const StackSection = memo(function StackSection() {
       <div ref={labelRef} className="section-label">stack</div>
 
       <div className="stack-pills">
-        {STACK.map((item) => (
+        {/* Premium refractive glass pills */}
+        {REFRACTIVE_TECH.map((item) => (
           <RefractiveDiv
             key={item}
             refraction={refraction}
-            className="stack-pill"
+            className="stack-pill stack-pill--refractive"
           >
             {item}
           </RefractiveDiv>
+        ))}
+
+        {/* Lightweight CSS glass pills */}
+        {CSS_TECH.map((item) => (
+          <div key={item} className="stack-pill stack-pill--css">
+            {item}
+          </div>
         ))}
       </div>
     </section>
