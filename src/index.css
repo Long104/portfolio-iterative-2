@@ -361,6 +361,15 @@ html.cursor-hidden * {
     0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+/* Brighter glass for hero role — lighter tint + stronger inner glow */
+.hero__role.glass-small {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
 /* ── Text contrast inside glass panels — dark halo for readability over 3D vortex ── */
 .about__text,
 .about__text span,
