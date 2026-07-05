@@ -3,7 +3,7 @@ import "./fonts.css";
 import type { ScrollContainerHandle } from "./components/ScrollContainer";
 import { setScrollState } from "./scrollStore";
 import { setMouseState } from "./mouseStore";
-import { gsap, ScrollTrigger } from "./lib/gsap";
+import { ScrollTrigger, gsap } from "./lib/gsap";
 import { useParallax } from "./hooks/useParallax";
 import { requestOrientationPermission } from "./useDeviceOrientation";
 
@@ -46,7 +46,7 @@ function App() {
   );
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const scrollRef = useRef<ScrollContainerHandle>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
 
   // Apply theme to root
   useEffect(() => {
@@ -150,29 +150,6 @@ function App() {
     return () => window.removeEventListener("mousemove", onMouseMove);
   }, [started]);
 
-  // Dim the 3D canvas when scrolling into content sections
-  // Hero: full brightness. Content: dimmed for text readability.
-  useEffect(() => {
-    if (!started) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const st = ScrollTrigger.create({
-      start: "top top",
-      end: "15% top",
-      scrub: 0.5,
-      onUpdate: (self) => {
-        gsap.to(canvas, {
-          opacity: 1 - self.progress * 0.65,
-          duration: 0.1,
-          overwrite: "auto",
-        });
-      },
-    });
-
-    return () => st.kill();
-  }, [started]);
-
   const handleStart = useCallback(async () => {
     requestOrientationPermission(); // iOS 13+: must be inside user gesture
     initAudioUI(); // create AudioContext inside trusted click
@@ -238,14 +215,50 @@ function App() {
     started,
   );
 
+  // Dim overlay: fades in after hero, out before contact
+  // Subtle (0.25) — dims tunnel for text readability without killing glass refraction
+  useEffect(() => {
+    if (!started) return;
+
+    const overlay = dimRef.current;
+    if (!overlay) return;
+
+    // Fade in: hero (section 0) → about (section 1)
+    const fadeIn = ScrollTrigger.create({
+      trigger: "[data-section-index='0']",
+      start: "bottom 80%",
+      end: "bottom 20%",
+      onEnter: () => gsap.to(overlay, { opacity: 0.25, duration: 1, ease: "power2.out" }),
+      onLeaveBack: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
+    });
+
+    // Fade out: currently (section 5) → contact (section 6)
+    const fadeOut = ScrollTrigger.create({
+      trigger: "[data-section-index='6']",
+      start: "top 80%",
+      end: "top 30%",
+      onEnter: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
+      onLeaveBack: () => gsap.to(overlay, { opacity: 0.25, duration: 1, ease: "power2.out" }),
+    });
+
+    return () => {
+      fadeIn.kill();
+      fadeOut.kill();
+    };
+  }, [started]);
+
   return (
     <>
       {/* ── Layer 0: Fixed 3D canvas (vortex) ── */}
-      <div ref={canvasRef} className="canvas-layer">
+      <div className="canvas-layer">
         <Suspense fallback={null}>
           <Scene />
         </Suspense>
       </div>
+
+      {/* ── Layer 0.5: Scroll-reactive dim overlay ── */}
+      {/* Fades in after hero, out before contact. Subtle — keeps glass refractive. */}
+      <div ref={dimRef} className="dim-overlay" />
 
       {/* ── Layer 1: Scrollable content (pre-mounted during boot) ── */}
       {contentMounted && (
