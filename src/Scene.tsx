@@ -3,13 +3,12 @@ import KiraKiraVortex from "./KiraKiraVortex";
 import SparkleSystem from "./SparkleSystem";
 import FrameLimiter from "./FrameLimiter";
 import { PERF_TIER, MAX_DPR } from "./perf";
+import { IS_CHROME } from "./lib/env";
 
 // preserveDrawingBuffer is only needed for refractive's html2canvas fallback
 // (Firefox/Safari). Chrome uses native SVG filters and doesn't need it.
 // Skipping it on Chrome avoids unnecessary GPU framebuffer retention.
-const NEEDS_PRESERVE_DRAWING_BUFFER =
-  typeof navigator !== "undefined" &&
-  !/Chrome|Chromium|Edg|OPR\//i.test(navigator.userAgent);
+const NEEDS_PRESERVE_DRAWING_BUFFER = !IS_CHROME;
 
 export default function Scene() {
   return (

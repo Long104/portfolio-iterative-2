@@ -250,6 +250,20 @@ export function createNoiseTexture(): Texture {
   return tex;
 }
 
+// ── Shared Math Helpers ──
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+function lerp3(a: number[], b: number[], t: number): number[] {
+  return [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t,
+    a[2] + (b[2] - a[2]) * t,
+  ];
+}
+
 // ── Glow Radial LUT ──
 // Bakes the 4 glow sub-layers (Sun, Rays, Bridge, Core) into a 256×4 texture.
 // Each row encodes one layer's color (RGB) and static intensity (A) as a
@@ -261,15 +275,6 @@ export function createGlowLUT(): Texture {
   const h = 4;
   const maxDist = 0.45;
   const data = new Uint8Array(w * h * 4);
-
-  function smoothstep(edge0: number, edge1: number, x: number): number {
-    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-    return t * t * (3 - 2 * t);
-  }
-
-  function lerp3(a: number[], b: number[], t: number): number[] {
-    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-  }
 
   for (let i = 0; i < w; i++) {
     const d = (i / w) * maxDist;
@@ -375,19 +380,6 @@ export function createBackdropLUT(): Texture {
   const data = new Uint8Array(w * 4);
   const maxDist = 1.0; // covers all screen positions after aspect correction
 
-  function smoothstep(edge0: number, edge1: number, x: number): number {
-    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-    return t * t * (3 - 2 * t);
-  }
-
-  function mix3(a: number[], b: number[], t: number): number[] {
-    return [
-      a[0] + (b[0] - a[0]) * t,
-      a[1] + (b[1] - a[1]) * t,
-      a[2] + (b[2] - a[2]) * t,
-    ];
-  }
-
   const darkVoid = [0.08, 0.00, 0.06];
   const c1       = [0.16, 0.02, 0.08];
   const c2       = [0.14, 0.04, 0.10];
@@ -400,12 +392,12 @@ export function createBackdropLUT(): Texture {
     const d = (i / (w - 1)) * maxDist;
 
     let color = [...darkVoid];
-    color = mix3(color, c1,       smoothstep(0.0,  0.08, d));
-    color = mix3(color, c2,       smoothstep(0.08, 0.18, d));
-    color = mix3(color, c3,       smoothstep(0.18, 0.28, d));
-    color = mix3(color, c4,       smoothstep(0.28, 0.40, d));
-    color = mix3(color, ringTeal, smoothstep(0.40, 0.55, d));
-    if (d > 0.55) color = mix3(color, teal, smoothstep(0.55, 0.75, d));
+    color = lerp3(color, c1,       smoothstep(0.0,  0.08, d));
+    color = lerp3(color, c2,       smoothstep(0.08, 0.18, d));
+    color = lerp3(color, c3,       smoothstep(0.18, 0.28, d));
+    color = lerp3(color, c4,       smoothstep(0.28, 0.40, d));
+    color = lerp3(color, ringTeal, smoothstep(0.40, 0.55, d));
+    if (d > 0.55) color = lerp3(color, teal, smoothstep(0.55, 0.75, d));
 
     const idx = i * 4;
     data[idx]     = Math.round(color[0] * 255);
@@ -420,6 +412,89 @@ export function createBackdropLUT(): Texture {
   tex.magFilter = LinearFilter;
   tex.minFilter = LinearFilter;
   tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ── Chromatic lens flare texture ──
+// Blue/teal fringed diamond sparkle, moved from SparkleSystem.tsx to textures.ts
+// to unify all procedural GPU asset generation.
+export function createSparkleTexture(): Texture {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const c = size / 2;
+
+  // 1. Blue glow (#3459B5) — offset upper-left
+  const blueGrad = ctx.createRadialGradient(c - 10, c - 10, 0, c - 10, c - 10, 70);
+  blueGrad.addColorStop(0, "rgba(52, 89, 181, 0.45)");
+  blueGrad.addColorStop(0.4, "rgba(52, 89, 181, 0.12)");
+  blueGrad.addColorStop(1, "rgba(52, 89, 181, 0)");
+  ctx.fillStyle = blueGrad;
+  ctx.fillRect(0, 0, size, size);
+
+  // 2. Teal glow (#6AABAD) — offset lower-right
+  const tealGrad = ctx.createRadialGradient(c + 10, c + 10, 0, c + 10, c + 10, 70);
+  tealGrad.addColorStop(0, "rgba(106, 171, 173, 0.45)");
+  tealGrad.addColorStop(0.4, "rgba(106, 171, 173, 0.12)");
+  tealGrad.addColorStop(1, "rgba(106, 171, 173, 0)");
+  ctx.fillStyle = tealGrad;
+  ctx.fillRect(0, 0, size, size);
+
+  // 3. Overexposed white core
+  const core = ctx.createRadialGradient(c, c, 0, c, c, 22);
+  core.addColorStop(0, "rgba(255, 255, 255, 1)");
+  core.addColorStop(0.25, "rgba(255, 255, 245, 0.95)");
+  core.addColorStop(0.55, "rgba(255, 250, 210, 0.4)");
+  core.addColorStop(1, "rgba(255, 250, 210, 0)");
+  ctx.fillStyle = core;
+  ctx.fillRect(0, 0, size, size);
+
+  // 4. Chromatic spikes — blue→white→teal split
+  ctx.save();
+  ctx.translate(c, c);
+  ctx.globalCompositeOperation = "lighter";
+
+  // Horizontal spike: blue (left) → white (center) → teal (right)
+  const hSpike = ctx.createLinearGradient(-c, 0, c, 0);
+  hSpike.addColorStop(0.00, "rgba(52, 89, 181, 0)");
+  hSpike.addColorStop(0.30, "rgba(52, 89, 181, 0.4)");
+  hSpike.addColorStop(0.42, "rgba(180, 200, 240, 0.7)");
+  hSpike.addColorStop(0.49, "rgba(255, 255, 255, 1)");
+  hSpike.addColorStop(0.51, "rgba(255, 255, 255, 1)");
+  hSpike.addColorStop(0.58, "rgba(180, 230, 230, 0.7)");
+  hSpike.addColorStop(0.70, "rgba(106, 171, 173, 0.4)");
+  hSpike.addColorStop(1.00, "rgba(106, 171, 173, 0)");
+  ctx.fillStyle = hSpike;
+  ctx.fillRect(-c, -2.5, size, 5);
+
+  // Vertical spike: same chromatic split
+  ctx.rotate(Math.PI / 2);
+  ctx.fillStyle = hSpike;
+  ctx.fillRect(-c, -2.5, size, 5);
+
+  // Diagonal accent spikes (thinner, subtler)
+  ctx.rotate(-Math.PI / 4);
+  for (let i = 0; i < 2; i++) {
+    const dSpike = ctx.createLinearGradient(-c, 0, c, 0);
+    dSpike.addColorStop(0.00, "rgba(52, 89, 181, 0)");
+    dSpike.addColorStop(0.40, "rgba(120, 150, 210, 0)");
+    dSpike.addColorStop(0.50, "rgba(200, 220, 240, 0.4)");
+    dSpike.addColorStop(0.60, "rgba(140, 200, 200, 0)");
+    dSpike.addColorStop(1.00, "rgba(106, 171, 173, 0)");
+    ctx.fillStyle = dSpike;
+    ctx.fillRect(-c, -1, size, 2);
+    ctx.rotate(Math.PI / 2);
+  }
+
+  ctx.restore();
+
+  const tex = new CanvasTexture(canvas);
+  tex.generateMipmaps = false;
+  tex.minFilter = LinearFilter;
+  tex.colorSpace = SRGBColorSpace;
   tex.needsUpdate = true;
   return tex;
 }

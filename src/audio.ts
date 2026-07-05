@@ -34,6 +34,9 @@ export class AudioEngine {
   private _cache: AudioData = { bass: 0, mid: 0, treble: 0, level: 0 };
   private _lastReadTime = 0;
 
+  /** Re-entrancy guard for crossfadeTo — incremented on each call. */
+  private _crossfadeToken = 0;
+
   get isPlaying() {
     return this._isPlaying;
   }
@@ -177,9 +180,12 @@ export class AudioEngine {
   async crossfadeTo(url: string): Promise<void> {
     if (!this.ctx || !this.gainNode || !this.analyser) return;
 
+    const myToken = ++this._crossfadeToken;
+
     // Make sure target buffer is available
     await this.preloadTrack(url);
 
+    if (myToken !== this._crossfadeToken) return;
     if (!this._audioBuffer) return;
 
     const now = this.ctx.currentTime;
@@ -193,6 +199,8 @@ export class AudioEngine {
     await new Promise<void>((resolve) => {
       setTimeout(resolve, FADE_SECONDS * 1000);
     });
+
+    if (myToken !== this._crossfadeToken) return;
 
     // Swap to new buffer (already loaded by preloadTrack)
     if (this.source) {

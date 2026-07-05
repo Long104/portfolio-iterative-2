@@ -15,10 +15,7 @@
 // so the AudioContext is created in a non-suspended state. Otherwise the
 // browser may reject AudioContext creation/resume from hover/keyboard events.
 
-// ── Safety gate: reduced motion ──
-const PREFERS_REDUCED_MOTION =
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+import { PREFERS_REDUCED_MOTION } from "./gsap";
 
 // ── Audio bus singleton ──
 let ctx: AudioContext | null = null;

@@ -1,13 +1,5 @@
 import { refractive, convex } from "refractive";
-
-// ── UA sniff for refractive fallback ──
-// html2canvas (refractive's snapshot fallback) CANNOT read WebGL canvas
-// pixels, so Firefox/Safari show solid #01314A instead of the vortex.
-// Fix: use "simple" mode which applies CSS backdrop-filter:blur() directly —
-// the browser's own GPU compositor CAN composite with the live WebGL canvas.
-const IS_CHROME =
-  typeof navigator !== "undefined" &&
-  /Chrome|Chromium|Edg|OPR\//i.test(navigator.userAgent);
+import { IS_CHROME } from "../lib/env";
 
 // Spread into config only on non-Chrome to skip html2canvas entirely.
 const SIMPLE_FALLBACK = IS_CHROME ? {} : { fallbackMode: "simple" as const };

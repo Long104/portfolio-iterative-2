@@ -2,10 +2,12 @@
 // Real-time audio waveform drawn on a tiny canvas.
 // Sits inside the audio bar — pulses with bass, shimmers with treble.
 // Color gradient: bass (magenta) → mid (violet) → treble (cyan).
+// Optimized: uses useAudioCanvas hook to encapsulate frame loop,
+// 30fps throttle, audio idle gating, and resize logic.
 
-import { useEffect, useRef } from "react";
-import { getAudioData } from "../useAudioEngine";
+import { useMemo, useRef } from "react";
 import { MAX_DPR } from "../perf";
+import { useAudioCanvas } from "../hooks/useAudioCanvas";
 
 const W = 100;
 const H = 24;
@@ -20,110 +22,58 @@ const WAVE_GRAD_STOPS: [number, string][] = [
 
 export function PsycommuWaveform() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cachedGradRef = useRef<CanvasGradient | null>(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const setup = useMemo(() => ({ width: W, height: H, dpr: DPR }), []);
 
-    const c = ctx; // narrowed: non-null after guard above
-    canvas.width = W * DPR;
-    canvas.height = H * DPR;
-    c.scale(DPR, DPR);
+  useAudioCanvas(canvasRef, setup, (c, data) => {
+    c.clearRect(0, 0, W, H);
 
-    let raf = 0;
-    let audioWatch = 0;
-    let lastNonZero = false;
-    let lastFrameTime = 0; // 30fps throttle
-    let cachedGrad: CanvasGradient | null = null;
+    // ── Baseline track ──
+    c.fillStyle = "rgba(255, 255, 255, 0.03)";
+    c.fillRect(0, H / 2 - 0.5, W, 1);
 
-    function draw() {
-      raf = requestAnimationFrame(draw);
+    // Draw waveform
+    const time = performance.now() / 1000;
+    const steps = 48;
+    const stepW = W / steps;
+    const centerY = H / 2;
 
-      // 30fps throttle — waveform updates at 30fps are visually identical to 60fps
-      const now = performance.now();
-      if (now - lastFrameTime < 33) return;
-      lastFrameTime = now;
+    c.beginPath();
+    c.moveTo(0, centerY);
 
-      const data = getAudioData();
+    for (let i = 0; i <= steps; i++) {
+      const x = i * stepW;
+      const t = i / steps;
 
-      // Skip paint when audio is silent (bass, mid, treble all zero)
-      const hasAudio = data.bass > 0 || data.mid > 0 || data.treble > 0;
-      if (!hasAudio) {
-        if (lastNonZero) {
-          c.clearRect(0, 0, W, H);
-          lastNonZero = false;
-        }
-        // ── Pause rAF when silent — restart on audio play ──
-        cancelAnimationFrame(raf);
-        raf = 0;
-        audioWatch = window.setInterval(() => {
-          const d = getAudioData();
-          if (d.bass > 0 || d.mid > 0 || d.treble > 0) {
-            window.clearInterval(audioWatch);
-            audioWatch = 0;
-            lastFrameTime = 0;
-            raf = requestAnimationFrame(draw);
-          }
-        }, 500);
-        return;
-      }
-      lastNonZero = true;
+      // Mix frequency bands with position-based weighting
+      // Bass dominates left, treble dominates right
+      const bassWeight = 1 - t;
+      const trebleWeight = t;
+      const midWeight = 0.5;
 
-      c.clearRect(0, 0, W, H);
+      const amplitude =
+        data.bass * bassWeight * 8 +
+        data.mid * midWeight * 5 +
+        data.treble * trebleWeight * 4;
 
-      // ── Baseline track ──
-      c.fillStyle = "rgba(255, 255, 255, 0.03)";
-      c.fillRect(0, H / 2 - 0.5, W, 1);
+      // Phase shift for organic wobble
+      const phase = Math.sin(time * 3 + i * 0.4) * 0.3;
+      const y = centerY + (amplitude + phase) * (i % 2 === 0 ? -1 : 1);
 
-      // Draw waveform
-      const time = performance.now() / 1000;
-      const steps = 48;
-      const stepW = W / steps;
-      const centerY = H / 2;
-
-      c.beginPath();
-      c.moveTo(0, centerY);
-
-      for (let i = 0; i <= steps; i++) {
-        const x = i * stepW;
-        const t = i / steps;
-
-        // Mix frequency bands with position-based weighting
-        // Bass dominates left, treble dominates right
-        const bassWeight = 1 - t;
-        const trebleWeight = t;
-        const midWeight = 0.5;
-
-        const amplitude =
-          data.bass * bassWeight * 8 +
-          data.mid * midWeight * 5 +
-          data.treble * trebleWeight * 4;
-
-        // Phase shift for organic wobble
-        const phase = Math.sin(time * 3 + i * 0.4) * 0.3;
-        const y = centerY + (amplitude + phase) * (i % 2 === 0 ? -1 : 1);
-
-        c.lineTo(x, y);
-      }
-
-      // Color transitions from magenta (left) → cyan (right)
-      if (!cachedGrad) {
-        cachedGrad = c.createLinearGradient(0, 0, W, 0);
-        for (const [offset, color] of WAVE_GRAD_STOPS) cachedGrad.addColorStop(offset, color);
-      }
-      c.strokeStyle = cachedGrad;
-      c.lineWidth = 1.5;
-      c.stroke();
+      c.lineTo(x, y);
     }
 
-    raf = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(raf);
-      if (audioWatch) window.clearInterval(audioWatch);
-    };
-  }, []);
+    // Color transitions from magenta (left) → cyan (right)
+    if (!cachedGradRef.current) {
+      const grad = c.createLinearGradient(0, 0, W, 0);
+      for (const [offset, color] of WAVE_GRAD_STOPS) grad.addColorStop(offset, color);
+      cachedGradRef.current = grad;
+    }
+    c.strokeStyle = cachedGradRef.current;
+    c.lineWidth = 1.5;
+    c.stroke();
+  });
 
   return (
     <canvas

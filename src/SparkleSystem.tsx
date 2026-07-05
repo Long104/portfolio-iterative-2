@@ -2,16 +2,14 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   AdditiveBlending,
-  CanvasTexture,
   Color,
   InstancedMesh,
-  LinearFilter,
   Object3D,
   PlaneGeometry,
   ShaderMaterial,
-  SRGBColorSpace,
 } from "three";
 import { useAudioEngine } from "./useAudioEngine";
+import { createSparkleTexture } from "./textures";
 
 // SPARKLE SYSTEM — Chromatic Lens Flare Kira-Kira
 // Each sparkle is a tiny anamorphic lens flare:
@@ -31,87 +29,6 @@ const SPARKLE_COLORS: [number, number, number][] = [
   [0.947, 0.247, 0.347], [1.000, 0.973, 0.612],
   [0.106, 0.737, 0.698],
 ];
-
-// Chromatic lens flare texture — blue/teal fringed diamond sparkle
-function createSparkleTexture() {
-  const size = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const c = size / 2;
-
-  // 1. Blue glow (#3459B5) — offset upper-left
-  const blueGrad = ctx.createRadialGradient(c - 10, c - 10, 0, c - 10, c - 10, 70);
-  blueGrad.addColorStop(0, "rgba(52, 89, 181, 0.45)");
-  blueGrad.addColorStop(0.4, "rgba(52, 89, 181, 0.12)");
-  blueGrad.addColorStop(1, "rgba(52, 89, 181, 0)");
-  ctx.fillStyle = blueGrad;
-  ctx.fillRect(0, 0, size, size);
-
-  // 2. Teal glow (#6AABAD) — offset lower-right
-  const tealGrad = ctx.createRadialGradient(c + 10, c + 10, 0, c + 10, c + 10, 70);
-  tealGrad.addColorStop(0, "rgba(106, 171, 173, 0.45)");
-  tealGrad.addColorStop(0.4, "rgba(106, 171, 173, 0.12)");
-  tealGrad.addColorStop(1, "rgba(106, 171, 173, 0)");
-  ctx.fillStyle = tealGrad;
-  ctx.fillRect(0, 0, size, size);
-
-  // 3. Overexposed white core
-  const core = ctx.createRadialGradient(c, c, 0, c, c, 22);
-  core.addColorStop(0, "rgba(255, 255, 255, 1)");
-  core.addColorStop(0.25, "rgba(255, 255, 245, 0.95)");
-  core.addColorStop(0.55, "rgba(255, 250, 210, 0.4)");
-  core.addColorStop(1, "rgba(255, 250, 210, 0)");
-  ctx.fillStyle = core;
-  ctx.fillRect(0, 0, size, size);
-
-  // 4. Chromatic spikes — blue→white→teal split
-  ctx.save();
-  ctx.translate(c, c);
-  ctx.globalCompositeOperation = "lighter";
-
-  // Horizontal spike: blue (left) → white (center) → teal (right)
-  const hSpike = ctx.createLinearGradient(-c, 0, c, 0);
-  hSpike.addColorStop(0.00, "rgba(52, 89, 181, 0)");
-  hSpike.addColorStop(0.30, "rgba(52, 89, 181, 0.4)");
-  hSpike.addColorStop(0.42, "rgba(180, 200, 240, 0.7)");
-  hSpike.addColorStop(0.49, "rgba(255, 255, 255, 1)");
-  hSpike.addColorStop(0.51, "rgba(255, 255, 255, 1)");
-  hSpike.addColorStop(0.58, "rgba(180, 230, 230, 0.7)");
-  hSpike.addColorStop(0.70, "rgba(106, 171, 173, 0.4)");
-  hSpike.addColorStop(1.00, "rgba(106, 171, 173, 0)");
-  ctx.fillStyle = hSpike;
-  ctx.fillRect(-c, -2.5, size, 5);
-
-  // Vertical spike: same chromatic split
-  ctx.rotate(Math.PI / 2);
-  ctx.fillStyle = hSpike;
-  ctx.fillRect(-c, -2.5, size, 5);
-
-  // Diagonal accent spikes (thinner, subtler)
-  ctx.rotate(-Math.PI / 4);
-  for (let i = 0; i < 2; i++) {
-    const dSpike = ctx.createLinearGradient(-c, 0, c, 0);
-    dSpike.addColorStop(0.00, "rgba(52, 89, 181, 0)");
-    dSpike.addColorStop(0.40, "rgba(120, 150, 210, 0)");
-    dSpike.addColorStop(0.50, "rgba(200, 220, 240, 0.4)");
-    dSpike.addColorStop(0.60, "rgba(140, 200, 200, 0)");
-    dSpike.addColorStop(1.00, "rgba(106, 171, 173, 0)");
-    ctx.fillStyle = dSpike;
-    ctx.fillRect(-c, -1, size, 2);
-    ctx.rotate(Math.PI / 2);
-  }
-
-  ctx.restore();
-
-  const tex = new CanvasTexture(canvas);
-  tex.generateMipmaps = false;
-  tex.minFilter = LinearFilter;
-  tex.colorSpace = SRGBColorSpace;
-  tex.needsUpdate = true;
-  return tex;
-}
 
 interface Sparkle {
   x: number; y: number; z: number;

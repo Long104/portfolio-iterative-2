@@ -118,10 +118,11 @@ function App() {
   useEffect(() => {
     if (!started) return;
     let ticking = false;
+    let rafId = 0;
     function onScroll() {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(() => {
         const max = document.body.scrollHeight - window.innerHeight;
         const pct = max > 0 ? window.scrollY / max : 0;
         setScrollState({ progress: pct });
@@ -129,17 +130,21 @@ function App() {
       });
     }
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [started]);
 
   // Mouse parallax (rAF-throttled, writes to mouseStore for R3F)
   useEffect(() => {
     if (!started) return;
     let ticking = false;
+    let rafId = 0;
     function onMouseMove(e: MouseEvent) {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(() => {
         const x = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) to 1 (right)
         const y = -(e.clientY / window.innerHeight) * 2 + 1;  // 1 (top) to -1 (bottom)
         setMouseState({ x, y, lastMoveTime: performance.now() });
@@ -147,7 +152,10 @@ function App() {
       });
     }
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [started]);
 
   const handleStart = useCallback(async () => {

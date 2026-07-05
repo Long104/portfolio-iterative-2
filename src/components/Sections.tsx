@@ -360,7 +360,9 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
       if (img) gsap.set(img, { clipPath: "inset(0 100% 0 0)" });
     });
 
-    if (horizontalTween.current) {
+    const isDesktop = !window.matchMedia("(max-width: 768px)").matches;
+
+    if (isDesktop) {
       // Desktop: viewport-based clip reveal
       // Instead of ScrollTrigger.create with containerAnimation (which fails
       // for cards whose left edge is already left of the viewport right edge),
