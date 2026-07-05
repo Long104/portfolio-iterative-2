@@ -1,4 +1,6 @@
 // Fullscreen backdrop — prevents black void
+// OPTIMIZED: radial gradient pre-baked to 256×1 LUT (createBackdropLUT).
+// Replaces 6 smoothstep + 6 mix per pixel with 1 texture lookup.
 export const backdropVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -10,6 +12,7 @@ export const backdropVertex = /* glsl */ `
 export const backdropFragment = /* glsl */ `
   uniform float uAspect;
   uniform float uBass;
+  uniform sampler2D uBackdropLUT;
   varying vec2 vUv;
   void main() {
     // Center coordinate space + correct for aspect ratio (matches glow shader)
@@ -17,22 +20,9 @@ export const backdropFragment = /* glsl */ `
     centered.x *= uAspect;
     float dist = length(centered);
 
-    // Inner: dark nebula — warm rose → desaturates through mauve/gray
-    // Outer: blooms into bright teal ring → dark teal tunnel (same unified hue)
-    vec3 darkVoid = vec3(0.08, 0.00, 0.06);   // dark pink void
-    vec3 c1       = vec3(0.16, 0.02, 0.08);   // dark rose
-    vec3 c2       = vec3(0.14, 0.04, 0.10);   // dark mauve
-    vec3 c3       = vec3(0.12, 0.06, 0.10);   // grayish mauve
-    vec3 c4       = vec3(0.10, 0.08, 0.10);   // dark neutral gray
-    vec3 ringTeal = vec3(0.114, 0.537, 0.498); // #1D897F — teal ring (brighter, green-teal)
-    vec3 teal     = vec3(0.004, 0.165, 0.180); // #012a2e — outer tunnel
-
-    vec3 color = mix(darkVoid, c1, smoothstep(0.0, 0.08, dist));
-    color = mix(color, c2, smoothstep(0.08, 0.18, dist));
-    color = mix(color, c3, smoothstep(0.18, 0.28, dist));
-    color = mix(color, c4, smoothstep(0.28, 0.40, dist));
-    color = mix(color, ringTeal, smoothstep(0.40, 0.55, dist));
-    if (dist > 0.55) color = mix(color, teal, smoothstep(0.55, 0.75, dist));
+    // Sample pre-baked radial gradient — identical to the former 6-stop
+    // smoothstep/mix chain, but as a single texture lookup.
+    vec3 color = texture2D(uBackdropLUT, vec2(clamp(dist, 0.0, 1.0), 0.5)).rgb;
 
     // Audio: bass makes the void breathe — barely perceptible
     color *= 1.0 + uBass * 0.06;

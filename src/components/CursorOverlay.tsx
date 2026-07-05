@@ -317,11 +317,18 @@ export function CursorOverlay() {
         prevX = dot.x;
         prevY = dot.y;
         firstMove = true;
-        return;
+      } else {
+        target.x = e.clientX;
+        target.y = e.clientY;
       }
-      target.x = e.clientX;
-      target.y = e.clientY;
       lastMoveTime = performance.now();
+      // Restart rAF if idle-stopped
+      if (rafId === 0) {
+        if (audioWatchId) { window.clearInterval(audioWatchId); audioWatchId = 0; }
+        lastT = performance.now();
+        lastFrameTime = 0;
+        rafId = requestAnimationFrame(frame);
+      }
     };
     const onOver = (e: MouseEvent): void => {
       const el = e.target;
@@ -400,6 +407,7 @@ export function CursorOverlay() {
     document.documentElement.classList.add("cursor-hidden");
 
     let rafId = 0;
+    let audioWatchId = 0;
     let lastT = performance.now();
     let lastFrameTime = 0; // for 30fps + idle throttle
 
@@ -408,14 +416,8 @@ export function CursorOverlay() {
       const dt = Math.min((t - lastT) / 1000, 0.05);
       lastT = t;
 
-      // 30fps throttle (33ms)
-      if (t - lastFrameTime < 33) {
-        // Keep rotation smooth during skipped frames — prevents snap on resume
-        const targetRotSpeed = hover ? 0 : 0.3;
-        rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
-        rotation += dt * rotSpeed;
-        return;
-      }
+      // 30fps throttle — zero work on skip frames
+      if (t - lastFrameTime < 33) return;
       lastFrameTime = t;
 
       const audio = getAudioData();
@@ -526,12 +528,40 @@ export function CursorOverlay() {
 
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
+
+      // ── IDLE GATE: cancel rAF when nothing is happening ──
+      // Conditions: user has moved at least once, no movement for 2s,
+      // no audio playing, all sparkles finished dying.
+      // Reticle stays frozen at last position on canvas.
+      // Restarts on pointermove or audio play.
+      if (firstMove && t - lastMoveTime > 2000 && audio.level === 0) {
+        let alive = false;
+        for (let i = 0; i < MAX_SPARKLES; i++) {
+          if (pool[i].life > 0) { alive = true; break; }
+        }
+        if (!alive) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+          // Watch for audio to resume rAF
+          audioWatchId = window.setInterval(() => {
+            if (getAudioData().level > 0) {
+              window.clearInterval(audioWatchId);
+              audioWatchId = 0;
+              lastT = performance.now();
+              lastFrameTime = 0;
+              rafId = requestAnimationFrame(frame);
+            }
+          }, 500);
+          return;
+        }
+      }
     };
 
     rafId = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(rafId);
+      if (audioWatchId) window.clearInterval(audioWatchId);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("mouseover", onOver);

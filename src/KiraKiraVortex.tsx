@@ -9,7 +9,7 @@ import {
   Vector3,
 } from "three";
 
-import { createStarTexture, createPetalTexture, createBlobTexture, createGradientLUT, createFlareColorLUT, createNoiseTexture, createGlowLUT } from "./textures";
+import { createStarTexture, createPetalTexture, createBlobTexture, createGradientLUT, createFlareColorLUT, createNoiseTexture, createGlowLUT, createBackdropLUT } from "./textures";
 import { backdropVertex, backdropFragment } from "./shaders/backdrop";
 import { particleVertex, particleFragment } from "./shaders/particles";
 import { flareVertex, flareFragment } from "./shaders/flare";
@@ -73,6 +73,7 @@ export default function KiraKiraVortex() {
   const flareColorLUT = useMemo(() => createFlareColorLUT(), []);
   const noiseTex = useMemo(() => createNoiseTexture(), []);
   const glowLUT = useMemo(() => createGlowLUT(), []);
+  const backdropLUT = useMemo(() => createBackdropLUT(), []);
 
   // --- Materials (useMemo — immutable identity, used in JSX render) ---
   // Note: uniforms are mutated per-frame in useFrame below.
@@ -86,13 +87,14 @@ export default function KiraKiraVortex() {
         uniforms: {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uBass: { value: 0 },
+          uBackdropLUT: { value: backdropLUT },
         },
         vertexShader: backdropVertex,
         fragmentShader: backdropFragment,
         depthWrite: false,
         depthTest: false,
       }),
-    [],
+    [backdropLUT],
   );
 
   const paintMat = useMemo(
@@ -188,7 +190,7 @@ export default function KiraKiraVortex() {
       mountedRef.current = false;
       setTimeout(() => {
         if (mountedRef.current) return; // StrictMode re-mounted
-        [starTex, petalTex, blobTex, gradLUT, flareColorLUT, noiseTex, glowLUT].forEach((t) => t.dispose());
+        [starTex, petalTex, blobTex, gradLUT, flareColorLUT, noiseTex, glowLUT, backdropLUT].forEach((t) => t.dispose());
         [backdropGeo, glowGeo, paintGeo, flareGeo].forEach((g) => g.dispose());
         [backdropMat, paintMat, flareMat, glowMat].forEach((m) =>
           m.dispose(),

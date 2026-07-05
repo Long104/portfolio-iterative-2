@@ -33,6 +33,7 @@ export function PsycommuWaveform() {
     c.scale(DPR, DPR);
 
     let raf = 0;
+    let audioWatch = 0;
     let lastNonZero = false;
     let lastFrameTime = 0; // 30fps throttle
     let cachedGrad: CanvasGradient | null = null;
@@ -54,6 +55,18 @@ export function PsycommuWaveform() {
           c.clearRect(0, 0, W, H);
           lastNonZero = false;
         }
+        // ── Pause rAF when silent — restart on audio play ──
+        cancelAnimationFrame(raf);
+        raf = 0;
+        audioWatch = window.setInterval(() => {
+          const d = getAudioData();
+          if (d.bass > 0 || d.mid > 0 || d.treble > 0) {
+            window.clearInterval(audioWatch);
+            audioWatch = 0;
+            lastFrameTime = 0;
+            raf = requestAnimationFrame(draw);
+          }
+        }, 500);
         return;
       }
       lastNonZero = true;
@@ -106,7 +119,10 @@ export function PsycommuWaveform() {
     }
 
     raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      if (audioWatch) window.clearInterval(audioWatch);
+    };
   }, []);
 
   return (

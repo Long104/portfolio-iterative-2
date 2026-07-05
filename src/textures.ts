@@ -363,3 +363,63 @@ export function createGlowLUT(): Texture {
   tex.needsUpdate = true;
   return tex;
 }
+
+// ── Backdrop radial gradient LUT ──
+// Pre-bakes the 6-stop smoothstep/mix chain from the backdrop shader into a
+// 256×1 texture. The shader replaces ~24 ALU ops/pixel with a single
+// texture2D lookup — 92% fewer ops on a fullscreen quad.
+// Colors stored as raw linear values (no SRGB conversion) to match the
+// original shader's hardcoded vec3 constants.
+export function createBackdropLUT(): Texture {
+  const w = 256;
+  const data = new Uint8Array(w * 4);
+  const maxDist = 1.0; // covers all screen positions after aspect correction
+
+  function smoothstep(edge0: number, edge1: number, x: number): number {
+    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+  }
+
+  function mix3(a: number[], b: number[], t: number): number[] {
+    return [
+      a[0] + (b[0] - a[0]) * t,
+      a[1] + (b[1] - a[1]) * t,
+      a[2] + (b[2] - a[2]) * t,
+    ];
+  }
+
+  const darkVoid = [0.08, 0.00, 0.06];
+  const c1       = [0.16, 0.02, 0.08];
+  const c2       = [0.14, 0.04, 0.10];
+  const c3       = [0.12, 0.06, 0.10];
+  const c4       = [0.10, 0.08, 0.10];
+  const ringTeal = [0.114, 0.537, 0.498];
+  const teal     = [0.004, 0.165, 0.180];
+
+  for (let i = 0; i < w; i++) {
+    const d = (i / (w - 1)) * maxDist;
+
+    let color = [...darkVoid];
+    color = mix3(color, c1,       smoothstep(0.0,  0.08, d));
+    color = mix3(color, c2,       smoothstep(0.08, 0.18, d));
+    color = mix3(color, c3,       smoothstep(0.18, 0.28, d));
+    color = mix3(color, c4,       smoothstep(0.28, 0.40, d));
+    color = mix3(color, ringTeal, smoothstep(0.40, 0.55, d));
+    if (d > 0.55) color = mix3(color, teal, smoothstep(0.55, 0.75, d));
+
+    const idx = i * 4;
+    data[idx]     = Math.round(color[0] * 255);
+    data[idx + 1] = Math.round(color[1] * 255);
+    data[idx + 2] = Math.round(color[2] * 255);
+    data[idx + 3] = 255;
+  }
+
+  const tex = new DataTexture(data, w, 1);
+  tex.format = RGBAFormat;
+  tex.type = UnsignedByteType;
+  tex.magFilter = LinearFilter;
+  tex.minFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}

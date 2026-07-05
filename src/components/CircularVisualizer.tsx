@@ -30,6 +30,7 @@ export function CircularVisualizer() {
     c.scale(DPR, DPR);
 
     let raf = 0;
+    let audioWatch = 0;
     let lastFrameTime = 0;
     let rotation = 0;
 
@@ -100,10 +101,29 @@ export function CircularVisualizer() {
       c.arc(CENTER, CENTER, 1.5, 0, Math.PI * 2);
       c.fillStyle = hasAudio ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.3)";
       c.fill();
+
+      // ── Pause rAF when silent — static ring stays on canvas ──
+      // Restarts via audio-watch interval when audio plays again.
+      if (!hasAudio) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        audioWatch = window.setInterval(() => {
+          const d = getAudioData();
+          if (d.bass > 0 || d.mid > 0 || d.treble > 0) {
+            window.clearInterval(audioWatch);
+            audioWatch = 0;
+            lastFrameTime = 0;
+            raf = requestAnimationFrame(draw);
+          }
+        }, 500);
+      }
     }
 
     raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      if (audioWatch) window.clearInterval(audioWatch);
+    };
   }, []);
 
   return (
