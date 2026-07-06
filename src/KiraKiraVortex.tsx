@@ -14,7 +14,7 @@ import { backdropVertex, backdropFragment } from "./shaders/backdrop";
 import { particleVertex, particleFragment } from "./shaders/particles";
 import { flareVertex, flareFragment } from "./shaders/flare";
 import { glowVertex, glowFragment } from "./shaders/glow";
-import { PAINT_COUNT, FLARE_COUNT } from "./perf";
+import { usePerfSettings } from "./perfStore";
 import { useAudioEngine } from "./useAudioEngine";
 import { getScrollState } from "./scrollStore";
 import { getMouseState } from "./mouseStore";
@@ -43,6 +43,7 @@ function generateInstanceData(count: number, maxRadius: number) {
 }
 
 export default function KiraKiraVortex() {
+  const { paintCount, flareCount } = usePerfSettings();
   // --- Audio reactivity ---
   const { getData } = useAudioEngine();
 
@@ -165,20 +166,20 @@ export default function KiraKiraVortex() {
   const glowGeo = useMemo(() => new CircleGeometry(1, 32), []);
 
   const paintGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(PAINT_COUNT, 38.0);
+    const { pos, rand } = generateInstanceData(paintCount, 38.0);
     const geo = new PlaneGeometry(0.4, 0.4);
     geo.setAttribute("aInitialPos", new InstancedBufferAttribute(pos, 3));
     geo.setAttribute("aRandoms", new InstancedBufferAttribute(rand, 3));
     return geo;
-  }, []);
+  }, [paintCount]);
 
   const flareGeo = useMemo(() => {
-    const { pos, rand } = generateInstanceData(FLARE_COUNT, 10.0);
+    const { pos, rand } = generateInstanceData(flareCount, 10.0);
     const geo = new PlaneGeometry(0.3, 0.3);
     geo.setAttribute("aInitialPos", new InstancedBufferAttribute(pos, 3));
     geo.setAttribute("aRandoms", new InstancedBufferAttribute(rand, 3));
     return geo;
-  }, []);
+  }, [flareCount]);
 
   // --- Dispose all GPU resources on unmount (prevents leaks on HMR/route change) ---
   // Deferred: in StrictMode dev, the re-mount sets mountedRef back to true
@@ -336,14 +337,16 @@ export default function KiraKiraVortex() {
 
       {/* 3. Particles (instanced — audio-reactive drift) */}
       <instancedMesh
-        args={[paintGeo, paintMat, PAINT_COUNT]}
+        key={`paint-${paintCount}`}
+        args={[paintGeo, paintMat, paintCount]}
         frustumCulled={false}
         renderOrder={1}
       />
 
       {/* 4. Saturated Star Flares (Drawn on the absolute top layer) */}
       <instancedMesh 
-        args={[flareGeo, flareMat, FLARE_COUNT]} 
+        key={`flare-${flareCount}`}
+        args={[flareGeo, flareMat, flareCount]} 
         frustumCulled={false} 
         renderOrder={2}
       />

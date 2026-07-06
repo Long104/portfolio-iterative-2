@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
+import { perfStore } from "./perfStore";
 
 // FRAME LIMITER — flat 30fps
 // Single tier: 30fps always.
@@ -15,6 +16,9 @@ export default function FrameLimiter() {
   const lastTimeRef = useRef(0);
 
   useEffect(() => {
+    let renderCount = 0;
+    let lastFPSCalcTime = performance.now();
+
     function loop(now: number) {
       rafRef.current = requestAnimationFrame(loop);
 
@@ -23,6 +27,15 @@ export default function FrameLimiter() {
       if (elapsed >= INTERVAL) {
         lastTimeRef.current = now - (elapsed % INTERVAL);
         invalidate();
+        renderCount++;
+
+        const timeSinceLastCalc = now - lastFPSCalcTime;
+        if (timeSinceLastCalc >= 1000) {
+          const actualFPS = (renderCount * 1000) / timeSinceLastCalc;
+          renderCount = 0;
+          lastFPSCalcTime = now;
+          perfStore.reportFPS(actualFPS);
+        }
       }
     }
 

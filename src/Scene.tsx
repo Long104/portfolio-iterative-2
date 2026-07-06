@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import KiraKiraVortex from "./KiraKiraVortex";
 import SparkleSystem from "./SparkleSystem";
 import FrameLimiter from "./FrameLimiter";
-import { PERF_TIER, MAX_DPR } from "./perf";
+import { usePerfSettings } from "./perfStore";
 import { IS_CHROME } from "./lib/env";
 
 // preserveDrawingBuffer is only needed for refractive's html2canvas fallback
@@ -11,12 +11,14 @@ import { IS_CHROME } from "./lib/env";
 const NEEDS_PRESERVE_DRAWING_BUFFER = !IS_CHROME;
 
 export default function Scene() {
+  const { tier, maxDpr } = usePerfSettings();
+
   return (
     <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
       <Canvas
         frameloop="demand"
         camera={{ position: [0, 0, 5], fov: 75 }}
-        dpr={PERF_TIER === "mobile" ? 1 : [1, MAX_DPR]}
+        dpr={tier === "mobile" ? 1 : [1, maxDpr]}
         gl={{
           antialias: false, // additive particles + glow — MSAA is wasted cost
           powerPreference: "default",
