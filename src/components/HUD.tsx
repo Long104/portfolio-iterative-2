@@ -6,6 +6,7 @@ import { usePerfState } from "../perfStore";
 
 export function HUD() {
   const { override, tier, setOverride } = usePerfState();
+  console.log("HUD render:", { override, tier });
 
   return (
     <>
@@ -25,26 +26,7 @@ export function HUD() {
                 {i > 0 && <span style={{ margin: "0 4px", opacity: 0.3 }}>/</span>}
                 <button
                   onClick={() => setOverride(opt)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: "0 2px",
-                    color: isActive ? "var(--theme-accent2)" : "rgba(255, 255, 255, 0.4)",
-                    textDecoration: isActive ? "underline" : "none",
-                    fontWeight: isActive ? "600" : "normal",
-                    cursor: "pointer",
-                    fontFamily: "var(--mono)",
-                    fontSize: "11px",
-                    textTransform: "lowercase",
-                    outline: "none",
-                    transition: "color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)";
-                  }}
+                  className={`hud__quality-btn ${isActive ? "hud__quality-btn--active" : ""}`}
                 >
                   {label}
                 </button>
