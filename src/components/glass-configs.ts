@@ -4,6 +4,12 @@ import { IS_CHROME } from "../lib/env";
 // Spread into config only on non-Chrome to skip html2canvas entirely.
 const SIMPLE_FALLBACK = IS_CHROME ? {} : { fallbackMode: "simple" as const };
 
+// Force integer pixel ratio. refractive 0.0.6 generates displacement/specular
+// ImageData with Math.round((2r+1)*pixelRatio) but validates against the exact
+// (unrounded) product, so fractional devicePixelRatio (Windows 125%/150%
+// scaling) throws "ImageData width is too small for the given corner width".
+const FORCE_PIXEL_RATIO = { pixelRatio: 1 };
+
 export const RefractiveDiv = refractive.div;
 
 // ── Glass config builders ──
@@ -17,6 +23,7 @@ export function buildPanelConfig(specularAngle: number) {
     refractiveIndex: 1.5, specularOpacity: 0.8, specularAngle,
     bezelHeightFn: convex,
     ...SIMPLE_FALLBACK,
+    ...FORCE_PIXEL_RATIO,
   };
 }
 
@@ -27,6 +34,7 @@ export function buildNavConfig(specularAngle: number) {
     refractiveIndex: 1.5, specularOpacity: 0.7, specularAngle,
     bezelHeightFn: convex,
     ...SIMPLE_FALLBACK,
+    ...FORCE_PIXEL_RATIO,
   };
 }
 
@@ -37,6 +45,7 @@ export function buildDetailConfig(specularAngle: number) {
     refractiveIndex: 1.5, specularOpacity: 0.85, specularAngle,
     bezelHeightFn: convex,
     ...SIMPLE_FALLBACK,
+    ...FORCE_PIXEL_RATIO,
   };
 }
 
@@ -47,6 +56,7 @@ export function buildSmallConfig(specularAngle: number) {
     refractiveIndex: 1.5, specularOpacity: 0.6, specularAngle,
     bezelHeightFn: convex,
     ...SIMPLE_FALLBACK,
+    ...FORCE_PIXEL_RATIO,
   };
 }
 
@@ -57,5 +67,6 @@ export function buildCircleConfig(specularAngle: number) {
     refractiveIndex: 1.5, specularOpacity: 0.6, specularAngle,
     bezelHeightFn: convex,
     ...SIMPLE_FALLBACK,
+    ...FORCE_PIXEL_RATIO,
   };
 }
