@@ -175,6 +175,11 @@ html.cursor-hidden * {
   transition: color 0.2s ease;
 }
 
+.hud__quality-btn:focus-visible {
+  outline: 1px solid var(--theme-accent2);
+  outline-offset: 2px;
+}
+
 .hud__quality-btn:hover {
   color: rgba(255, 255, 255, 0.8);
 }
