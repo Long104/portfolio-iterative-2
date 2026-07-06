@@ -6,6 +6,7 @@ import { RefractiveDiv, buildNavConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { gsap } from "../lib/gsap";
 import { playHoverSound, playClickSound } from "../lib/audio-ui";
+import { useSlidingIndicator } from "../hooks/useSlidingIndicator";
 
 const SECTIONS = ["pilot", "about", "experience", "work", "stack", "now", "contact"] as const;
 
@@ -19,8 +20,10 @@ export function NavPill({ activeIndex, onNavigate }: NavPillProps) {
   const refraction = useMemo(() => buildNavConfig(specularAngle), [specularAngle]);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<HTMLButtonElement[]>([]);
-  const initialised = useRef(false);
   const hoverTweens = useRef<Map<number, gsap.core.Tween>>(new Map());
+
+  // ── Sliding indicator ──
+  useSlidingIndicator(indicatorRef, itemsRef, activeIndex);
 
   // ── Hover spring (pointer devices only) ──
   useEffect(() => {
@@ -58,42 +61,6 @@ export function NavPill({ activeIndex, onNavigate }: NavPillProps) {
       hoverTweens.current.clear();
     };
   }, []);
-
-  // ── Slide indicator to active section ──
-  useEffect(() => {
-    const indicator = indicatorRef.current;
-    const target = itemsRef.current[activeIndex];
-    if (!indicator || !target) return;
-
-    const pill = indicator.parentElement;
-    if (!pill) return;
-
-    const pillRect = pill.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-
-    const left = targetRect.left - pillRect.left;
-    const w = targetRect.width;
-
-    if (!initialised.current) {
-      // First paint: set instantly (no flash).
-      initialised.current = true;
-      gsap.set(indicator, { left, width: w });
-      return;
-    }
-
-    // Subsequent: animate smoothly.
-    const anim = gsap.to(indicator, {
-      left,
-      width: w,
-      duration: 0.4,
-      ease: "power3.out",
-      overwrite: "auto",
-    });
-
-    return () => {
-      anim.kill();
-    };
-  }, [activeIndex]);
 
   return (
     <RefractiveDiv

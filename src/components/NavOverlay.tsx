@@ -13,6 +13,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { RefractiveDiv, buildCircleConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { gsap, PREFERS_REDUCED_MOTION } from "../lib/gsap";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 const SECTIONS = ["pilot", "about", "experience", "work", "stack", "now", "contact"] as const;
 
@@ -165,16 +166,7 @@ export function NavOverlay({ activeIndex, onNavigate }: NavOverlayProps) {
   }
 
   // ── Lock body scroll ──
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // ── Cleanup ──
   useEffect(() => {

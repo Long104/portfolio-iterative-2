@@ -12,6 +12,7 @@ import type { Project } from "./projects";
 import { playCloseSound } from "../lib/audio-ui";
 import { RefractiveDiv, buildDetailConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface ProjectDetailProps {
   project: Project | null;
@@ -22,7 +23,6 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
-  const wasBodyOverflow = useRef<string>("");
   const prevFocusRef = useRef<HTMLElement | null>(null);
 
   // ── Refractive glass config ──
@@ -140,16 +140,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
   }, [onClose]);
 
   // ── Lock body scroll when open ──
-  useEffect(() => {
-    if (!project) return;
-
-    wasBodyOverflow.current = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = wasBodyOverflow.current;
-    };
-  }, [project]);
+  useScrollLock(!!project);
 
   // ── Escape to close ──
   useEffect(() => {

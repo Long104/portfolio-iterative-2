@@ -5,6 +5,7 @@ import { setScrollState } from "./scrollStore";
 import { setMouseState } from "./mouseStore";
 import { ScrollTrigger, gsap } from "./lib/gsap";
 import { useParallax } from "./hooks/useParallax";
+import { useScrollLock } from "./hooks/useScrollLock";
 import { requestOrientationPermission } from "./useDeviceOrientation";
 
 const Scene = lazy(() => import("./Scene"));
@@ -31,7 +32,7 @@ import {
   WorkSection,
   CurrentlySection,
   ContactSection,
-} from "./components/Sections";
+} from "./components/sections";
 import { StackSection } from "./components/Armament";
 
 type Theme = "gquuuuuux" | "gfreed";
@@ -104,14 +105,7 @@ function App() {
   // Content is pre-mounted 800ms after page load (behind the boot overlay).
   // Without this, users can scroll the hidden content during the boot sequence,
   // leaving it in a random position when LAUNCH fires.
-  useEffect(() => {
-    if (started) {
-      document.body.style.overflow = "";
-      return;
-    }
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, [started]);
+  useScrollLock(!started);
 
   // Scroll progress (rAF-throttled, writes to scrollStore for R3F)
   // Also writes to global scrollStore for R3F to read in useFrame (no React re-render).

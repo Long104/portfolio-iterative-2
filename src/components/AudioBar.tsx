@@ -6,6 +6,7 @@ import { RefractiveDiv, buildSmallConfig } from "./glass-configs";
 import { useDeviceOrientation } from "../useDeviceOrientation";
 import { TRACKS } from "../useAudioEngine";
 import { gsap } from "../lib/gsap";
+import { useSlidingIndicator } from "../hooks/useSlidingIndicator";
 
 interface AudioBarProps {
   isPlaying: boolean;
@@ -28,8 +29,11 @@ export function AudioBar({
   const refraction = useMemo(() => buildSmallConfig(specularAngle), [specularAngle]);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<HTMLButtonElement[]>([]);
-  const initialised = useRef(false);
   const playBtnRef = useRef<HTMLButtonElement>(null);
+
+  // ── Sliding indicator ──
+  const activeTrackIndex = TRACKS.findIndex((t) => t.url === currentTrack);
+  useSlidingIndicator(indicatorRef, itemsRef, activeTrackIndex);
 
   // ── Play button micro-interaction ──
   useEffect(() => {
@@ -68,39 +72,6 @@ export function AudioBar({
       el.removeEventListener("mouseleave", onLeave);
     };
   }, []);
-
-  // ── Slide indicator ──
-  useEffect(() => {
-    const indicator = indicatorRef.current;
-    const activeIdx = TRACKS.findIndex((t) => t.url === currentTrack);
-    const target = itemsRef.current[activeIdx];
-    if (!indicator || !target) return;
-
-    const bar = indicator.parentElement;
-    if (!bar) return;
-
-    const barRect = bar.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-
-    const left = targetRect.left - barRect.left;
-    const w = targetRect.width;
-
-    if (!initialised.current) {
-      initialised.current = true;
-      gsap.set(indicator, { left, width: w });
-      return;
-    }
-
-    const anim = gsap.to(indicator, {
-      left,
-      width: w,
-      duration: 0.4,
-      ease: "power3.out",
-      overwrite: "auto",
-    });
-
-    return () => { anim.kill(); };
-  }, [currentTrack]);
 
   return (
     <RefractiveDiv
