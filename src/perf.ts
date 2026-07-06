@@ -12,6 +12,32 @@
 //   high   — high-end desktops (30fps, 1.25 DPR, 10000 paint / 3500 flare, smooth)
 export type PerfTier = "mobile" | "tablet" | "low" | "high";
 
+function detectLowSpecGPU(): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
+    if (!gl) return true;
+    const extension = gl.getExtension("WEBGL_debug_renderer_info");
+    if (!extension) return false;
+    const renderer = (gl.getParameter(extension.UNMASKED_RENDERER_WEBGL) || "").toLowerCase();
+    
+    return (
+      renderer.includes("intel") ||
+      renderer.includes("uhd") ||
+      renderer.includes("hd graphics") ||
+      renderer.includes("iris") ||
+      renderer.includes("swiftshader") ||
+      renderer.includes("software") ||
+      renderer.includes("basic render") ||
+      renderer.includes("geforce mx") ||
+      (renderer.includes("radeon") && (renderer.includes("tm") || renderer.includes("graphics") || renderer.includes("vega")))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function detectPerfTier(): PerfTier {
   if (typeof navigator === "undefined") return "high";
   const ua = navigator.userAgent;
@@ -34,7 +60,7 @@ export function detectPerfTier(): PerfTier {
 
   const cores = navigator.hardwareConcurrency ?? 4;
   const memory = (navigator as { deviceMemory?: number }).deviceMemory ?? 4;
-  if (cores <= 4 || memory <= 4) return "low";
+  if (cores <= 4 || memory <= 4 || detectLowSpecGPU()) return "low";
   return "high";
 }
 
