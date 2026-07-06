@@ -2,7 +2,7 @@
 // Vertical wire with glowing dot nodes. Each text element gets its own
 // SplitText-driven scroll reveal via useGSAP.
 
-import { useRef, memo } from "react";
+import { useRef, memo, type ReactNode } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, SplitText, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../../lib/gsap";
 import { useScrollReveal } from "../../hooks/useScrollReveal";
@@ -14,7 +14,7 @@ interface ExpItemData {
   role: string;
   company?: string;
   location?: string;
-  description?: string;
+  description?: ReactNode;
   isCurrent?: boolean;
   isEducation?: boolean;
 }
@@ -79,7 +79,7 @@ function ExpItem({ period, role, company, location, description, isCurrent, isEd
         <div className={`tl-item__period${isCurrent ? " tl-item__period--current" : ""}`}>
           {period}
         </div>
-        <div className={`tl-item__role${isCurrent ? " tl-item__role--current" : ""}`}>
+        <div className={`tl-item__role${isCurrent ? " tl-item__role--current" : ""} keyword`}>
           {role}
         </div>
         {company && (
