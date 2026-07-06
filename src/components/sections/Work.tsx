@@ -1,7 +1,7 @@
 // ── Work section — horizontal scroll ──
 // Pins on scroll, cards scroll horizontally. Each card has clip-path reveal.
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap, ScrollTrigger } from "../../lib/gsap";
 import { useScrollReveal } from "../../hooks/useScrollReveal";
 import { useHorizontalScroll } from "../../hooks/useHorizontalScroll";
@@ -28,6 +28,18 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const revealTriggers = useRef<ScrollTrigger[]>([]);
 
+  // ── Track viewport breakpoint for clip reveal strategy ──
+  // Re-runs the clip effect when the viewport crosses 768px (e.g. iPad rotation)
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && !window.matchMedia("(max-width: 768px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const handleChange = () => setIsDesktop(!mq.matches);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
   useEffect(() => {
     if (!started) return;
 
@@ -37,8 +49,6 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
     imageRefs.current.forEach((img) => {
       if (img) gsap.set(img, { clipPath: "inset(0 100% 0 0)" });
     });
-
-    const isDesktop = !window.matchMedia("(max-width: 768px)").matches;
 
     if (isDesktop) {
       const containerEl = containerRef.current;
@@ -102,7 +112,7 @@ export function WorkSection({ started, onOpenProject, hidden }: { started: boole
       revealTriggers.current.forEach((st) => st.kill());
       revealTriggers.current = [];
     };
-  }, [started]);
+  }, [started, isDesktop]);
 
   return (
     <section ref={containerRef} className="section section--work-horizontal" data-section-index={3} style={{ visibility: hidden ? "hidden" : "visible" }}>
