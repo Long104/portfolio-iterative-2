@@ -1,12 +1,11 @@
-// ── End Credits — movie-style scrolling credits ──
-// The portfolio closes like a film.
-// Auto-scrolls when section enters viewport (pinned).
-// User scroll takes over; auto-scroll resumes after 1.5s of inactivity.
-// Fade masks at top/bottom create the cinematic "stars in space" edge fade.
+// ── End Credits — movie-style auto-play with scroll-to-skip ──
+// Credits auto-play from bottom to top like a movie.
+// User can wheel/touch-scroll to fast-forward.
+// After 400ms of no scroll input, normal speed resumes.
 
 import { useRef, memo } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap, PREFERS_REDUCED_MOTION } from "../../lib/gsap";
+import { gsap, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../../lib/gsap";
 
 interface CreditGroup {
   readonly title: string;
@@ -78,8 +77,10 @@ const CREDIT_GROUPS: readonly CreditGroup[] = [
   },
 ];
 
-const AUTO_SCROLL_DELAY_MS = 1500;
-const AUTO_SCROLL_SPEED = 0.8; // px per frame ~ 48px/s at 60fps
+// Auto-play: ~40s bottom-to-top. Scroll input boosts to 8x speed.
+const AUTO_PLAY_DURATION = 40;
+const FF_SCALE = 8;
+const FF_RESET_MS = 400;
 
 export const CreditsSection = memo(function CreditsSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -93,59 +94,67 @@ export const CreditsSection = memo(function CreditsSection() {
       const track = trackRef.current;
       if (!section || !track) return;
 
-      // ── Build the pin + scrub timeline ──
-      const travel = track.offsetHeight + window.innerHeight;
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: `+=${travel}`,
-          scrub: 1,
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
+      // ── Auto-play timeline (paused until section enters viewport) ──
+      // Track starts below viewport (y = innerHeight) and scrolls up
+      // until the last line rests near viewport bottom.
+      const tl = gsap.timeline({ paused: true });
 
       tl.fromTo(
         track,
         { y: () => window.innerHeight },
-        { y: () => -track.offsetHeight, ease: "none" },
+        {
+          y: () => -Math.max(0, track.offsetHeight - window.innerHeight),
+          duration: AUTO_PLAY_DURATION,
+          ease: "none",
+        },
       );
 
-      // ── Auto-scroll: advance when user is idle and section is active ──
-      let lastScrollTime = Date.now();
-      let rafId = 0;
+      // ── Play when section enters, reset on scroll back ──
+      const st = ScrollTrigger.create({
+        trigger: section,
+        start: "top 60%",
+        onEnter: () => tl.play(),
+        onLeaveBack: () => {
+          tl.pause(0);
+        },
+      });
 
-      function onScroll() {
-        lastScrollTime = Date.now();
-      }
-      window.addEventListener("scroll", onScroll, { passive: true });
+      // ── Scroll-to-skip: wheel / touch fast-forwards credits ──
+      let ffTimer: ReturnType<typeof setTimeout> | undefined;
+      let touchStartY = 0;
 
-      function tick() {
-        const trigger = tl.scrollTrigger;
-        if (
-          trigger &&
-          trigger.isActive &&
-          trigger.progress > 0.001 &&
-          trigger.progress < 0.999 &&
-          !document.documentElement.classList.contains("lenis-stopped")
-        ) {
-          const idle = Date.now() - lastScrollTime > AUTO_SCROLL_DELAY_MS;
-          if (idle) {
-            window.scrollBy(0, AUTO_SCROLL_SPEED);
-          }
-        }
-        rafId = requestAnimationFrame(tick);
+      function boostSpeed() {
+        if (!tl.isActive() || tl.progress() >= 0.99) return;
+        tl.timeScale(FF_SCALE);
+        clearTimeout(ffTimer);
+        ffTimer = setTimeout(() => {
+          tl.timeScale(1);
+        }, FF_RESET_MS);
       }
-      rafId = requestAnimationFrame(tick);
+
+      function onWheel(e: WheelEvent) {
+        if (e.deltaY > 0) boostSpeed();
+      }
+
+      function onTouchStart(e: TouchEvent) {
+        touchStartY = e.touches[0]?.clientY ?? 0;
+      }
+
+      function onTouchMove(e: TouchEvent) {
+        const currentY = e.touches[0]?.clientY ?? 0;
+        if (touchStartY - currentY > 10) boostSpeed();
+      }
+
+      window.addEventListener("wheel", onWheel, { passive: true });
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
 
       return () => {
-        window.removeEventListener("scroll", onScroll);
-        cancelAnimationFrame(rafId);
-        tl.scrollTrigger?.kill();
+        clearTimeout(ffTimer);
+        window.removeEventListener("wheel", onWheel);
+        window.removeEventListener("touchstart", onTouchStart);
+        window.removeEventListener("touchmove", onTouchMove);
+        st.kill();
         tl.kill();
       };
     },

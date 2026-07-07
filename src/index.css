@@ -2455,7 +2455,7 @@ html.cursor-hidden * {
   );
 }
 
-/* Track — GSAP controls y for scroll animation */
+/* Track — GSAP controls y for auto-play animation */
 .credits__track {
   position: absolute;
   top: 0;
@@ -2464,7 +2464,7 @@ html.cursor-hidden * {
   margin: 0 auto;
   width: 100%;
   max-width: 580px;
-  padding: 0 32px;
+  padding: 0 32px 30vh; /* bottom space so last lines rest in viewport */
   text-align: center;
   will-change: transform;
 }

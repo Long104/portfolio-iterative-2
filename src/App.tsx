@@ -1,4 +1,11 @@
-import { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  lazy,
+  Suspense,
+} from "react";
 import "./fonts.css";
 import type { ScrollContainerHandle } from "./components/ScrollContainer";
 import { setScrollState } from "./scrollStore";
@@ -30,7 +37,6 @@ import {
   AboutSection,
   ExperienceSection,
   WorkSection,
-  CurrentlySection,
   ContactSection,
   CreditsSection,
 } from "./components/sections";
@@ -41,7 +47,9 @@ type Theme = "gquuuuuux" | "gfreed";
 function App() {
   const [started, setStarted] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
-  const [bootPhase, setBootPhase] = useState<"enter" | "exit" | "gone">("enter");
+  const [bootPhase, setBootPhase] = useState<"enter" | "exit" | "gone">(
+    "enter",
+  );
   const [activeSection, setActiveSection] = useState(0);
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("kira-theme") as Theme) || "gquuuuuux",
@@ -99,7 +107,9 @@ function App() {
       if (cancelled) return;
       ScrollTrigger.refresh();
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Lock body scroll during boot
@@ -140,8 +150,8 @@ function App() {
       if (ticking) return;
       ticking = true;
       rafId = requestAnimationFrame(() => {
-        const x = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) to 1 (right)
-        const y = -(e.clientY / window.innerHeight) * 2 + 1;  // 1 (top) to -1 (bottom)
+        const x = (e.clientX / window.innerWidth) * 2 - 1; // -1 (left) to 1 (right)
+        const y = -(e.clientY / window.innerHeight) * 2 + 1; // 1 (top) to -1 (bottom)
         setMouseState({ x, y, lastMoveTime: performance.now() });
         ticking = false;
       });
@@ -170,20 +180,23 @@ function App() {
     if (otherTrack) warmPreload(otherTrack.url);
   }, [isPreloaded, engage, loadTrack, currentTrack, warmPreload]);
 
-  const handleSelectTrack = useCallback(async (url: string) => {
-    requestOrientationPermission(); // iOS 13+: must be inside user gesture
-    initAudioUI(); // create AudioContext inside trusted click
-    if (url === currentTrack) {
-      if (!isPlaying) await engage();
-      return;
-    }
-    // Crossfade: 1.5s fade-out current → 1.5s fade-in new track
-    // Uses cached buffer if preloaded — no network wait.
-    const previousTrack = currentTrack; // capture before state updates
-    await crossfadeTo(url);
-    // Keep the track we just left in cache — user might switch back
-    warmPreload(previousTrack);
-  }, [currentTrack, isPlaying, engage, crossfadeTo, warmPreload]);
+  const handleSelectTrack = useCallback(
+    async (url: string) => {
+      requestOrientationPermission(); // iOS 13+: must be inside user gesture
+      initAudioUI(); // create AudioContext inside trusted click
+      if (url === currentTrack) {
+        if (!isPlaying) await engage();
+        return;
+      }
+      // Crossfade: 1.5s fade-out current → 1.5s fade-in new track
+      // Uses cached buffer if preloaded — no network wait.
+      const previousTrack = currentTrack; // capture before state updates
+      await crossfadeTo(url);
+      // Keep the track we just left in cache — user might switch back
+      warmPreload(previousTrack);
+    },
+    [currentTrack, isPlaying, engage, crossfadeTo, warmPreload],
+  );
 
   const handleExitComplete = useCallback(() => {
     setBootPhase("gone");
@@ -207,16 +220,12 @@ function App() {
     setSelectedProject(null);
   }, []);
 
-  const bootPhaseNarrowed: "enter" | "exit" = bootPhase === "gone" ? "exit" : bootPhase;
+  const bootPhaseNarrowed: "enter" | "exit" =
+    bootPhase === "gone" ? "exit" : bootPhase;
 
   // Parallax: glass panels float on scroll
   // Activates after LAUNCH when content is visible.
-  useParallax(
-    ".glass-panel",
-    30,
-    1.5,
-    started,
-  );
+  useParallax(".glass-panel", 30, 1.5, started);
 
   // Dim overlay: fades in after hero, out before contact
   // Subtle (0.25) — dims tunnel for text readability without killing glass refraction
@@ -231,8 +240,10 @@ function App() {
       trigger: "[data-section-index='0']",
       start: "bottom 80%",
       end: "bottom 20%",
-      onEnter: () => gsap.to(overlay, { opacity: 0.45, duration: 1, ease: "power2.out" }),
-      onLeaveBack: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
+      onEnter: () =>
+        gsap.to(overlay, { opacity: 0.45, duration: 1, ease: "power2.out" }),
+      onLeaveBack: () =>
+        gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
     });
 
     // Fade out: currently (section 5) → contact (section 6)
@@ -240,8 +251,10 @@ function App() {
       trigger: "[data-section-index='6']",
       start: "top 80%",
       end: "top 30%",
-      onEnter: () => gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
-      onLeaveBack: () => gsap.to(overlay, { opacity: 0.45, duration: 1, ease: "power2.out" }),
+      onEnter: () =>
+        gsap.to(overlay, { opacity: 0, duration: 1, ease: "power2.out" }),
+      onLeaveBack: () =>
+        gsap.to(overlay, { opacity: 0.45, duration: 1, ease: "power2.out" }),
     });
 
     return () => {
@@ -266,13 +279,24 @@ function App() {
       {/* ── Layer 1: Scrollable content (pre-mounted during boot) ── */}
       {contentMounted && (
         <Suspense fallback={<div className="content-layer" />}>
-          <ScrollContainer ref={scrollRef} onSectionChange={handleSectionChange} paused={!started} locked={selectedProject !== null}>
+          <ScrollContainer
+            ref={scrollRef}
+            onSectionChange={handleSectionChange}
+            paused={!started}
+            locked={selectedProject !== null}
+          >
             <HeroSection started={started} />
             <AboutSection />
             <ExperienceSection />
-            <WorkSection started={started} onOpenProject={handleOpenProject} hidden={selectedProject !== null} />
+            <WorkSection
+              started={started}
+              onOpenProject={handleOpenProject}
+              hidden={selectedProject !== null}
+            />
             <StackSection />
-            <CurrentlySection />
+
+            {/* Still in progress about should add this or not don't do anything for this section yet */}
+            {/* <CurrentlySection /> */}
             <ContactSection />
             <CreditsSection />
           </ScrollContainer>
@@ -320,7 +344,9 @@ function App() {
           theme={theme}
           toggle={toggle}
           handleSelectTrack={handleSelectTrack}
-          onToggleTheme={() => setTheme((t) => (t === "gquuuuuux" ? "gfreed" : "gquuuuuux"))}
+          onToggleTheme={() =>
+            setTheme((t) => (t === "gquuuuuux" ? "gfreed" : "gquuuuuux"))
+          }
         />
       )}
     </>
