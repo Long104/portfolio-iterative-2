@@ -7,17 +7,6 @@ import { playHoverSound } from "../../lib/audio-ui";
 import { GlassPanel } from "../Glass";
 
 export const ContactSection = memo(function ContactSection() {
-  const headlineRef = useScrollReveal<HTMLDivElement>({
-    split: "lines",
-    stagger: 0.15,
-    y: "120%",
-    clipWipe: true,
-    start: "top 80%",
-    end: "top 40%",
-    duration: 1.0,
-    ease: "expo.out",
-  });
-
   const linksRef = useScrollReveal<HTMLDivElement>({
     split: "lines",
     stagger: 0.1,
@@ -78,10 +67,6 @@ export const ContactSection = memo(function ContactSection() {
 
   return (
     <section className="section section--centered" data-section-index={6}>
-      <div ref={headlineRef} className="contact__headline">
-        open <br />
-        <span>channel.</span>
-      </div>
       <GlassPanel>
         <div ref={linksRef} className="contact">
           <a className="contact__email" href="mailto:longpantorn@gmail.com">
@@ -91,10 +76,10 @@ export const ContactSection = memo(function ContactSection() {
             <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
               github →
             </a>
-            <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee-99a51a341/" target="_blank" rel="noreferrer">
+            <a className="contact__link" href="https://www.linkedin.com/in/pantorn-chuavallee/" target="_blank" rel="noreferrer">
               linkedin →
             </a>
-            <a className="contact__link" href="https://resume.pantorn.me/resume.pdf" target="_blank" rel="noreferrer">
+            <a className="contact__link" href="https://pantorn.site/resume.pdf" target="_blank" rel="noreferrer">
               resume →
             </a>
           </div>
