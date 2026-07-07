@@ -77,8 +77,8 @@ const CREDIT_GROUPS: readonly CreditGroup[] = [
   },
 ];
 
-// Auto-play: ~40s bottom-to-top. Scroll input boosts speed proportionally.
-const AUTO_PLAY_DURATION = 40;
+// Auto-play: ~15s bottom-to-top. Scroll input boosts speed proportionally.
+const AUTO_PLAY_DURATION = 15;
 const FF_MAX_BOOST = 3; // max additional timeScale from scroll (1x → 4x)
 const FF_RESET_MS = 150; // return to normal after this long with no scroll
 
