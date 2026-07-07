@@ -32,6 +32,7 @@ import {
   WorkSection,
   CurrentlySection,
   ContactSection,
+  CreditsSection,
 } from "./components/sections";
 import { StackSection } from "./components/Armament";
 
@@ -273,6 +274,7 @@ function App() {
             <StackSection />
             <CurrentlySection />
             <ContactSection />
+            <CreditsSection />
           </ScrollContainer>
         </Suspense>
       )}

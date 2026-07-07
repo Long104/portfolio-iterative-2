@@ -5,3 +5,4 @@ export { ExperienceSection } from "./Experience";
 export { WorkSection } from "./Work";
 export { CurrentlySection } from "./Currently";
 export { ContactSection } from "./Contact";
+export { CreditsSection } from "./Credits";

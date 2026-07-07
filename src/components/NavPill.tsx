@@ -8,7 +8,7 @@ import { gsap } from "../lib/gsap";
 import { playHoverSound, playClickSound } from "../lib/audio-ui";
 import { useSlidingIndicator } from "../hooks/useSlidingIndicator";
 
-const SECTIONS = ["pilot", "about", "experience", "work", "stack", "now", "contact"] as const;
+const SECTIONS = ["pilot", "about", "experience", "work", "stack", "now", "contact", "credits"] as const;
 
 interface NavPillProps {
   activeIndex: number;
