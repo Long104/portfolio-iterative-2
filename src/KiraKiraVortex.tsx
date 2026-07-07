@@ -297,13 +297,19 @@ export default function KiraKiraVortex() {
     backdropMat.uniforms.uBass.value = s.backdropBass;
 
     // ── Scroll-linked camera ──
-    // Section-index-aware interpolation: each section maps to a specific camera.
-    // Uses scrollStore.sectionIndex (which section midpoint is closest to viewport center)
-    // instead of raw scroll progress, so uneven section heights (Work=1640px on mobile)
-    // don't skew the camera into wrong positions.
+    // Hybrid section-index + progress interpolation:
+    // Uses scrollStore.sectionIndex to pick the correct camera pair (so uneven
+    // section heights like Work=1640px on mobile don't skew positions), then
+    // blends between current and next camera using scroll progress for smooth
+    // continuous motion during scroll within each section.
     const sectionIdx = SECTION_INDEX_MAP[scroll.sectionIndex] ?? 0;
     const camIdx = Math.min(sectionIdx, SECTION_CAMERAS.length - 1);
-    const camTargetDef = SECTION_CAMERAS[camIdx];
+    const cur = SECTION_CAMERAS[camIdx];
+    const nxt = SECTION_CAMERAS[Math.min(camIdx + 1, SECTION_CAMERAS.length - 1)];
+    // Fractional position within the current section segment.
+    // segCount = number of sections - 1. Progress-based blend within the segment.
+    const segCount = SECTION_CAMERAS.length - 1;
+    const segT = Math.max(0, Math.min(1, (scroll.progress * segCount) - camIdx));
 
     // Idle-decayed mouse parallax
     // When the cursor hasn't moved for 2 seconds, the parallax offset
@@ -321,11 +327,11 @@ export default function KiraKiraVortex() {
       idleMouse.current.y = mouse.y;
     }
 
-    // Interpolate camera position + mouse offset
+    // Interpolate camera position between current and next section + mouse offset
     camTarget.current.set(
-      camTargetDef.pos[0] + idleMouse.current.x * 0.3,
-      camTargetDef.pos[1] + idleMouse.current.y * 0.2,
-      camTargetDef.pos[2],
+      cur.pos[0] + (nxt.pos[0] - cur.pos[0]) * segT + idleMouse.current.x * 0.3,
+      cur.pos[1] + (nxt.pos[1] - cur.pos[1]) * segT + idleMouse.current.y * 0.2,
+      cur.pos[2] + (nxt.pos[2] - cur.pos[2]) * segT,
     );
     camera.position.lerp(camTarget.current, 0.05);
 

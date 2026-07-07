@@ -2413,10 +2413,10 @@ html.cursor-hidden * {
 
 .credits {
   display: block; /* Override .section flex */
-  height: 100dvh;
   height: 100vh; /* fallback for older browsers */
-  min-height: 100dvh;
+  height: 100dvh; /* dynamic viewport height — mobile address bar safe */
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0;
   overflow: hidden;
   background: rgba(0, 2, 8, 0.72); /* near-black, let faint tunnel show through */
