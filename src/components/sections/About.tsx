@@ -33,7 +33,7 @@ export const AboutSection = memo(function AboutSection() {
         <div className="about__header">
           <img src="/webp/profile-small.webp" alt="pantorn chuavallee" className="about__photo" width="80" height="80" />
           <p ref={textRef} className="about__text">
-            it graduate & <span className="keyword">software engineer</span> from bangkok. <br />
+            <span className="keyword">software engineer</span> based in bangkok. <br />
             shipped production code at <span className="keyword">omise (opn)</span> during a 6-month internship. <br />
             <span>
               across <span className="keyword">go</span>, <span className="keyword">typescript</span>, and <span className="keyword">aws</span> — into webgl, ai, and backend

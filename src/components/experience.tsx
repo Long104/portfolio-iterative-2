@@ -37,4 +37,4 @@ export const EXPERIENCE: readonly ExperienceItem[] = [
   },
 ];
 
-export const CURRENT_STATUS = "it graduate — open to software engineer roles";
+export const CURRENT_STATUS = "based in bangkok — open to opportunities";
