@@ -208,15 +208,34 @@ export default function KiraKiraVortex() {
   const camLookAt = useRef(new Vector3(0, 0, 0));
   const currentLookAt = useRef(new Vector3(0, 0, 0));
 
-  // Per-section camera positions — each section has a distinct angle
-  // Subtle variety — not jarring. Mouse parallax adds on top.
-  const SECTION_CAMERAS: { pos: [number, number, number]; look: [number, number, number] }[] = useMemo(() => [
-    { pos: [0,    0,    5.5], look: [0, 0, 0] },  // 0: hero — slightly pulled back
-    { pos: [0.2,  0.15, 5.0], look: [0, 0, 0] },  // 1: about — gentle drift right
-    { pos: [-0.15, 0.1, 4.7], look: [0, 0, 0] },  // 2: experience — slightly closer
-    { pos: [0,   -0.15, 5.3], look: [0, 0, 0] },  // 3: work — pulled back for h-scroll
-    { pos: [0,    0,    4.5], look: [0, 0, 0] },  // 4: contact — centered, slightly zoomed
-  ], []);
+  // Per-section camera positions — each section has a distinct angle.
+  // Indexed by data-section-index: hero=0, about=1, exp=2, work=3, stack=4,
+  //   contact=6, credits=7. (section 5 is commented out / Currently).
+  // On mobile, camera stays further back to prevent the core appearing too large.
+  const { tier } = usePerfSettings();
+  const MOBILE_Z_OFFSET = tier === "mobile" ? 1.2 : 0;
+
+  const SECTION_CAMERAS = useMemo(() => [
+    { pos: [0,    0,    5.5 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 0: hero — pulled back
+    { pos: [0.2,  0.15, 5.0 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 1: about — gentle drift right
+    { pos: [-0.15, 0.1, 4.8 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 2: experience — slightly closer
+    { pos: [0,   -0.15, 5.3 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 3: work — pulled back for h-scroll
+    { pos: [0,    0,    5.2 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 4: stack — centered, comfortable
+    { pos: [0,    0,    5.0 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 6: contact — centered, slightly closer
+    { pos: [0,    0,    5.5 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 7: credits — pulled back, near-black bg
+  ] as { pos: [number, number, number]; look: [number, number, number] }[], [MOBILE_Z_OFFSET]);
+
+  // Map from data-section-index to SECTION_CAMERAS array index.
+  // section 5 (Currently) is commented out, so indices skip: 0,1,2,3,4,6,7 → 0,1,2,3,4,5,6
+  const SECTION_INDEX_MAP: Record<number, number> = {
+    0: 0, // hero
+    1: 1, // about
+    2: 2, // experience
+    3: 3, // work
+    4: 4, // stack
+    6: 5, // contact
+    7: 6, // credits
+  };
 
   // Idle-decayed mouse offset
   // When the user hasn't moved the mouse for 2s, this value exponentially
@@ -278,14 +297,13 @@ export default function KiraKiraVortex() {
     backdropMat.uniforms.uBass.value = s.backdropBass;
 
     // ── Scroll-linked camera ──
-    // Lerp between section camera positions based on scroll progress.
-    const p = scroll.progress;
-    const segCount = SECTION_CAMERAS.length - 1;
-    const segP = Math.min(p * segCount, segCount - 0.001);
-    const segIdx = Math.floor(segP);
-    const segT = segP - segIdx;
-    const cur = SECTION_CAMERAS[segIdx];
-    const nxt = SECTION_CAMERAS[segIdx + 1] ?? cur;
+    // Section-index-aware interpolation: each section maps to a specific camera.
+    // Uses scrollStore.sectionIndex (which section midpoint is closest to viewport center)
+    // instead of raw scroll progress, so uneven section heights (Work=1640px on mobile)
+    // don't skew the camera into wrong positions.
+    const sectionIdx = SECTION_INDEX_MAP[scroll.sectionIndex] ?? 0;
+    const camIdx = Math.min(sectionIdx, SECTION_CAMERAS.length - 1);
+    const camTargetDef = SECTION_CAMERAS[camIdx];
 
     // Idle-decayed mouse parallax
     // When the cursor hasn't moved for 2 seconds, the parallax offset
@@ -305,9 +323,9 @@ export default function KiraKiraVortex() {
 
     // Interpolate camera position + mouse offset
     camTarget.current.set(
-      cur.pos[0] + (nxt.pos[0] - cur.pos[0]) * segT + idleMouse.current.x * 0.3,
-      cur.pos[1] + (nxt.pos[1] - cur.pos[1]) * segT + idleMouse.current.y * 0.2,
-      cur.pos[2] + (nxt.pos[2] - cur.pos[2]) * segT,
+      camTargetDef.pos[0] + idleMouse.current.x * 0.3,
+      camTargetDef.pos[1] + idleMouse.current.y * 0.2,
+      camTargetDef.pos[2],
     );
     camera.position.lerp(camTarget.current, 0.05);
 
@@ -321,7 +339,7 @@ export default function KiraKiraVortex() {
     // (Shader computes pos = uTime * uSpeed, so sudden speed changes teleport
     // all particles. Lerp the uniform at 5%/frame for gradual acceleration.)
     const velBoost = Math.min(Math.abs(scroll.velocity) / 200, 0.6);
-    const targetSpeed = 0.15 + p * 0.25 + velBoost * 0.15;
+    const targetSpeed = 0.15 + scroll.progress * 0.25 + velBoost * 0.15;
     paintMat.uniforms.uSpeed.value += (targetSpeed - paintMat.uniforms.uSpeed.value) * 0.05;
     const targetFlareSpeed = targetSpeed * 1.2 + velBoost * 0.2;
     flareMat.uniforms.uSpeed.value += (targetFlareSpeed - flareMat.uniforms.uSpeed.value) * 0.05;

@@ -2413,7 +2413,9 @@ html.cursor-hidden * {
 
 .credits {
   display: block; /* Override .section flex */
-  height: 100vh;
+  height: 100dvh;
+  height: 100vh; /* fallback for older browsers */
+  min-height: 100dvh;
   min-height: 100vh;
   padding: 0;
   overflow: hidden;
@@ -2467,6 +2469,34 @@ html.cursor-hidden * {
   padding: 0 32px 30vh; /* bottom space so last lines rest in viewport */
   text-align: center;
   will-change: transform;
+}
+
+/* ── Credits mobile overrides ── */
+@media (max-width: 768px) {
+  .credits__fade {
+    height: 80px;
+  }
+
+  .credits__track {
+    padding: 0 20px 15vh; /* reduce bottom padding on small screens */
+    max-width: 100%;
+  }
+
+  .credits__title {
+    margin-bottom: 48px;
+  }
+
+  .credits__group {
+    margin-bottom: 40px;
+  }
+
+  .credits__fin {
+    margin: 48px 0 24px;
+  }
+
+  .credits__joke {
+    margin-bottom: 32px;
+  }
 }
 
 .credits__title {

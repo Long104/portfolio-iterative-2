@@ -7,6 +7,16 @@ import { useRef, memo } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger, PREFERS_REDUCED_MOTION } from "../../lib/gsap";
 
+// Mobile-safe viewport height.
+// visualViewport.height excludes the address bar on iOS/Android.
+// Falls back to innerHeight for older browsers.
+function getViewportHeight(): number {
+  if (window.visualViewport) {
+    return window.visualViewport.height;
+  }
+  return window.innerHeight;
+}
+
 interface CreditGroup {
   readonly title: string;
   readonly lines: readonly string[];
@@ -95,19 +105,26 @@ export const CreditsSection = memo(function CreditsSection() {
       if (!section || !track) return;
 
       // ── Auto-play timeline (paused until section enters viewport) ──
-      // Track starts below viewport (y = innerHeight) and scrolls up
+      // Track starts below viewport (y = viewportHeight) and scrolls up
       // until the last line rests near viewport bottom.
+      // Uses getViewportHeight() to respect mobile address bar.
       const tl = gsap.timeline({ paused: true });
 
-      tl.fromTo(
-        track,
-        { y: () => window.innerHeight },
-        {
-          y: () => -Math.max(0, track.offsetHeight - window.innerHeight),
-          duration: AUTO_PLAY_DURATION,
-          ease: "none",
-        },
-      );
+      function buildTimeline() {
+        tl.clear();
+        const vh = getViewportHeight();
+        tl.fromTo(
+          track!,
+          { y: vh },
+          {
+            y: -Math.max(0, track!.offsetHeight - vh),
+            duration: AUTO_PLAY_DURATION,
+            ease: "none",
+          },
+        );
+      }
+
+      buildTimeline();
 
       // ── Play when section enters, reset on scroll back ──
       const st = ScrollTrigger.create({
@@ -140,6 +157,10 @@ export const CreditsSection = memo(function CreditsSection() {
         setSpeed(e.deltaY / 50);
       }
 
+      // ── Touch fast-forward (viewport-level, non-passive) ──
+      // On mobile, passive touch events don't prevent iOS rubber-band overscroll
+      // which consumes the gesture. Attaching non-passive to the credits viewport
+      // lets us control the gesture without blocking page scroll elsewhere.
       function onTouchStart(e: TouchEvent) {
         touchStartY = e.touches[0]?.clientY ?? 0;
       }
@@ -148,20 +169,55 @@ export const CreditsSection = memo(function CreditsSection() {
         const currentY = e.touches[0]?.clientY ?? 0;
         const delta = touchStartY - currentY;
         if (delta > 5) {
+          // Only prevent default when credits timeline is active
+          // and user is at the bottom of the page (can't scroll further down)
+          if (tl.isActive() && window.scrollY >= document.body.scrollHeight - getViewportHeight() - 10) {
+            e.preventDefault(); // prevent iOS rubber band
+          }
           setSpeed(delta / 40);
           touchStartY = currentY;
         }
       }
 
+      // Wheel: passive on window (desktop)
       window.addEventListener("wheel", onWheel, { passive: true });
-      window.addEventListener("touchstart", onTouchStart, { passive: true });
-      window.addEventListener("touchmove", onTouchMove, { passive: true });
+      // Touch: non-passive on credits viewport only (mobile)
+      const viewport = section.querySelector(".credits__viewport");
+      viewport?.addEventListener("touchstart", onTouchStart as EventListener, { passive: true });
+      viewport?.addEventListener("touchmove", onTouchMove as EventListener, { passive: false });
+
+      // ── Resize handler: recalc timeline on mobile address bar toggle ──
+      // visualViewport resize fires when address bar shows/hides on iOS/Android.
+      // Also handles orientation changes.
+      let resizeTimer: ReturnType<typeof setTimeout> | undefined;
+
+      function onViewportResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          // Only rebuild if viewport height actually changed
+          const wasPlaying = tl.isActive();
+          const progress = tl.progress();
+          buildTimeline();
+          tl.progress(progress);
+          if (wasPlaying) tl.play();
+          ScrollTrigger.refresh();
+        }, 100);
+      }
+
+      const vv = window.visualViewport;
+      if (vv) {
+        vv.addEventListener("resize", onViewportResize);
+      }
+      window.addEventListener("orientationchange", onViewportResize);
 
       return () => {
         clearTimeout(ffTimer);
+        clearTimeout(resizeTimer);
         window.removeEventListener("wheel", onWheel);
-        window.removeEventListener("touchstart", onTouchStart);
-        window.removeEventListener("touchmove", onTouchMove);
+        viewport?.removeEventListener("touchstart", onTouchStart as EventListener);
+        viewport?.removeEventListener("touchmove", onTouchMove as EventListener);
+        if (vv) vv.removeEventListener("resize", onViewportResize);
+        window.removeEventListener("orientationchange", onViewportResize);
         st.kill();
         tl.kill();
       };
