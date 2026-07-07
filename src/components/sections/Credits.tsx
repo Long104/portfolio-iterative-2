@@ -77,10 +77,10 @@ const CREDIT_GROUPS: readonly CreditGroup[] = [
   },
 ];
 
-// Auto-play: ~40s bottom-to-top. Scroll input boosts to 8x speed.
+// Auto-play: ~40s bottom-to-top. Scroll input boosts speed proportionally.
 const AUTO_PLAY_DURATION = 40;
-const FF_SCALE = 8;
-const FF_RESET_MS = 400;
+const FF_MAX_BOOST = 3; // max additional timeScale from scroll (1x → 4x)
+const FF_RESET_MS = 150; // return to normal after this long with no scroll
 
 export const CreditsSection = memo(function CreditsSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -120,20 +120,24 @@ export const CreditsSection = memo(function CreditsSection() {
       });
 
       // ── Scroll-to-skip: wheel / touch fast-forwards credits ──
+      // Speed boost is proportional to scroll intensity, not a flat jump.
+      // Gentle trackpad scroll ≈ 1.5x. Fast mouse wheel ≈ 3-4x. No scroll = 1x.
       let ffTimer: ReturnType<typeof setTimeout> | undefined;
       let touchStartY = 0;
 
-      function boostSpeed() {
+      function setSpeed(boost: number) {
         if (!tl.isActive() || tl.progress() >= 0.99) return;
-        tl.timeScale(FF_SCALE);
+        tl.timeScale(1 + Math.min(boost, FF_MAX_BOOST));
         clearTimeout(ffTimer);
         ffTimer = setTimeout(() => {
-          tl.timeScale(1);
+          gsap.to(tl, { timeScale: 1, duration: 0.5, ease: "power2.out" });
         }, FF_RESET_MS);
       }
 
       function onWheel(e: WheelEvent) {
-        if (e.deltaY > 0) boostSpeed();
+        if (e.deltaY <= 0) return;
+        // Wheel delta: trackpad ~1-10, mouse wheel ~30-120
+        setSpeed(e.deltaY / 50);
       }
 
       function onTouchStart(e: TouchEvent) {
@@ -142,7 +146,11 @@ export const CreditsSection = memo(function CreditsSection() {
 
       function onTouchMove(e: TouchEvent) {
         const currentY = e.touches[0]?.clientY ?? 0;
-        if (touchStartY - currentY > 10) boostSpeed();
+        const delta = touchStartY - currentY;
+        if (delta > 5) {
+          setSpeed(delta / 40);
+          touchStartY = currentY;
+        }
       }
 
       window.addEventListener("wheel", onWheel, { passive: true });
