@@ -25,6 +25,45 @@ function env(cur: number, target: number, atk: number, dec: number): number {
   return cur + (target - cur) * (target > cur ? atk : dec);
 }
 
+// Map from data-section-index to SECTION_CAMERAS array index.
+// section 5 (Currently) is commented out, so indices skip: 0,1,2,3,4,6,7 → 0,1,2,3,4,5,6
+// Static — no dependency on reactive values, safe at module scope.
+const SECTION_INDEX_MAP: Record<number, number> = {
+  0: 0, // hero
+  1: 1, // about
+  2: 2, // experience
+  3: 3, // work
+  4: 4, // stack
+  6: 5, // contact
+  7: 6, // credits
+};
+
+// Cached section boundary measurements for per-section camera blending.
+// Auto-invalidates after 5s to handle resize/orientation change without
+// needing an explicit event listener.
+let sectionBoundaries: { top: number; bottom: number }[] | null = null;
+let boundaryTimestamp = 0;
+const BOUNDARY_TTL_MS = 5000;
+
+function getSectionBoundaries(): { top: number; bottom: number }[] | null {
+  const now = performance.now();
+  if (!sectionBoundaries || now - boundaryTimestamp > BOUNDARY_TTL_MS) {
+    const sections = document.querySelectorAll<HTMLElement>("[data-section-index]");
+    if (sections.length === 0) return null;
+    const bounds: { top: number; bottom: number }[] = [];
+    sections.forEach((s) => {
+      const rect = s.getBoundingClientRect();
+      bounds.push({
+        top: rect.top + window.scrollY,
+        bottom: rect.top + window.scrollY + rect.height,
+      });
+    });
+    sectionBoundaries = bounds;
+    boundaryTimestamp = now;
+  }
+  return sectionBoundaries;
+}
+
 function generateInstanceData(count: number, maxRadius: number) {
   const pos = new Float32Array(count * 3);
   const rand = new Float32Array(count * 3);
@@ -225,18 +264,6 @@ export default function KiraKiraVortex() {
     { pos: [0,    0,    5.5 + MOBILE_Z_OFFSET], look: [0, 0, 0] },  // 7: credits — pulled back, near-black bg
   ] as { pos: [number, number, number]; look: [number, number, number] }[], [MOBILE_Z_OFFSET]);
 
-  // Map from data-section-index to SECTION_CAMERAS array index.
-  // section 5 (Currently) is commented out, so indices skip: 0,1,2,3,4,6,7 → 0,1,2,3,4,5,6
-  const SECTION_INDEX_MAP: Record<number, number> = {
-    0: 0, // hero
-    1: 1, // about
-    2: 2, // experience
-    3: 3, // work
-    4: 4, // stack
-    6: 5, // contact
-    7: 6, // credits
-  };
-
   // Idle-decayed mouse offset
   // When the user hasn't moved the mouse for 2s, this value exponentially
   // decays toward (0, 0), smoothly returning the camera to center.
@@ -297,19 +324,39 @@ export default function KiraKiraVortex() {
     backdropMat.uniforms.uBass.value = s.backdropBass;
 
     // ── Scroll-linked camera ──
-    // Hybrid section-index + progress interpolation:
+    // Hybrid section-index + per-section progress interpolation:
     // Uses scrollStore.sectionIndex to pick the correct camera pair (so uneven
     // section heights like Work=1640px on mobile don't skew positions), then
-    // blends between current and next camera using scroll progress for smooth
-    // continuous motion during scroll within each section.
+    // blends between current and next camera using per-section progress.
+    //
+    // Per-section progress is calculated from actual DOM boundaries — how far
+    // through the current section the viewport is — NOT from global scroll
+    // progress. This ensures smooth camera motion regardless of section height.
     const sectionIdx = SECTION_INDEX_MAP[scroll.sectionIndex] ?? 0;
     const camIdx = Math.min(sectionIdx, SECTION_CAMERAS.length - 1);
     const cur = SECTION_CAMERAS[camIdx];
     const nxt = SECTION_CAMERAS[Math.min(camIdx + 1, SECTION_CAMERAS.length - 1)];
-    // Fractional position within the current section segment.
-    // segCount = number of sections - 1. Progress-based blend within the segment.
-    const segCount = SECTION_CAMERAS.length - 1;
-    const segT = Math.max(0, Math.min(1, (scroll.progress * segCount) - camIdx));
+
+    // Compute segT from actual section positions in the DOM.
+    // Falls back to global progress if DOM measurements aren't available yet.
+    let segT: number;
+    const bounds = getSectionBoundaries();
+    const domSections = document.querySelectorAll("[data-section-index]");
+    if (bounds && domSections.length > sectionIdx) {
+      // Current section's actual DOM boundaries
+      const curBound = bounds[sectionIdx];
+      const nextBound = bounds[Math.min(sectionIdx + 1, bounds.length - 1)];
+      // segT = how far past the current section's midpoint toward the next
+      // section's midpoint (0 = at current section center, 1 = at next center)
+      const curMid = (curBound.top + curBound.bottom) / 2;
+      const nextMid = (nextBound.top + nextBound.bottom) / 2;
+      const viewportCenter = window.scrollY + window.innerHeight / 2;
+      segT = Math.max(0, Math.min(1, (viewportCenter - curMid) / Math.max(1, nextMid - curMid)));
+    } else {
+      // Fallback: global progress (pre-fix behavior, only at mount before DOM ready)
+      const segCount = SECTION_CAMERAS.length - 1;
+      segT = Math.max(0, Math.min(1, (scroll.progress * segCount) - camIdx));
+    }
 
     // Idle-decayed mouse parallax
     // When the cursor hasn't moved for 2 seconds, the parallax offset

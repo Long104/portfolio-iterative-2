@@ -111,6 +111,9 @@ export const CreditsSection = memo(function CreditsSection() {
       const tl = gsap.timeline({ paused: true });
 
       function buildTimeline() {
+        // Reset timeScale in case fast-forward (timeScale up to 4x) was active
+        // when resize fired — tl.clear() preserves the boosted timeScale.
+        tl.timeScale(1);
         tl.clear();
         const vh = getViewportHeight();
         tl.fromTo(
@@ -194,13 +197,18 @@ export const CreditsSection = memo(function CreditsSection() {
       function onViewportResize() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-          // Only rebuild if viewport height actually changed
+          // Refresh ScrollTrigger instance FIRST — recalculates trigger positions
+          // after viewport height change. Using st.refresh() (instance-only)
+          // instead of global ScrollTrigger.refresh() to avoid cascading refresh
+          // of unrelated triggers. This may fire onLeaveBack/onEnter, but we
+          // restore progress AFTER, so it takes precedence.
+          st.refresh();
+          // Now rebuild timeline with new viewport height and restore progress
           const wasPlaying = tl.isActive();
           const progress = tl.progress();
           buildTimeline();
           tl.progress(progress);
           if (wasPlaying) tl.play();
-          ScrollTrigger.refresh();
         }, 100);
       }
 
