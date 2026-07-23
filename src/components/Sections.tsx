@@ -108,13 +108,13 @@ export function ContactSection() {
     <section className="section section--centered" data-section-index={4}>
       <div className="section-label section-label--center">// let's talk</div>
       <div className="contact">
-        <a className="contact__link" href="https://github.com" target="_blank" rel="noreferrer">
+        <a className="contact__link" href="https://github.com/Long104" target="_blank" rel="noreferrer">
           github →
         </a>
-        <a className="contact__link" href="https://linkedin.com" target="_blank" rel="noreferrer">
+        <a className="contact__link" href="https://linkedin.com/in/pantorn-chuavallee" target="_blank" rel="noreferrer">
           linkedin →
         </a>
-        <a className="contact__link" href="mailto:hello@pantorn.dev">
+        <a className="contact__link" href="mailto:longpantorn@gmail.com">
           email →
         </a>
       </div>

@@ -2,16 +2,16 @@
 
 export const EXPERIENCE = [
   {
-    period: "2023 — 2024",
-    role: "software engineer",
-    company: "company one",
-    description: "built and maintained full-stack web applications. focused on performance, developer experience, and shipping features that matter.",
+    period: "jun 2025 — dec 2025",
+    role: "software engineer intern",
+    company: "omise",
+    description: "shipped production ui fixes across the merchant dashboard, migrated next.js 14→15, ran poc for launchdarkly & mixpanel, added jest/sonarqube to ruby + js + react codebases.",
   },
   {
-    period: "2021 — 2023",
-    role: "junior developer",
-    company: "company two",
-    description: "developed client-facing interfaces, integrated apis, and learned the craft of writing clean, maintainable code under real constraints.",
+    period: "nov 2022 — dec 2025",
+    role: "b.sc. information technology · gpa 3.78",
+    company: "stamford international university",
+    description: "majoring in it while shipping team & personal projects, and helping run the university coding club.",
   },
 ] as const;
 
