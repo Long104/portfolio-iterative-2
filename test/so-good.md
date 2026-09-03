@@ -364,13 +364,12 @@ const flareFragment = /* glsl */ `
   }
 `;
 
-// Layer D: 3D perspective-transformed background layers
+// Layer D: Fullscreen meshes with additive blending
 const glowVertex = /* glsl */ `
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    // FIXED: Upgraded from clip-space flat planes to full projection matrix transformations
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_Position = vec4(position, 1.0);
   }
 `;
 
@@ -407,8 +406,7 @@ const sunFragment = /* glsl */ `
     float dist = length(centered);
     float angle = atan(centered.y, centered.x);
 
-    // FIXED: Adjusted scale for proper depth sampling across the 3D space matrix
-    float gasNoise = fbm(centered * 2.5 - vec2(uTime * 0.3, uTime * 0.3));
+    float gasNoise = fbm(centered * 4.0 - vec2(uTime * 0.3, uTime * 0.3));
     float ripple = fbm(vec2(angle * 3.0, uTime * 0.6)) * 0.02;
     float d = dist + ripple;
 
@@ -642,6 +640,7 @@ function KiraKiraVortex() {
     [starTex]
   );
 
+  // D4: Sun
   const sunMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -649,7 +648,7 @@ function KiraKiraVortex() {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
         },
-        vertexShader: glowVertex, 
+        vertexShader: glowVertex, // FIXED
         fragmentShader: sunFragment,
         transparent: true,
         depthWrite: false,
@@ -659,6 +658,7 @@ function KiraKiraVortex() {
     []
   );
 
+  // D3: Rays
   const raysMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -666,7 +666,7 @@ function KiraKiraVortex() {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
         },
-        vertexShader: glowVertex, 
+        vertexShader: glowVertex, // FIXED
         fragmentShader: raysFragment,
         transparent: true,
         depthWrite: false,
@@ -676,6 +676,7 @@ function KiraKiraVortex() {
     []
   );
 
+  // D2: Bridge
   const bridgeMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -683,7 +684,7 @@ function KiraKiraVortex() {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
         },
-        vertexShader: glowVertex, 
+        vertexShader: glowVertex, // FIXED
         fragmentShader: bridgeFragment,
         transparent: true,
         depthWrite: false,
@@ -693,6 +694,7 @@ function KiraKiraVortex() {
     []
   );
 
+  // D1: Core
   const coreMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -700,7 +702,7 @@ function KiraKiraVortex() {
           uAspect: { value: window.innerWidth / window.innerHeight },
           uTime: { value: 0 },
         },
-        vertexShader: glowVertex, 
+        vertexShader: glowVertex, // FIXED
         fragmentShader: coreFragment,
         transparent: true,
         depthWrite: false,
@@ -754,20 +756,13 @@ function KiraKiraVortex() {
 
   return (
     <>
-      {/* 1. Deep universe backdrop anchor pass */}
-      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-5} />
-
-      {/* 2. FIXED: Nebula clouds layered into true 3D space with matching translation scales */}
-      <mesh geometry={backdropGeo} material={sunMat} position={[0, 0, -20]} scale={25} renderOrder={-4} />
-      <mesh geometry={backdropGeo} material={raysMat} position={[0, 0, -20]} scale={25} renderOrder={-3} />
-      <mesh geometry={backdropGeo} material={bridgeGeo || backdropGeo} material={bridgeMat} position={[0, 0, -20]} scale={25} renderOrder={-2} />
-      <mesh geometry={backdropGeo} material={coreMat} position={[0, 0, -19]} scale={25} renderOrder={-1} />
-
-      {/* 3. Floating particle streams clipping elegantly over the transformed clouds */}
-      <instancedMesh args={[paintGeo, paintMat, PAINT_COUNT]} frustumCulled={false} renderOrder={1} />
-
-      {/* 4. Top layout rendering pass for star flares */}
-      <instancedMesh args={[flareGeo, flareMat, FLARE_COUNT]} frustumCulled={false} renderOrder={2} />
+      <mesh geometry={backdropGeo} material={backdropMat} renderOrder={-1} />
+      <instancedMesh args={[paintGeo, paintMat, PAINT_COUNT]} frustumCulled={false} />
+      <instancedMesh args={[flareGeo, flareMat, FLARE_COUNT]} frustumCulled={false} />
+      <mesh geometry={backdropGeo} material={sunMat} renderOrder={1} />
+      <mesh geometry={backdropGeo} material={raysMat} renderOrder={2} />
+      <mesh geometry={backdropGeo} material={bridgeMat} renderOrder={3} />
+      <mesh geometry={backdropGeo} material={coreMat} renderOrder={4} />
     </>
   );
 }
